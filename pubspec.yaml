@@ -1,0 +1,61 @@
+name: colemex
+description: "App institucional para abogados y clientes COLEMEX"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 🎨 Iconos y diseño
+  cupertino_icons: ^1.0.8
+
+  # 🌐 Navegación externa
+  url_launcher: ^6.2.5
+
+  # 📁 Selector de archivos multiplataforma (Web compatible)
+  file_picker: 10.0.0   # ✅ versión estable y compatible
+
+  # 📷 Cámara y galería
+  image_picker: ^1.0.4  # ✅ para tomar/seleccionar fotos
+
+  # 🔗 Conexión HTTP y multipart
+  http: ^1.1.0
+  http_parser: ^4.0.2   # ✅ necesario para MediaType en multipart
+
+  # 💾 Preferencias locales
+  shared_preferences: ^2.2.2
+
+  # 📦 Gestión de estado
+  provider: ^6.1.1
+
+  # 📍 Geolocalización
+  geolocator: ^10.1.0
+  geocoding: ^2.1.0   # 👉 Para convertir coordenadas en direcciones
+
+  # 🗺️ Mapas interactivos sin clave API
+  flutter_map: ^6.0.0
+  latlong2: ^0.9.0
+
+  # 🔑 Permisos en tiempo de ejecución
+  permission_handler: ^11.0.1   # ✅ versión estable
+
+  # 🌍 Internacionalización y formatos
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/iconos/logo.png
+    - assets/iconos/mazo-libro.png
+    - assets/fondos/
