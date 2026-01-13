@@ -24,8 +24,7 @@ class _HomePublicScreenState extends State<HomePublicScreen> {
     final yaMostrado = prefs.getBool('beneficiosMostrados') ?? false;
 
     if (!yaMostrado) {
-      // Primera vez → mostrar beneficios y marcar como visto
-      await prefs.setBool('beneficiosMostrados', true);
+      // Primera vez → mostrar beneficios
       setState(() {
         mostrarBeneficios = true;
       });
@@ -45,7 +44,7 @@ class _HomePublicScreenState extends State<HomePublicScreen> {
               children: const [
                 BeneficiosClientePage(),
                 BeneficiosAbogadoPage(),
-                LoginScreen(),
+                FinalIntroPage(), // ✅ Nueva página con botón "Continuar"
               ],
             )
           : const LoginScreen(),
@@ -67,11 +66,13 @@ Future<void> abrirPagina(String url) async {
 class BasePage extends StatelessWidget {
   final String title;
   final String content;
+  final Widget? extra;
 
   const BasePage({
     super.key,
     required this.title,
     required this.content,
+    this.extra,
   });
 
   @override
@@ -81,13 +82,12 @@ class BasePage extends StatelessWidget {
         image: DecorationImage(
           image: AssetImage("assets/iconos/mazo-libro.png"), // 👈 Fondo institucional
           fit: BoxFit.cover,
-          opacity: 0.15, // Fondo tenue para que no opaque el texto
+          opacity: 0.15,
         ),
       ),
       child: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          // Logo institucional
           Center(
             child: Image.asset(
               "assets/iconos/logo.png",
@@ -95,8 +95,6 @@ class BasePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Título
           Text(
             title,
             style: const TextStyle(
@@ -107,13 +105,15 @@ class BasePage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-
-          // Contenido
           Text(
             content,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
+          if (extra != null) ...[
+            const SizedBox(height: 24),
+            extra!,
+          ],
         ],
       ),
     );
@@ -146,6 +146,32 @@ class BeneficiosAbogadoPage extends StatelessWidget {
           "✔ Mayor visibilidad con clientes\n"
           "✔ Herramientas digitales para gestión de casos\n"
           "✔ Red profesional de colegas",
+    );
+  }
+}
+
+// ✅ Página final con botón para continuar al login
+class FinalIntroPage extends StatelessWidget {
+  const FinalIntroPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BasePage(
+      title: "Bienvenido a COLEMEX",
+      content: "Tu plataforma legal digital segura y confiable.",
+      extra: ElevatedButton(
+        onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('beneficiosMostrados', true);
+
+          // ✅ Redirigir al login y no volver atrás
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+          );
+        },
+        child: const Text("Continuar"),
+      ),
     );
   }
 }
