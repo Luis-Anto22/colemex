@@ -1,4 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// IMPORTA tus módulos (los crearemos abajo)
+import 'investigador_modulos/casos_asignados_screen.dart';
+import 'investigador_modulos/bitacora_screen.dart';
+import 'investigador_modulos/evidencias_screen.dart';
+import 'investigador_modulos/rutas_screen.dart';
+import 'investigador_modulos/perfil_verificado_screen.dart';
+import 'investigador_modulos/agenda_screen.dart';
+import 'investigador_modulos/historial_screen.dart';
+import 'investigador_modulos/ingresos_screen.dart';
+import 'investigador_modulos/calificaciones_screen.dart';
+import 'investigador_modulos/notificaciones_screen.dart';
+import 'investigador_modulos/configuracion_screen.dart';
+import 'investigador_modulos/soporte_screen.dart';
 
 class PanelInvestigadorScreen extends StatefulWidget {
   const PanelInvestigadorScreen({super.key});
