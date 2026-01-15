@@ -1,5 +1,23 @@
 import 'package:flutter/material.dart';
 
+// ✅ Reutiliza módulos base (los que ya hicimos para investigador)
+import '../investigador/investigador_modulos/perfil_verificado_screen.dart';
+import '../investigador/investigador_modulos/ubicacion_tiempo_real_screen.dart';
+import '../investigador/investigador_modulos/agenda_screen.dart';
+import '../investigador/investigador_modulos/historial_screen.dart';
+import '../investigador/investigador_modulos/ingresos_screen.dart';
+import '../investigador/investigador_modulos/calificaciones_screen.dart';
+import '../investigador/investigador_modulos/notificaciones_screen.dart';
+import '../investigador/investigador_modulos/configuracion_screen.dart';
+import '../investigador/investigador_modulos/soporte_screen.dart';
+import '../investigador/investigador_modulos/contacto_profesional_screen.dart';
+
+// ✅ Módulos propios de Valuador
+import 'valuador_modulos/solicitudes_avaluo_screen.dart';
+import 'valuador_modulos/avaluos_inmobiliarios_screen.dart';
+import 'valuador_modulos/dictamenes_reportes_screen.dart';
+import 'valuador_modulos/evidencia_fotografica_screen.dart';
+
 class PanelValuadorScreen extends StatefulWidget {
   const PanelValuadorScreen({super.key});
 
@@ -15,10 +33,13 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.primaryColor,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.primaryColor,
       ),
     );
+  }
+
+  void _go(Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
   Widget _sectionTitle(String text, Color gold) {
@@ -126,8 +147,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gold = theme.primaryColor;
-    final headerBg =
-        theme.appBarTheme.backgroundColor ?? theme.primaryColor;
+    final headerBg = theme.appBarTheme.backgroundColor ?? theme.primaryColor;
 
     final shadow = <BoxShadow>[
       BoxShadow(
@@ -146,14 +166,9 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/iconos/mazo-libro.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/iconos/mazo-libro.png', fit: BoxFit.cover),
           ),
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(.62)),
-          ),
+          Positioned.fill(child: Container(color: Colors.black.withOpacity(.62))),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -187,9 +202,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                               decoration: BoxDecoration(
                                 color: gold.withOpacity(.12),
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: gold.withOpacity(.25),
-                                ),
+                                border: Border.all(color: gold.withOpacity(.25)),
                               ),
                               child: Icon(Icons.assessment, color: gold),
                             ),
@@ -234,12 +247,14 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                             _estadoChip('Fuera de servicio', gold),
                           ],
                         ),
+
                         const SizedBox(height: 12),
                         _tile(
                           icon: Icons.verified_user_outlined,
                           title: 'Perfil profesional verificado',
                           subtitle: 'Datos, documentos y validación.',
                           gold: gold,
+                          onTap: () => _go(const PerfilVerificadoScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -247,6 +262,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Ubicación en tiempo real',
                           subtitle: 'Ubicación activa cuando estés disponible.',
                           gold: gold,
+                          onTap: () => _go(const UbicacionTiempoRealScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -254,6 +270,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Agenda / citas',
                           subtitle: 'Disponibilidad y visitas.',
                           gold: gold,
+                          onTap: () => _go(const AgendaScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -261,6 +278,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Historial de servicios',
                           subtitle: 'Avalúos realizados.',
                           gold: gold,
+                          onTap: () => _go(const HistorialScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -268,6 +286,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Ingresos / comisiones',
                           subtitle: 'Pagos y facturación.',
                           gold: gold,
+                          onTap: () => _go(const IngresosScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -275,6 +294,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Calificaciones de usuarios',
                           subtitle: 'Opiniones y promedio.',
                           gold: gold,
+                          onTap: () => _go(const CalificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -282,6 +302,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Notificaciones',
                           subtitle: 'Asignaciones y alertas.',
                           gold: gold,
+                          onTap: () => _go(const NotificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -289,22 +310,37 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Configuración',
                           subtitle: 'Cuenta y preferencias.',
                           gold: gold,
+                          onTap: () => _go(const ConfiguracionScreen()),
                         ),
                         const SizedBox(height: 10),
+
+                        // ✅ contacto profesional
+                        _tile(
+                          icon: Icons.contact_phone_outlined,
+                          title: 'Contacto profesional',
+                          subtitle: 'Teléfono, correo, WhatsApp.',
+                          gold: gold,
+                          onTap: () => _go(const ContactoProfesionalScreen()),
+                        ),
+                        const SizedBox(height: 10),
+
                         _tile(
                           icon: Icons.support_agent_outlined,
-                          title: 'Contacto / soporte',
-                          subtitle: 'Soporte técnico.',
+                          title: 'Soporte técnico',
+                          subtitle: 'Ayuda técnica.',
                           gold: gold,
+                          onTap: () => _go(const SoporteScreen()),
                         ),
 
                         // MÓDULOS VALUADOR
                         _sectionTitle('MÓDULOS VALUADOR', gold),
+
                         _tile(
                           icon: Icons.assignment_outlined,
                           title: 'Solicitudes de avalúo',
                           subtitle: 'Aceptar o rechazar solicitudes.',
                           gold: gold,
+                          onTap: () => _go(const SolicitudesAvaluoScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -312,6 +348,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Avalúos inmobiliarios',
                           subtitle: 'Casas, terrenos y edificios.',
                           gold: gold,
+                          onTap: () => _go(const AvaluosInmobiliariosScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -319,6 +356,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Dictámenes / reportes',
                           subtitle: 'Generar y subir documentos.',
                           gold: gold,
+                          onTap: () => _go(const DictamenesReportesScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -326,6 +364,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           title: 'Evidencia fotográfica',
                           subtitle: 'Fotos del inmueble.',
                           gold: gold,
+                          onTap: () => _go(const EvidenciaFotograficaScreen()),
                         ),
                       ],
                     ),
@@ -339,4 +378,5 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
     );
   }
 }
+
 
