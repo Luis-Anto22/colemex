@@ -1,3 +1,5 @@
+import 'package:colemex/screens/investigador/investigador.dart';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,6 +19,7 @@ import 'screens/buscar_abogado_map_screen.dart';
 import 'screens/registro_socio_screen.dart';
 import 'screens/home_public_screen.dart';
 import 'screens/registro_usuario_screen.dart';
+import 'screens/valuador/valuador.dart';
 
 // Screens admin
 import 'screens/admin/panel_admin_home.dart';
@@ -67,6 +70,8 @@ class MyApp extends StatelessWidget {
         '/panel-abogado': (context) => const PanelAbogado(),
         '/panel-admin': (context) => const PanelAdmin(),
         '/panel-admin-home': (context) => const PanelAdminHome(),
+        '/panel-valuador': (context) => const PanelValuadorScreen(),
+        '/panel-investigador': (context) => const PanelInvestigadorScreen(),
         '/crear-caso': (context) => const CrearCasoScreen(),
         '/editar-caso': (context) => const EditarCasoScreen(),
         '/subir-documento': (context) => const SubirArchivoScreen(),

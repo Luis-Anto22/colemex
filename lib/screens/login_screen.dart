@@ -17,6 +17,40 @@ class _LoginScreenState extends State<LoginScreen> {
   bool cargando = false;
   String mensajeError = '';
 
+  //tipo de usuario
+  String _normalizarPerfil(String p) {
+  final s = p.toLowerCase().trim();
+  return s
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
+}
+
+String _rutaPorPerfil(String perfilRaw) {
+  final p = _normalizarPerfil(perfilRaw);
+
+  // Admin
+  if (p == 'admin' || p == 'administrador') return '/panel-admin';
+
+  // Abogado
+  if (p == 'abogado' || p == 'abogados') return '/panel-abogado';
+
+  // Cliente
+  if (p == 'cliente' || p == 'clientes') return '/panel-cliente';
+
+  // Valuador
+  if (p == 'valuador' || p == 'valuadores') return '/panel-valuador';
+
+  //Investigador
+  if (p == 'investigador' || p == 'investigadores') return '/panel-investigador';
+
+  // (Luego agregamos: ajustadores, peritos, psicologos, etc.)
+  return '/panel'; // o '/login' si prefieres regresarlo al login
+}
+// fin tipo de usuario
+
   Future<void> iniciarSesion() async {
     final usuario = usuarioController.text.trim();
     final clave = claveController.text.trim();
@@ -76,15 +110,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
           if (!mounted) return;
 
-          final ruta = perfil == 'admin'
-              ? '/panel-admin'
-              : perfil == 'abogado'
-                  ? '/panel-abogado'
-                  : perfil == 'cliente'
-                      ? '/panel-cliente'
-                      : '/panel';
-
+          //seleccion por perfil
+          final ruta = _rutaPorPerfil(perfil);
           Navigator.pushReplacementNamed(context, ruta);
+
         } else {
           setState(() {
             mensajeError = datos['mensaje'] ?? '❌ Credenciales incorrectas';
