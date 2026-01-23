@@ -3,8 +3,8 @@ import '../../api_service.dart'; // Servicio que consume tus APIs
 import 'abogado.dart'; // Modelo dentro de la carpeta admin
 import 'detalle_abogado_screen.dart'; // Pantalla de detalle
 import 'buscador_abogados_widget.dart'; // Widget buscador
-import 'editar_abogado_screen.dart'; // Navegación directa (evita problemas de rutas)
-import 'registrar_abogado_screen.dart'; // Navegación directa (evita problemas de rutas)
+import 'editar_abogado_screen.dart'; // Navegación directa
+import 'registrar_abogado_screen.dart'; // Navegación directa
 
 class ListaAbogadosScreen extends StatefulWidget {
   const ListaAbogadosScreen({Key? key}) : super(key: key);
@@ -31,8 +31,9 @@ class _ListaAbogadosScreenState extends State<ListaAbogadosScreen> {
     try {
       final data = await ApiService.obtenerAbogados();
       setState(() {
-        _abogados = data;
-        _filteredAbogados = data;
+        // ✅ Aseguramos que la lista sea de tipo Abogado
+        _abogados = data.map((e) => Abogado.fromJson(e)).toList();
+        _filteredAbogados = _abogados;
         _isLoading = false;
       });
     } catch (e) {
@@ -167,8 +168,13 @@ class _ListaAbogadosScreenState extends State<ListaAbogadosScreen> {
                                 ),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundImage: NetworkImage(abogado.foto),
+                                    backgroundImage: abogado.foto.isNotEmpty
+                                        ? NetworkImage(abogado.foto)
+                                        : null,
                                     backgroundColor: Colors.grey[200],
+                                    child: abogado.foto.isEmpty
+                                        ? const Icon(Icons.person)
+                                        : null,
                                   ),
                                   title: Text(abogado.nombre),
                                   subtitle: Text(
@@ -178,12 +184,10 @@ class _ListaAbogadosScreenState extends State<ListaAbogadosScreen> {
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // Botón editar (navegación directa)
                                       IconButton(
                                         icon: const Icon(Icons.edit, color: Colors.orange),
                                         onPressed: () => _editarAbogado(abogado),
                                       ),
-                                      // Botón eliminar
                                       IconButton(
                                         icon: const Icon(Icons.delete, color: Colors.red),
                                         onPressed: () => _eliminarAbogado(abogado),
@@ -198,7 +202,6 @@ class _ListaAbogadosScreenState extends State<ListaAbogadosScreen> {
           ),
         ],
       ),
-      // Botón flotante para registrar nuevo abogado (navegación directa)
       floatingActionButton: FloatingActionButton(
         onPressed: _registrarAbogado,
         child: const Icon(Icons.person_add),

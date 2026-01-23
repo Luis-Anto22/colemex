@@ -24,14 +24,18 @@ import 'screens/admin/lista_abogados_screen.dart';
 import 'screens/admin/registrar_abogado_screen.dart';
 import 'screens/admin/editar_abogado_screen.dart';
 import 'screens/admin/estadisticas_general_screen.dart';
+import 'screens/agente_crediticio/agente_panel.dart';
 
 // Modelo
 import 'screens/admin/abogado.dart';
 
-void main() async {
+// ✅ Portales profesionales
+import 'screens/contador/contador_panel.dart';
+import 'screens/auditor/auditor_panel.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Llamada a la API para usar la importación
   try {
     final stats = await ApiService.obtenerEstadisticas();
     debugPrint("📊 Estadísticas iniciales: $stats");
@@ -39,7 +43,6 @@ void main() async {
     debugPrint("❌ Error al obtener estadísticas: $e");
   }
 
-  // ✅ Verificamos si ya se mostró la introducción
   final prefs = await SharedPreferences.getInstance();
   final introVisto = prefs.getBool('introVisto') ?? false;
 
@@ -55,11 +58,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'COLEMEX',
-      theme: ThemeData(primarySwatch: Colors.indigo),
-
-      // ✅ Si no ha visto la intro → HomePublicScreen, si ya la vio → LoginScreen
-      home: introVisto ? const LoginScreen() : const HomePublicScreen(),
-
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.indigo,
+        ).copyWith(
+          secondary: const Color(0xFFD4AF37),
+        ),
+      ),
+      initialRoute: '/panel-agente',
       routes: {
         '/home': (context) => const HomePublicScreen(),
         '/login': (context) => const LoginScreen(),
@@ -76,24 +82,45 @@ class MyApp extends StatelessWidget {
         '/estadisticas': (context) => const EstadisticasGeneralScreen(),
         '/lista-abogados': (context) => const ListaAbogadosScreen(),
         '/registrar-abogado': (context) => const RegistrarAbogadoScreen(),
+        '/panel-auditor': (context) => const AuditorPanel(),
+
+        // ✅ Panel contador con argumentos
+        '/panel-contador': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int && args > 0) {
+            return ContadorPanel(idContador: args);
+          }
+          // Si no hay ID, mostramos el panel vacío con mensajes amigables
+          return const ContadorPanel();
+        },
+
+        // ✅ Rutas con argumentos
         '/editar-abogado': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is Abogado) return EditarAbogadoScreen(abogado: args);
+          if (args is Abogado) {
+            return EditarAbogadoScreen(abogado: args);
+          }
           return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para editar abogado'),
-            ),
+            body: Center(child: Text('❌ Argumentos inválidos para editar abogado')),
           );
         },
+
+        // ✅ Panel agente crediticio
+        '/panel-agente': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int && args > 0) {
+            return AgentePanel(idAgente: args);
+          }
+          return const AgentePanel();
+        },
+
         '/ubicacion-despacho': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is Map<String, dynamic> && args['id'] is int) {
             return UbicacionDespachoScreen(idAbogado: args['id'] as int);
           }
           return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para ubicación del despacho'),
-            ),
+            body: Center(child: Text('❌ Argumentos inválidos para ubicación del despacho')),
           );
         },
       },

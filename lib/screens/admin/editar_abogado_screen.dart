@@ -21,6 +21,7 @@ class _EditarAbogadoScreenState extends State<EditarAbogadoScreen> {
   @override
   void initState() {
     super.initState();
+    // ✅ Usamos el campo que sí existe en tu modelo (nombre)
     _usuarioController = TextEditingController(text: widget.abogado.nombre);
   }
 
@@ -40,8 +41,12 @@ class _EditarAbogadoScreenState extends State<EditarAbogadoScreen> {
       final mensaje = await ApiService.actualizarAbogado(
         widget.abogado.id,
         _usuarioController.text.trim(),
-        _contrasenaController.text.trim().isEmpty ? null : _contrasenaController.text.trim(),
+        contrasena: _contrasenaController.text.trim().isEmpty
+            ? null
+            : _contrasenaController.text.trim(),
       );
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensaje)),
@@ -49,11 +54,14 @@ class _EditarAbogadoScreenState extends State<EditarAbogadoScreen> {
 
       Navigator.pop(context, true); // Regresa a la lista y refresca
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("❌ Error: $e")),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -64,7 +72,7 @@ class _EditarAbogadoScreenState extends State<EditarAbogadoScreen> {
         title: const Text("Editar Abogado"),
         backgroundColor: Colors.indigo,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,

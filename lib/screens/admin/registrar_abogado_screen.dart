@@ -26,19 +26,25 @@ class _RegistrarAbogadoScreenState extends State<RegistrarAbogadoScreen> {
         _contrasenaController.text.trim(),
       );
 
+      if (!mounted) return; // ✅ evita errores si el widget ya fue desmontado
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensaje)),
       );
 
-      if (mensaje.contains("✅")) {
+      // ✅ mejor usar startsWith o contains con validación clara
+      if (mensaje.contains("✅") || mensaje.toLowerCase().contains("registrado")) {
         Navigator.pop(context, true); // Regresa a la lista y refresca
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("❌ Error: $e")),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -56,7 +62,7 @@ class _RegistrarAbogadoScreenState extends State<RegistrarAbogadoScreen> {
         title: const Text("Registrar Abogado"),
         backgroundColor: Colors.indigo,
       ),
-      body: Padding(
+      body: SingleChildScrollView( // ✅ evita overflow en pantallas pequeñas
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
