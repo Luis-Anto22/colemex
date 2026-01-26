@@ -21,9 +21,6 @@ import 'screens/registro_usuario_screen.dart';
 
 // Screens admin
 import 'screens/admin/panel_admin_home.dart';
-import 'screens/admin/lista_abogados_screen.dart';
-import 'screens/admin/registrar_abogado_screen.dart';
-import 'screens/admin/editar_abogado_screen.dart';
 import 'screens/admin/lista_profesionales_screen.dart';
 import 'screens/admin/registrar_profesional_screen.dart';
 import 'screens/admin/editar_profesional_screen.dart';
@@ -31,7 +28,6 @@ import 'screens/admin/estadisticas_general_screen.dart';
 import 'screens/agente_crediticio/agente_panel.dart';
 
 // Modelos
-import 'screens/admin/abogado.dart';
 import 'screens/admin/profesional.dart';
 
 // 👩‍⚕️ Panel psicólogos
@@ -97,12 +93,12 @@ class MyApp extends StatelessWidget {
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
         '/estadisticas': (context) => const EstadisticasGeneralScreen(),
 
-        // ✅ Abogados
-        '/lista-abogados': (context) => const ListaAbogadosScreen(),
-        '/registrar-abogado': (context) => const RegistrarAbogadoScreen(),
+        // ✅ Abogados (usando modelo Profesional)
+        '/lista-abogados': (context) => const ListaProfesionalesScreen(),
+        '/registrar-abogado': (context) => const RegistrarProfesionalScreen(),
         '/editar-abogado': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is Abogado) return EditarAbogadoScreen(abogado: args);
+          if (args is Profesional) return EditarProfesionalScreen(profesional: args);
           return const Scaffold(
             body: Center(child: Text('❌ Argumentos inválidos para editar abogado')),
           );
