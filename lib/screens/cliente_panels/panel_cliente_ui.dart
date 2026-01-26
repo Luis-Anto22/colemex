@@ -9,10 +9,10 @@ class PanelClienteUI extends StatefulWidget {
   final List<Map<String, dynamic>> listaCasos;
 
   const PanelClienteUI({
-    Key? key,
+    super.key,
     required this.nombreUsuario,
     required this.listaCasos,
-  }) : super(key: key);
+  });
 
   @override
   State<PanelClienteUI> createState() => _PanelClienteUIState();

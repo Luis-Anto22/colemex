@@ -3,7 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../api_service.dart';
 
 class EstadisticasGeneralScreen extends StatefulWidget {
-  const EstadisticasGeneralScreen({Key? key}) : super(key: key);
+  const EstadisticasGeneralScreen({super.key});
 
   @override
   State<EstadisticasGeneralScreen> createState() => _EstadisticasGeneralScreenState();

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class PanelInicio extends StatelessWidget {
   final String nombreUsuario;
 
-  const PanelInicio({Key? key, required this.nombreUsuario}) : super(key: key);
+  const PanelInicio({super.key, required this.nombreUsuario});
 
   @override
   Widget build(BuildContext context) {

@@ -300,8 +300,8 @@ class _PanelAbogadoState extends State<PanelAbogado> {
         onPressed: () {
           Navigator.pushNamed(context, '/crear-caso');
         },
-        child: const Icon(Icons.add),
         tooltip: 'Crear nuevo caso',
+        child: const Icon(Icons.add),
       ),
     );
   }

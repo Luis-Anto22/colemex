@@ -62,7 +62,7 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
       mensaje = '';
     });
 
-    // ✅ Nuevo endpoint para clientes
+    // ✅ Endpoint para clientes
     final url = Uri.parse('https://corporativolegaldigital.com/api/registro-cliente.php');
 
     try {
@@ -74,8 +74,8 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
         'contrasena': contrasena,
       });
 
-      print("Código: ${respuesta.statusCode}");
-      print("Cuerpo: ${respuesta.body}");
+      debugPrint("Código: ${respuesta.statusCode}");
+      debugPrint("Cuerpo: ${respuesta.body}");
 
       setState(() {
         cargando = false;
@@ -120,10 +120,11 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Registro de cliente"),
-        backgroundColor: const Color(0xFFD4AF37),
+        backgroundColor: const Color(0xFFD4AF37), // Dorado institucional
       ),
       body: Stack(
         children: [
+          // Fondo con imagen
           Positioned.fill(
             child: Image.asset(
               'assets/iconos/mazo-libro.png',
@@ -132,6 +133,7 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
               colorBlendMode: BlendMode.darken,
             ),
           ),
+          // Scroll con altura completa
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(24),

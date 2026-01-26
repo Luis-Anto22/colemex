@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'screens/admin/profesional.dart';
 
 class ApiService {
   static const String baseUrl = "https://corporativolegaldigital.com/api";
@@ -12,16 +13,21 @@ class ApiService {
   static const String actualizarAbogadoEndpoint = "$baseUrl/actualizar-abogado.php";
   static const String estadisticasEndpoint = "$baseUrl/estadisticas.php";
 
-  /// ✅ Listar abogados
-  static Future<List<dynamic>> obtenerAbogados() async {
+  /// ✅ Listar abogados tipados con modelo
+  static Future<List<Profesional>> obtenerAbogados() async {
     try {
       final response = await http.get(Uri.parse(listarAbogadosEndpoint));
       if (kDebugMode) debugPrint("Respuesta listar-abogados: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data is Map<String, dynamic> && data["success"] == true) {
-          return data["abogados"] as List<dynamic>;
+        if (data is Map && data["success"] == true) {
+          final abogadosJson = data["abogados"];
+          if (abogadosJson is List) {
+            return abogadosJson.map((e) => Profesional.fromJson(e)).toList();
+          } else {
+            throw Exception("Formato inesperado en 'abogados': ${response.body}");
+          }
         } else {
           throw Exception(data["mensaje"] ?? "Error en listar-abogados");
         }
