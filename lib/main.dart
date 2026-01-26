@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ✅ Servicio de API
-import 'api_service.dart';
+// ✅ Servicios de API
+import 'api_service.dart'; // si lo sigues usando para login/estadísticas generales
+import 'screens/admin/api_service_profesionales.dart'; // nuevo servicio para CRUD de profesionales
 
 // Screens principales
 import 'screens/login_screen.dart';
@@ -20,14 +21,14 @@ import 'screens/registro_usuario_screen.dart';
 
 // Screens admin
 import 'screens/admin/panel_admin_home.dart';
-import 'screens/admin/lista_abogados_screen.dart';
-import 'screens/admin/registrar_abogado_screen.dart';
-import 'screens/admin/editar_abogado_screen.dart';
+import 'screens/admin/lista_profesionales_screen.dart';
+import 'screens/admin/registrar_profesional_screen.dart';
+import 'screens/admin/editar_profesional_screen.dart';
 import 'screens/admin/estadisticas_general_screen.dart';
 import 'screens/agente_crediticio/agente_panel.dart';
 
 // Modelo
-import 'screens/admin/abogado.dart';
+import 'screens/admin/profesional.dart';
 
 // ✅ Portales profesionales
 import 'screens/contador/contador_panel.dart';
@@ -37,10 +38,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    // Puedes usar ApiService para estadísticas generales
     final stats = await ApiService.obtenerEstadisticas();
     debugPrint("📊 Estadísticas iniciales: $stats");
+
+    // O si quieres probar el servicio de profesionales
+    final profesionales = await ApiServiceProfesionales.obtenerProfesionales();
+    debugPrint("👥 Profesionales iniciales: ${profesionales.length}");
   } catch (e) {
-    debugPrint("❌ Error al obtener estadísticas: $e");
+    debugPrint("❌ Error al obtener datos iniciales: $e");
   }
 
   final prefs = await SharedPreferences.getInstance();
@@ -65,7 +71,8 @@ class MyApp extends StatelessWidget {
           secondary: const Color(0xFFD4AF37),
         ),
       ),
-      initialRoute: '/panel-agente',
+      // ✅ Si es la primera vez abre HomePublicScreen, después siempre Login
+      initialRoute: introVisto ? '/login' : '/home',
       routes: {
         '/home': (context) => const HomePublicScreen(),
         '/login': (context) => const LoginScreen(),
@@ -80,8 +87,8 @@ class MyApp extends StatelessWidget {
         '/registro-socio': (context) => const RegistroSocioScreen(),
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
         '/estadisticas': (context) => const EstadisticasGeneralScreen(),
-        '/lista-abogados': (context) => const ListaAbogadosScreen(),
-        '/registrar-abogado': (context) => const RegistrarAbogadoScreen(),
+        '/lista-profesionales': (context) => const ListaProfesionalesScreen(),
+        '/registrar-profesional': (context) => const RegistrarProfesionalScreen(),
         '/panel-auditor': (context) => const AuditorPanel(),
 
         // ✅ Panel contador con argumentos
@@ -90,18 +97,17 @@ class MyApp extends StatelessWidget {
           if (args is int && args > 0) {
             return ContadorPanel(idContador: args);
           }
-          // Si no hay ID, mostramos el panel vacío con mensajes amigables
           return const ContadorPanel();
         },
 
-        // ✅ Rutas con argumentos
-        '/editar-abogado': (context) {
+        // ✅ Rutas con argumentos para edición de profesionales
+        '/editar-profesional': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is Abogado) {
-            return EditarAbogadoScreen(abogado: args);
+          if (args is Profesional) {
+            return EditarProfesionalScreen(profesional: args);
           }
           return const Scaffold(
-            body: Center(child: Text('❌ Argumentos inválidos para editar abogado')),
+            body: Center(child: Text('❌ Argumentos inválidos para editar profesional')),
           );
         },
 

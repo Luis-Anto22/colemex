@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'lista_abogados_screen.dart';
+import 'lista_profesionales_screen.dart';
 import 'estadisticas_general_screen.dart';
 
 class PanelAdminHome extends StatelessWidget {
@@ -51,17 +51,17 @@ class PanelAdminHome extends StatelessWidget {
                             Expanded(
                               child: ElevatedButton.icon(
                                 icon: const Icon(Icons.people),
-                                label: const Text('Lista de abogados'),
+                                label: const Text('Lista de profesionales'),
                                 onPressed: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          const ListaAbogadosScreen(),
+                                          const ListaProfesionalesScreen(),
                                     ),
                                   );
                                   // Alternativa con rutas nombradas:
-                                  // Navigator.pushNamed(context, '/lista-abogados');
+                                  // Navigator.pushNamed(context, '/lista-profesionales');
                                 },
                               ),
                             ),
@@ -99,7 +99,7 @@ class PanelAdminHome extends StatelessWidget {
                   child: const Padding(
                     padding: EdgeInsets.all(12.0),
                     child: Text(
-                      'Próximamente: Notificaciones, gestión avanzada de tipos de abogados y filtros por fecha.',
+                      'Próximamente: Notificaciones, gestión avanzada de tipos de profesionales y filtros por fecha.',
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
