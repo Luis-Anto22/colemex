@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'admin/panel_admin_home.dart'; // Vista principal del admin
 
 class PanelAdmin extends StatelessWidget {
-  const PanelAdmin({Key? key}) : super(key: key);
+  const PanelAdmin({super.key});
 
   @override
   Widget build(BuildContext context) {

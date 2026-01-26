@@ -13,9 +13,34 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController claveController = TextEditingController();
-  String perfilSeleccionado = 'profesional'; // por defecto profesional
+  String perfilSeleccionado = 'abogado'; // por defecto abogado
   bool cargando = false;
   String mensajeError = '';
+
+  // 🔹 Normalizar perfil
+  String _normalizarPerfil(String p) {
+    final s = p.toLowerCase().trim();
+    return s
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u');
+  }
+
+  // 🔹 Ruta según perfil
+  String _rutaPorPerfil(String perfilRaw) {
+    final p = _normalizarPerfil(perfilRaw);
+
+    if (p == 'admin' || p == 'administrador') return '/panel-admin';
+    if (p == 'abogado' || p == 'abogados') return '/panel-abogado';
+    if (p == 'cliente' || p == 'clientes') return '/panel-cliente';
+    if (p == 'valuador' || p == 'valuadores') return '/panel-valuador';
+    if (p == 'investigador' || p == 'investigadores') return '/panel-investigador';
+
+    // (Luego agregamos: ajustadores, peritos, psicólogos, etc.)
+    return '/panel';
+  }
 
   Future<void> iniciarSesion() async {
     final usuario = usuarioController.text.trim();
@@ -48,13 +73,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 'contrasena': clave,
               }
             : {
-                'correo': usuario, // ahora usamos correo también para profesionales
+                'usuario': usuario,
                 'contrasena': clave,
               },
       );
 
       final cuerpo = respuesta.body.trim();
-      print('Respuesta cruda: $cuerpo');
+      debugPrint('Respuesta cruda: $cuerpo');
 
       setState(() {
         cargando = false;
@@ -64,10 +89,10 @@ class _LoginScreenState extends State<LoginScreen> {
         final datos = json.decode(cuerpo);
 
         if (datos['success'] == true && datos['usuario'] is Map) {
-          final usuario = datos['usuario'];
-          final perfil = usuario['perfil'] ?? perfilSeleccionado;
-          final nombre = usuario['nombre'] ?? 'Usuario';
-          final id = int.tryParse(usuario['id'].toString()) ?? 0;
+          final usuarioData = datos['usuario'];
+          final perfil = usuarioData['perfil'] ?? perfilSeleccionado;
+          final nombre = usuarioData['nombre'] ?? 'Usuario';
+          final id = int.tryParse(usuarioData['id'].toString()) ?? 0;
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setInt('id', id);
@@ -76,14 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           if (!mounted) return;
 
-          final ruta = perfil == 'admin'
-              ? '/panel-admin'
-              : perfil == 'profesional'
-                  ? '/panel-abogado'
-                  : perfil == 'cliente'
-                      ? '/panel-cliente'
-                      : '/panel';
-
+          final ruta = _rutaPorPerfil(perfil);
           Navigator.pushReplacementNamed(context, ruta);
         } else {
           setState(() {
@@ -130,12 +148,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ToggleButtons(
                     isSelected: [
                       perfilSeleccionado == 'cliente',
-                      perfilSeleccionado == 'profesional',
+                      perfilSeleccionado == 'abogado',
                     ],
                     onPressed: (index) {
                       setState(() {
-                        perfilSeleccionado =
-                            index == 0 ? 'cliente' : 'profesional';
+                        perfilSeleccionado = index == 0 ? 'cliente' : 'abogado';
                       });
                     },
                     borderRadius: BorderRadius.circular(8),
@@ -144,11 +161,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: const [
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: Text('SOY CLIENTE'),
+                        child: Text('CLIENTE'),
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: Text('SOY PROFESIONAL'),
+                        child: Text('ABOGADO'),
                       ),
                     ],
                   ),
@@ -160,9 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       fillColor: Colors.white,
                       labelText: perfilSeleccionado == 'cliente'
                           ? 'Correo institucional'
-                          : 'Correo profesional',
+                          : 'Usuario',
                       border: const OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
+                      focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFFD4AF37), width: 2),
                       ),
                     ),
@@ -208,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushNamed(context, '/registro-usuario');
                     },
                     child: const Text(
-                      'Registrar cliente',
+                      'Registrar usuario',
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFFD4AF37),
@@ -221,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushNamed(context, '/registro-socio');
                     },
                     child: const Text(
-                      'Registrar profesional',
+                      'Registrar abogado',
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFFD4AF37),

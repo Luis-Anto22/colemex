@@ -194,7 +194,7 @@ class _BuscarAbogadoMapScreenState extends State<BuscarAbogadoMapScreen> {
                                     child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
                                   ),
                                 );
-                              }).toList(),
+                              }),
                             ],
                           ),
                         ],

@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'cliente_panels/panel_cliente_ui.dart';
 
 class PanelCliente extends StatefulWidget {
-  const PanelCliente({Key? key}) : super(key: key);
+  const PanelCliente({super.key});
 
   @override
   State<PanelCliente> createState() => _PanelClienteState();

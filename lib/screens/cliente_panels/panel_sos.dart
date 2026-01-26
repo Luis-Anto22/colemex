@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/botones_emergencia.dart';
 
 class PanelSOS extends StatelessWidget {
-  const PanelSOS({Key? key}) : super(key: key);
+  const PanelSOS({super.key});
 
   @override
   Widget build(BuildContext context) {
