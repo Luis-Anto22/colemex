@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 
 // ✅ Importa las pantallas nuevas
-import 'pantalla_agenda_inmuebles.dart';
-import 'pantalla_propiedades.dart';
-import 'pantalla_historial_inmuebles.dart';
-import 'pantalla_ingresos_inmuebles.dart';
-import 'pantalla_calificaciones_inmuebles.dart';
-import 'pantalla_notificaciones_inmuebles.dart';
-import 'pantalla_configuracion_inmuebles.dart';
-import 'pantalla_contacto_soporte_inmuebles.dart';
+import 'pantalla_historial_servicios.dart';
+import 'pantalla_agenda.dart';
+import 'pantalla_ingresos.dart';
+import 'pantalla_calificaciones.dart';
+import 'pantalla_notificaciones.dart';
+import 'pantalla_configuracion.dart';
+import 'pantalla_contacto_soporte.dart';
 
-class PanelAgentesInmobiliarios extends StatelessWidget {
-  final int agenteId;
+class PanelPsicologos extends StatelessWidget {
+  final int psicologoId;
 
-  const PanelAgentesInmobiliarios({super.key, required this.agenteId});
+  const PanelPsicologos({super.key, required this.psicologoId});
 
   @override
   Widget build(BuildContext context) {
-    final bool idValido = agenteId > 0;
+    final bool idValido = psicologoId > 0;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Panel de Agentes Inmobiliarios"),
-        backgroundColor: const Color(0xFFD4AF37), // Dorado institucional
+        title: const Text("Panel de Psicólogos"),
+        backgroundColor: const Color(0xFF6A1B9A), // 💜 color institucional psicólogos
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -34,7 +33,7 @@ class PanelAgentesInmobiliarios extends StatelessWidget {
               backgroundColor: Colors.green,
               child: Icon(Icons.person, color: Colors.white),
             ),
-            title: const Text("Nombre del Agente"),
+            title: const Text("Nombre del Psicólogo"),
             subtitle: const Text("Disponible • Perfil verificado"),
             trailing: const Icon(Icons.verified, color: Colors.blue),
           ),
@@ -48,44 +47,30 @@ class PanelAgentesInmobiliarios extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const PantallaAgendaInmuebles(),
+                  builder: (context) => const PantallaAgenda(),
                 ),
               );
             },
           ),
 
-          // 🏠 Propiedades listadas
-          ListTile(
-            leading: const Icon(Icons.home, color: Colors.teal),
-            title: const Text("Propiedades Listadas"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PantallaPropiedades(agenteId: agenteId), // ✅ corregido
-                ),
-              );
-            },
-          ),
-
-          // 📁 Historial de ventas/rentas
+          // 📁 Historial de servicios
           idValido
               ? ListTile(
                   leading: const Icon(Icons.history, color: Colors.orange),
-                  title: const Text("Historial de Operaciones"),
+                  title: const Text("Historial de Servicios"),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            PantallaHistorialInmuebles(agenteId: agenteId),
+                            PantallaHistorialServicios(psicologoId: psicologoId),
                       ),
                     );
                   },
                 )
               : const ListTile(
                   leading: Icon(Icons.warning, color: Colors.orange),
-                  title: Text("ID de agente no válido"),
+                  title: Text("ID de psicólogo no válido"),
                 ),
 
           // 💰 Ingresos
@@ -97,7 +82,7 @@ class PanelAgentesInmobiliarios extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      PantallaIngresosInmuebles(profesionalId: agenteId), // ✅ conectado
+                      PantallaIngresosPsicologos(profesionalId: psicologoId), // ✅ conectado
                 ),
               );
             },
@@ -112,25 +97,26 @@ class PanelAgentesInmobiliarios extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      PantallaCalificacionesInmuebles(agenteId: agenteId), // ✅ corregido
+                      PantallaCalificacionesPsicologos(psicologoId: psicologoId), // ✅ corregido
                 ),
               );
             },
           ),
 
           // 🔔 Notificaciones
-ListTile(
-  leading: const Icon(Icons.notifications, color: Colors.red),
-  title: const Text("Notificaciones"),
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PantallaNotificacionesInmuebles(agenteId: agenteId), // ✅ corregido
-      ),
-    );
-  },
-),
+          ListTile(
+            leading: const Icon(Icons.notifications, color: Colors.red),
+            title: const Text("Notificaciones"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      PantallaNotificacionesPsicologos(psicologoId: psicologoId), // ✅ corregido
+                ),
+              );
+            },
+          ),
 
           // ⚙️ Configuración
           ListTile(
@@ -140,7 +126,7 @@ ListTile(
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const PantallaConfiguracionInmuebles(),
+                  builder: (context) => const PantallaConfiguracion(),
                 ),
               );
             },
@@ -154,8 +140,7 @@ ListTile(
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const PantallaContactoSoporteInmuebles(),
+                  builder: (context) => const PantallaContactoSoporte(),
                 ),
               );
             },

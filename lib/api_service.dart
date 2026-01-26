@@ -114,7 +114,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is Map && data["success"] == true) {
-          return data as Map<String, dynamic>; // ✅ Cast explícito corregido
+          return Map<String, dynamic>.from(data); // ✅ Cast seguro
         } else {
           throw Exception("Error en estadísticas: ${data["mensaje"] ?? "Respuesta inválida"}");
         }
@@ -123,6 +123,39 @@ class ApiService {
       }
     } catch (e) {
       throw Exception("Error al obtener estadísticas: $e");
+    }
+  }
+
+  /// ✅ Historial de servicios de psicólogos
+  static Future<List<dynamic>> obtenerHistorialServiciosPsicologo(int id) async {
+    if (id <= 0) {
+      throw Exception("ID inválido: el psicólogoId debe ser mayor a 0");
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/historial_servicios_psicologo.php?id=$id")
+      );
+      debugPrint("Respuesta historial-servicios: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        // 🔧 Manejo de respuestas con error desde PHP
+        if (data is Map && data.containsKey("success") && data["success"] == false) {
+          throw Exception("Error en servidor: ${data["mensaje"]}");
+        }
+
+        if (data is List) {
+          return data;
+        } else {
+          throw Exception("Formato inesperado en historial: ${response.body}");
+        }
+      } else {
+        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("Error al obtener historial de servicios: $e");
     }
   }
 }

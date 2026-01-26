@@ -13,6 +13,7 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
   final nombreController = TextEditingController();
   final correoController = TextEditingController();
   final telefonoController = TextEditingController();
+  final ciudadController = TextEditingController();
   final contrasenaController = TextEditingController();
   final confirmarController = TextEditingController();
 
@@ -23,6 +24,7 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
     final nombre = nombreController.text.trim();
     final correo = correoController.text.trim();
     final telefono = telefonoController.text.trim();
+    final ciudad = ciudadController.text.trim();
     final contrasena = contrasenaController.text.trim();
     final confirmar = confirmarController.text.trim();
 
@@ -30,6 +32,7 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
     if (nombre.isEmpty ||
         correo.isEmpty ||
         telefono.isEmpty ||
+        ciudad.isEmpty ||
         contrasena.isEmpty ||
         confirmar.isEmpty) {
       setState(() {
@@ -46,23 +49,31 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
       return;
     }
 
+    // Validación de contraseñas
+    if (contrasena != confirmar) {
+      setState(() {
+        mensaje = '❌ Las contraseñas no coinciden';
+      });
+      return;
+    }
+
     setState(() {
       cargando = true;
       mensaje = '';
     });
 
-    final url = Uri.parse('https://corporativolegaldigital.com/api/registro.php');
+    // ✅ Nuevo endpoint para clientes
+    final url = Uri.parse('https://corporativolegaldigital.com/api/registro-cliente.php');
 
     try {
       final respuesta = await http.post(url, body: {
         'nombre': nombre,
         'correo': correo,
         'telefono': telefono,
+        'ciudad': ciudad,
         'contrasena': contrasena,
-        'confirmar': confirmar,
       });
 
-      // Depuración: imprime código y cuerpo
       print("Código: ${respuesta.statusCode}");
       print("Cuerpo: ${respuesta.body}");
 
@@ -71,7 +82,6 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
       });
 
       if (respuesta.statusCode == 200) {
-        // Verificar que el servidor devolvió JSON
         if (respuesta.headers['content-type']?.contains('application/json') == true) {
           final datos = json.decode(respuesta.body);
 
@@ -109,12 +119,11 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Registro de usuario"),
-        backgroundColor: const Color(0xFFD4AF37), // Dorado institucional
+        title: const Text("Registro de cliente"),
+        backgroundColor: const Color(0xFFD4AF37),
       ),
       body: Stack(
         children: [
-          // Fondo con imagen
           Positioned.fill(
             child: Image.asset(
               'assets/iconos/mazo-libro.png',
@@ -123,7 +132,6 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
               colorBlendMode: BlendMode.darken,
             ),
           ),
-          // Scroll con altura completa
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -137,7 +145,7 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      "Registro de usuario",
+                      "Registro de cliente",
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -159,6 +167,10 @@ class _RegistroUsuarioScreenState extends State<RegistroUsuarioScreen> {
                       controller: telefonoController,
                       decoration: const InputDecoration(labelText: "Teléfono (10 dígitos)"),
                       keyboardType: TextInputType.phone,
+                    ),
+                    TextField(
+                      controller: ciudadController,
+                      decoration: const InputDecoration(labelText: "Ciudad"),
                     ),
                     TextField(
                       controller: contrasenaController,
