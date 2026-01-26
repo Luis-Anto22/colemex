@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class BuscadorAbogadosWidget extends StatelessWidget {
+class BuscadorProfesionalesWidget extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const BuscadorAbogadosWidget({
+  const BuscadorProfesionalesWidget({
     Key? key,
     required this.controller,
     required this.onChanged,
@@ -18,7 +18,7 @@ class BuscadorAbogadosWidget extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(
-          labelText: "Buscar abogado...",
+          labelText: "Buscar profesional...",
           prefixIcon: const Icon(Icons.search),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),

@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController claveController = TextEditingController();
-  String perfilSeleccionado = 'abogado';
+  String perfilSeleccionado = 'profesional'; // por defecto profesional
   bool cargando = false;
   String mensajeError = '';
 
@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 'contrasena': clave,
               }
             : {
-                'usuario': usuario,
+                'correo': usuario, // ahora usamos correo también para profesionales
                 'contrasena': clave,
               },
       );
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           final ruta = perfil == 'admin'
               ? '/panel-admin'
-              : perfil == 'abogado'
+              : perfil == 'profesional'
                   ? '/panel-abogado'
                   : perfil == 'cliente'
                       ? '/panel-cliente'
@@ -130,11 +130,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ToggleButtons(
                     isSelected: [
                       perfilSeleccionado == 'cliente',
-                      perfilSeleccionado == 'abogado',
+                      perfilSeleccionado == 'profesional',
                     ],
                     onPressed: (index) {
                       setState(() {
-                        perfilSeleccionado = index == 0 ? 'cliente' : 'abogado';
+                        perfilSeleccionado =
+                            index == 0 ? 'cliente' : 'profesional';
                       });
                     },
                     borderRadius: BorderRadius.circular(8),
@@ -143,11 +144,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: const [
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: Text('CLIENTE'),
+                        child: Text('SOY CLIENTE'),
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
-                        child: Text('ABOGADO'),
+                        child: Text('SOY PROFESIONAL'),
                       ),
                     ],
                   ),
@@ -155,10 +156,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: usuarioController,
                     decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
                       labelText: perfilSeleccionado == 'cliente'
                           ? 'Correo institucional'
-                          : 'Usuario',
+                          : 'Correo profesional',
                       border: const OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFD4AF37), width: 2),
+                      ),
                     ),
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -166,8 +172,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextField(
                     controller: claveController,
                     decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
                       labelText: 'Contraseña',
                       border: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFFD4AF37), width: 2),
+                      ),
                     ),
                     obscureText: true,
                   ),
@@ -197,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushNamed(context, '/registro-usuario');
                     },
                     child: const Text(
-                      'Registrar usuario',
+                      'Registrar cliente',
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFFD4AF37),
@@ -210,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.pushNamed(context, '/registro-socio');
                     },
                     child: const Text(
-                      'Registrar abogado',
+                      'Registrar profesional',
                       style: TextStyle(
                         fontSize: 16,
                         color: Color(0xFFD4AF37),

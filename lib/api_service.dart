@@ -1,28 +1,29 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
-import 'screens/admin/abogado.dart';
 
 class ApiService {
   static const String baseUrl = "https://corporativolegaldigital.com/api";
 
+  // 🔹 Endpoints de admin
+  static const String listarAbogadosEndpoint = "$baseUrl/listar-abogados.php";
+  static const String registrarAbogadoEndpoint = "$baseUrl/registrar-abogado.php";
+  static const String eliminarAbogadoEndpoint = "$baseUrl/eliminar-abogado.php";
+  static const String actualizarAbogadoEndpoint = "$baseUrl/actualizar-abogado.php";
+  static const String estadisticasEndpoint = "$baseUrl/estadisticas.php";
+
   /// ✅ Listar abogados
-  static Future<List<Abogado>> obtenerAbogados() async {
+  static Future<List<dynamic>> obtenerAbogados() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/listar-abogados.php"));
-      debugPrint("Respuesta listar-abogados: ${response.body}");
+      final response = await http.get(Uri.parse(listarAbogadosEndpoint));
+      if (kDebugMode) debugPrint("Respuesta listar-abogados: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data is Map && data["success"] == true) {
-          final abogadosJson = data["abogados"];
-          if (abogadosJson is List) {
-            return abogadosJson.map((e) => Abogado.fromJson(e)).toList();
-          } else {
-            throw Exception("Formato inesperado en 'abogados': ${response.body}");
-          }
+        if (data is Map<String, dynamic> && data["success"] == true) {
+          return data["abogados"] as List<dynamic>;
         } else {
-          throw Exception("Error en listar-abogados: ${data["mensaje"] ?? "Respuesta inválida"}");
+          throw Exception(data["mensaje"] ?? "Error en listar-abogados");
         }
       } else {
         throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
@@ -36,13 +37,13 @@ class ApiService {
   static Future<String> registrarAbogado(String usuario, String contrasena) async {
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/registrar-abogado.php"),
+        Uri.parse(registrarAbogadoEndpoint),
         body: {
           "usuario": usuario,
           "contrasena": contrasena,
         },
       );
-      debugPrint("Respuesta registrar-abogado: ${response.body}");
+      if (kDebugMode) debugPrint("Respuesta registrar-abogado: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -59,12 +60,10 @@ class ApiService {
   static Future<String> eliminarAbogado(int id) async {
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/eliminar-abogado.php"),
-        body: {
-          "id": id.toString(),
-        },
+        Uri.parse(eliminarAbogadoEndpoint),
+        body: {"id": id.toString()},
       );
-      debugPrint("Respuesta eliminar-abogado: ${response.body}");
+      if (kDebugMode) debugPrint("Respuesta eliminar-abogado: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -77,8 +76,8 @@ class ApiService {
     }
   }
 
-  /// ✅ Actualizar abogado
-  static Future<String> actualizarAbogado(int id, String usuario, String? contrasena) async {
+  /// ✅ Actualizar abogado (con contraseña opcional)
+  static Future<String> actualizarAbogado(int id, String usuario, {String? contrasena}) async {
     try {
       final body = {
         "id": id.toString(),
@@ -89,10 +88,10 @@ class ApiService {
       }
 
       final response = await http.post(
-        Uri.parse("$baseUrl/actualizar-abogado.php"),
+        Uri.parse(actualizarAbogadoEndpoint),
         body: body,
       );
-      debugPrint("Respuesta actualizar-abogado: ${response.body}");
+      if (kDebugMode) debugPrint("Respuesta actualizar-abogado: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -108,15 +107,15 @@ class ApiService {
   /// ✅ Obtener estadísticas generales
   static Future<Map<String, dynamic>> obtenerEstadisticas() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/estadisticas.php"));
-      debugPrint("Respuesta estadísticas: ${response.body}");
+      final response = await http.get(Uri.parse(estadisticasEndpoint));
+      if (kDebugMode) debugPrint("Respuesta estadísticas: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is Map && data["success"] == true) {
           return Map<String, dynamic>.from(data); // ✅ Cast seguro
         } else {
-          throw Exception("Error en estadísticas: ${data["mensaje"] ?? "Respuesta inválida"}");
+          throw Exception(data["mensaje"] ?? "Error en estadísticas");
         }
       } else {
         throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
@@ -134,7 +133,7 @@ class ApiService {
 
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/historial_servicios_psicologo.php?id=$id")
+        Uri.parse("$baseUrl/historial_servicios_psicologo.php?id=$id"),
       );
       debugPrint("Respuesta historial-servicios: ${response.body}");
 
