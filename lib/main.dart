@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ✅ Servicios de API
-import 'api_service.dart'; // si lo sigues usando para login/estadísticas generales
-import 'screens/admin/api_service_profesionales.dart'; // nuevo servicio para CRUD de profesionales
+import 'api_service.dart'; // login/estadísticas generales
+import 'screens/admin/api_service_profesionales.dart'; // CRUD de profesionales
 
 // Screens principales
 import 'screens/login_screen.dart';
@@ -21,14 +21,24 @@ import 'screens/registro_usuario_screen.dart';
 
 // Screens admin
 import 'screens/admin/panel_admin_home.dart';
+import 'screens/admin/lista_abogados_screen.dart';
+import 'screens/admin/registrar_abogado_screen.dart';
+import 'screens/admin/editar_abogado_screen.dart';
 import 'screens/admin/lista_profesionales_screen.dart';
 import 'screens/admin/registrar_profesional_screen.dart';
 import 'screens/admin/editar_profesional_screen.dart';
 import 'screens/admin/estadisticas_general_screen.dart';
 import 'screens/agente_crediticio/agente_panel.dart';
 
-// Modelo
+// Modelos
+import 'screens/admin/abogado.dart';
 import 'screens/admin/profesional.dart';
+
+// 👩‍⚕️ Panel psicólogos
+import 'screens/psicologos/psicologos.dart';
+
+// 🏠 Panel agentes inmobiliarios
+import 'screens/agente_imobiliario/agente_imobiliario.dart';
 
 // ✅ Portales profesionales
 import 'screens/contador/contador_panel.dart';
@@ -38,11 +48,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Puedes usar ApiService para estadísticas generales
+    // Estadísticas generales
     final stats = await ApiService.obtenerEstadisticas();
     debugPrint("📊 Estadísticas iniciales: $stats");
 
-    // O si quieres probar el servicio de profesionales
+    // Profesionales
     final profesionales = await ApiServiceProfesionales.obtenerProfesionales();
     debugPrint("👥 Profesionales iniciales: ${profesionales.length}");
   } catch (e) {
@@ -71,7 +81,6 @@ class MyApp extends StatelessWidget {
           secondary: const Color(0xFFD4AF37),
         ),
       ),
-      // ✅ Si es la primera vez abre HomePublicScreen, después siempre Login
       initialRoute: introVisto ? '/login' : '/home',
       routes: {
         '/home': (context) => const HomePublicScreen(),
@@ -87,20 +96,21 @@ class MyApp extends StatelessWidget {
         '/registro-socio': (context) => const RegistroSocioScreen(),
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
         '/estadisticas': (context) => const EstadisticasGeneralScreen(),
-        '/lista-profesionales': (context) => const ListaProfesionalesScreen(),
-        '/registrar-profesional': (context) => const RegistrarProfesionalScreen(),
-        '/panel-auditor': (context) => const AuditorPanel(),
 
-        // ✅ Panel contador con argumentos
-        '/panel-contador': (context) {
+        // ✅ Abogados
+        '/lista-abogados': (context) => const ListaAbogadosScreen(),
+        '/registrar-abogado': (context) => const RegistrarAbogadoScreen(),
+        '/editar-abogado': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int && args > 0) {
-            return ContadorPanel(idContador: args);
-          }
-          return const ContadorPanel();
+          if (args is Abogado) return EditarAbogadoScreen(abogado: args);
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para editar abogado')),
+          );
         },
 
-        // ✅ Rutas con argumentos para edición de profesionales
+        // ✅ Profesionales
+        '/lista-profesionales': (context) => const ListaProfesionalesScreen(),
+        '/registrar-profesional': (context) => const RegistrarProfesionalScreen(),
         '/editar-profesional': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is Profesional) {
@@ -111,6 +121,36 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // 👩‍⚕️ Psicólogos
+        '/panel-psicologos': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int) return PanelPsicologos(psicologoId: args);
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para panel psicólogos')),
+          );
+        },
+
+        // 🏠 Agentes inmobiliarios
+        '/panel-inmuebles': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int) return PanelAgentesInmobiliarios(agenteId: args);
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para panel inmobiliarios')),
+          );
+        },
+
+        // ✅ Panel contador
+        '/panel-contador': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int && args > 0) {
+            return ContadorPanel(idContador: args);
+          }
+          return const ContadorPanel();
+        },
+
+        // ✅ Panel auditor
+        '/panel-auditor': (context) => const AuditorPanel(),
+
         // ✅ Panel agente crediticio
         '/panel-agente': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
@@ -120,6 +160,7 @@ class MyApp extends StatelessWidget {
           return const AgentePanel();
         },
 
+        // ✅ Ubicación despacho
         '/ubicacion-despacho': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is Map<String, dynamic> && args['id'] is int) {
