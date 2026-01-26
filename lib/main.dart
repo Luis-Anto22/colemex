@@ -1,14 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// 👩‍⚕️ Panel de psicólogos
+// ✅ Servicio de API
+import 'api_service.dart';
+
+// Screens principales
+import 'screens/login_screen.dart';
+import 'screens/panel_cliente.dart';
+import 'screens/panel_abogado.dart';
+import 'screens/panel_admin.dart';
+import 'screens/crear_caso_screen.dart';
+import 'screens/editar_caso_screen.dart';
+import 'screens/subir_archivo_screen.dart';
+import 'screens/ubicacion_despacho_screen.dart';
+import 'screens/buscar_abogado_map_screen.dart';
+import 'screens/registro_socio_screen.dart';
+import 'screens/home_public_screen.dart';
+import 'screens/registro_usuario_screen.dart';
+
+// Screens admin
+import 'screens/admin/panel_admin_home.dart';
+import 'screens/admin/lista_abogados_screen.dart';
+
+import 'screens/admin/registrar_abogado_screen.dart';
+import 'screens/admin/editar_abogado_screen.dart';
+import 'screens/admin/estadisticas_general_screen.dart';
+
+// Modelo
+import 'screens/admin/abogado.dart';
+
+// 👩‍⚕️ Nuevo panel de psicólogos
 import 'screens/psicologos/psicologos.dart';
 
-void main() {
-  runApp(const MyApp());
+// 🏠 Nuevo panel de agentes inmobiliarios
+import 'screens/agente_imobiliario/agente_imobiliario.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ Llamada a la API para usar la importación
+  try {
+    final stats = await ApiService.obtenerEstadisticas();
+    debugPrint("📊 Estadísticas iniciales: $stats");
+  } catch (e) {
+    debugPrint("❌ Error al obtener estadísticas: $e");
+  }
+
+  // ✅ Verificamos si ya se mostró la introducción
+  final prefs = await SharedPreferences.getInstance();
+  final introVisto = prefs.getBool('introVisto') ?? false;
+
+  runApp(MyApp(introVisto: introVisto));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool introVisto;
+  const MyApp({super.key, required this.introVisto});
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +64,73 @@ class MyApp extends StatelessWidget {
       title: 'COLEMEX',
       theme: ThemeData(primarySwatch: Colors.indigo),
 
-      // ✅ Arranca directamente en el panel de psicólogos
-      home: const PanelPsicologos(psicologoId: 1), // 👈 aquí puedes poner el ID real
+      // ✅ Si no ha visto la intro → HomePublicScreen, si ya la vio → LoginScreen
+      home: introVisto ? const LoginScreen() : const HomePublicScreen(),
+
+      routes: {
+        '/home': (context) => const HomePublicScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/panel-cliente': (context) => const PanelCliente(),
+        '/panel-abogado': (context) => const PanelAbogado(),
+        '/panel-admin': (context) => const PanelAdmin(),
+        '/panel-admin-home': (context) => const PanelAdminHome(),
+        '/crear-caso': (context) => const CrearCasoScreen(),
+        '/editar-caso': (context) => const EditarCasoScreen(),
+        '/subir-documento': (context) => const SubirArchivoScreen(),
+        '/buscar-abogado': (context) => const BuscarAbogadoMapScreen(),
+        '/registro-socio': (context) => const RegistroSocioScreen(),
+        '/registro-usuario': (context) => const RegistroUsuarioScreen(),
+        '/estadisticas': (context) => const EstadisticasGeneralScreen(),
+        '/lista-abogados': (context) => const ListaAbogadosScreen(),
+        '/registrar-abogado': (context) => const RegistrarAbogadoScreen(),
+
+        // 👩‍⚕️ Nueva ruta para el panel de psicólogos
+        '/panel-psicologos': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int) {
+            return PanelPsicologos(psicologoId: args);
+          }
+          return const Scaffold(
+            body: Center(
+              child: Text('❌ Argumentos inválidos para panel psicólogos'),
+            ),
+          );
+        },
+
+        // 🏠 Nueva ruta para el panel de agentes inmobiliarios
+        '/panel-inmuebles': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int) {
+            return PanelAgentesInmobiliarios(agenteId: args);
+          }
+          return const Scaffold(
+            body: Center(
+              child: Text('❌ Argumentos inválidos para panel inmobiliarios'),
+            ),
+          );
+        },
+
+        '/editar-abogado': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Abogado) return EditarAbogadoScreen(abogado: args);
+          return const Scaffold(
+            body: Center(
+              child: Text('❌ Argumentos inválidos para editar abogado'),
+            ),
+          );
+        },
+        '/ubicacion-despacho': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map<String, dynamic> && args['id'] is int) {
+            return UbicacionDespachoScreen(idAbogado: args['id'] as int);
+          }
+          return const Scaffold(
+            body: Center(
+              child: Text('❌ Argumentos inválidos para ubicación del despacho'),
+            ),
+          );
+        },
+      },
     );
   }
 }
