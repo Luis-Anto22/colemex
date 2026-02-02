@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/agenda_widget.dart';
+import 'package:advocatus/widgets_global/agenda_widget.dart';
 
 class PantallaAgenda extends StatelessWidget {
   const PantallaAgenda({super.key});

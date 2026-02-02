@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 
 // COMMON SCREENS
-import 'package:colemex/screens/common/agenda/agenda_screen.dart';
-import 'package:colemex/screens/common/calificaciones/calificaciones_screen.dart';
-import 'package:colemex/screens/common/configuracion/configuracion_screen.dart';
-import 'package:colemex/screens/common/historial/historial_screen.dart';
-import 'package:colemex/screens/common/ingresos/ingresos_screen.dart';
-import 'package:colemex/screens/common/notificaciones/notificaciones_screen.dart';
-import 'package:colemex/screens/common/soporte/soporte_screen.dart';
-import 'package:colemex/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
+import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';
+import 'package:advocatus/screens/common/configuracion/configuracion_screen.dart';
+import 'package:advocatus/screens/common/historial/historial_screen.dart';
+import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
+import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
+import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
+import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
 
+  
 class PanelAjustadorScreen extends StatefulWidget {
-  const PanelAjustadorScreen({super.key});
-
+  final int ajustadorId;
+  const PanelAjustadorScreen({
+      super.key,
+      required this.ajustadorId, // 🔹 Constructor con parámetro requerido
+    });
+  
   @override
   State<PanelAjustadorScreen> createState() => _PanelAjustadorScreenState();
 }

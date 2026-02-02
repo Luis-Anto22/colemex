@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/ingresos_widget.dart';
+import 'package:advocatus/widgets_global/ingresos_widget.dart';
 
 class PantallaIngresosPsicologos extends StatelessWidget {
   final int profesionalId; // 👈 ID del psicólogo

@@ -97,7 +97,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _redirigirSegunPerfil(String perfil, int id) {
     switch (perfil) {
-
       case 'admin':
       case 'administrador':
         Navigator.pushReplacementNamed(context, '/panel-admin-home');
@@ -127,6 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/panel-ajustador', arguments: id);
         break;
 
+      case 'peritos_en_criminalistica':   // 🔹 Ajuste agregado
+        Navigator.pushReplacementNamed(context, '/panel-perito', arguments: id);
+        break;
+
       case 'agentes_crediticios':
         Navigator.pushReplacementNamed(context, '/panel-agente', arguments: id);
         break;
@@ -149,47 +152,77 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
-              const Text('SELECCIONA TU PERFIL', style: TextStyle(fontSize: 22)),
-              const SizedBox(height: 20),
-              ToggleButtons(
-                isSelected: [tipoLogin == 'cliente', tipoLogin == 'profesional'],
-                onPressed: (i) {
-                  setState(() {
-                    tipoLogin = i == 0 ? 'cliente' : 'profesional';
-                  });
-                },
-                children: const [
-                  Padding(padding: EdgeInsets.all(12), child: Text('CLIENTE')),
-                  Padding(padding: EdgeInsets.all(12), child: Text('PROFESIONAL')),
-                ],
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: correoController,
-                decoration: const InputDecoration(labelText: 'Correo'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: claveController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
-              ),
-              const SizedBox(height: 20),
-              if (mensajeError.isNotEmpty)
-                Text(mensajeError, style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: cargando ? null : iniciarSesion,
-                child: cargando
-                    ? const CircularProgressIndicator()
-                    : const Text('Iniciar sesión'),
-              ),
-            ],
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/iconos/mazo-libro.png"), // 🔹 Fondo
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                // 🔹 Logo arriba del texto
+                Image.asset(
+                  "assets/iconos/logo.png",
+                  height: 120,
+                ),
+                const SizedBox(height: 20),
+
+                const Text(
+                  'SELECCIONA TU PERFIL',
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.white, // texto blanco para contraste
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                ToggleButtons(
+                  isSelected: [tipoLogin == 'cliente', tipoLogin == 'profesional'],
+                  onPressed: (i) {
+                    setState(() {
+                      tipoLogin = i == 0 ? 'cliente' : 'profesional';
+                    });
+                  },
+                  children: const [
+                    Padding(padding: EdgeInsets.all(12), child: Text('CLIENTE')),
+                    Padding(padding: EdgeInsets.all(12), child: Text('PROFESIONAL')),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: correoController,
+                  decoration: const InputDecoration(labelText: 'Correo'),
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: claveController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
+                ),
+                const SizedBox(height: 20),
+
+                if (mensajeError.isNotEmpty)
+                  Text(
+                    mensajeError,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                const SizedBox(height: 20),
+
+                ElevatedButton(
+                  onPressed: cargando ? null : iniciarSesion,
+                  child: cargando
+                      ? const CircularProgressIndicator()
+                      : const Text('Iniciar sesión'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

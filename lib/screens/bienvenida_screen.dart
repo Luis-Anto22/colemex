@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/screens/login_screen.dart';
-import 'package:colemex/screens/register_screen.dart';
+import 'package:advocatus/screens/login_screen.dart';
+import 'package:advocatus/screens/register_screen.dart';
 
 class BienvenidaScreen extends StatelessWidget {
   const BienvenidaScreen({super.key});

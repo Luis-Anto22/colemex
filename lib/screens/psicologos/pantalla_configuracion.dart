@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/configuracion_widget.dart';
+import 'package:advocatus/widgets_global/configuracion_widget.dart';
 
 class PantallaConfiguracion extends StatelessWidget {
   const PantallaConfiguracion({super.key});

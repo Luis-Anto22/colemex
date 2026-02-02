@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 // COMMON
-import 'package:colemex/screens/common/agenda/agenda_screen.dart';
-import 'package:colemex/screens/common/calificaciones/calificaciones_screen.dart';
-import 'package:colemex/screens/common/configuracion/configuracion_screen.dart';
-import 'package:colemex/screens/common/historial/historial_screen.dart';
-import 'package:colemex/screens/common/ingresos/ingresos_screen.dart';
-import 'package:colemex/screens/common/notificaciones/notificaciones_screen.dart';
-import 'package:colemex/screens/common/perfil/perfil_verificado_screen.dart';
-import 'package:colemex/screens/common/soporte/soporte_screen.dart';
-import 'package:colemex/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
+import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
+import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';
+import 'package:advocatus/screens/common/configuracion/configuracion_screen.dart';
+import 'package:advocatus/screens/common/historial/historial_screen.dart';
+import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
+import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
+import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
+import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
 
 // WIDGET COMÚN
-import 'package:colemex/screens/common/estado_profesional/estado_profesional_widget.dart';
+import 'package:advocatus/screens/common/estado_profesional/estado_profesional_widget.dart';
 
 // INVESTIGADOR
 import 'investigador_modulos/bitacora_screen.dart';

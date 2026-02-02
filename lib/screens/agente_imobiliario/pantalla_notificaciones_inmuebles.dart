@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/notificaciones_widget.dart';
+import 'package:advocatus/widgets_global/notificaciones_widget.dart';
 
 class PantallaNotificacionesInmuebles extends StatelessWidget {
   final int agenteId; // 👈 ID del agente inmobiliario

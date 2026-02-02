@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/contacto_soporte_widget.dart';
+import 'package:advocatus/widgets_global/contacto_soporte_widget.dart';
 
 class PantallaContactoSoporte extends StatelessWidget {
   const PantallaContactoSoporte({super.key});

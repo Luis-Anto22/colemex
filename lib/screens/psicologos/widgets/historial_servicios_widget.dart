@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/api_service.dart';
+import 'package:advocatus/api_service.dart';
 
 class HistorialServiciosWidget extends StatelessWidget {
   final int psicologoId; // 🔧 ID del psicólogo

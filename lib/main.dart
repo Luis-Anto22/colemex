@@ -36,14 +36,14 @@ import 'screens/contador/contador_panel.dart';
 import 'screens/auditor/auditor_panel.dart';
 // 🕵️ Panel investigadores
 import 'screens/investigador/investigador.dart';
+import 'screens/perito_criminalistica/perito.dart';
+import 'screens/ajustador/ajustador.dart';
 
 // 🏠 Panel valuadores
 import 'screens/valuador/valuador.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // ❌ Quitamos las llamadas a ApiService.obtenerEstadisticas() y ApiServiceProfesionales.obtenerProfesionales()
 
   final prefs = await SharedPreferences.getInstance();
   final introVisto = prefs.getBool('introVisto') ?? false;
@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'COLEMEX',
+      title: 'Advocatus',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSwatch(
           primarySwatch: Colors.indigo,
@@ -82,7 +82,7 @@ class MyApp extends StatelessWidget {
         '/registro-socio': (context) => const RegistroSocioScreen(),
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
 
-        // ✅ Abogados (usando modelo Profesional)
+        // ✅ Abogados
         '/lista-abogados': (context) => const ListaProfesionalesScreen(),
         '/registrar-abogado': (context) => const RegistrarProfesionalScreen(),
         '/editar-abogado': (context) {
@@ -114,28 +114,28 @@ class MyApp extends StatelessWidget {
             body: Center(child: Text('❌ Argumentos inválidos para panel psicólogos')),
           );
         },
+
         // 🕵️ Investigadores
-'/panel-investigador': (context) {
-  final args = ModalRoute.of(context)?.settings.arguments;
-  if (args is int) {
-    return PanelInvestigadorScreen(investigadorId: args);
-  }
-  return const Scaffold(
-    body: Center(child: Text('❌ Argumentos inválidos para panel investigador')),
-  );
-},
+        '/panel-investigador': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int) {
+            return PanelInvestigadorScreen(investigadorId: args);
+          }
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para panel investigador')),
+          );
+        },
 
-// 🏠 Valuadores
-'/panel-valuador': (context) {
-  final args = ModalRoute.of(context)?.settings.arguments;
-  if (args is int) {
-    return PanelValuadorScreen(valuadorId: args);
-  }
-  return const Scaffold(
-    body: Center(child: Text('❌ Argumentos inválidos para panel valuador')),
-  );
-},
-
+        // 🏠 Valuadores
+        '/panel-valuador': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int) {
+            return PanelValuadorScreen(valuadorId: args);
+          }
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para panel valuador')),
+          );
+        },
 
         // 🏠 Agentes inmobiliarios
         '/panel-inmuebles': (context) {
@@ -165,6 +165,28 @@ class MyApp extends StatelessWidget {
             return AgentePanel(idAgente: args);
           }
           return const AgentePanel();
+        },
+
+        // ✅ Panel perito criminalística
+        '/panel-perito': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int && args > 0) {
+            return PanelPeritoScreen(peritoId: args);
+          }
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para panel perito')),
+          );
+        },
+
+        // ✅ Panel ajustador
+        '/panel-ajustador': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is int && args > 0) {
+            return PanelAjustadorScreen(ajustadorId: args);
+          }
+          return const Scaffold(
+            body: Center(child: Text('❌ Argumentos inválidos para panel ajustador')),
+          );
         },
 
         // ✅ Ubicación despacho

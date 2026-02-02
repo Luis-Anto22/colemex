@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/calificaciones_widget.dart';
+import 'package:advocatus/widgets_global/calificaciones_widget.dart';
 
 class PantallaCalificacionesPsicologos extends StatelessWidget {
   final int psicologoId; // 👈 ID del psicólogo

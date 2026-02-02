@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colemex/widgets_global/calificaciones_widget.dart';
+import 'package:advocatus/widgets_global/calificaciones_widget.dart';
 
 class PantallaCalificacionesInmuebles extends StatelessWidget {
   final int agenteId; // 👈 ID del agente inmobiliario

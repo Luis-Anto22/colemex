@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:colemex/screens/login_screen.dart';
+import 'package:advocatus/screens/login_screen.dart';
 
 class HomePublicScreen extends StatefulWidget {
   const HomePublicScreen({super.key});
