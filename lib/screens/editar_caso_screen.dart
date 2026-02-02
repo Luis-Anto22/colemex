@@ -135,7 +135,7 @@ class _EditarCasoScreenState extends State<EditarCasoScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: estadoSeleccionado,
+              initialValue: estadoSeleccionado,
               items: estadosValidos.map((estado) {
                 return DropdownMenuItem(value: estado, child: Text(estado));
               }).toList(),

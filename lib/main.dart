@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ✅ Servicios de API
-import 'api_service.dart'; // login/estadísticas generales
-import 'screens/admin/api_service_profesionales.dart'; // CRUD de profesionales
-
 // Screens principales
 import 'screens/login_screen.dart';
 import 'screens/panel_cliente.dart';
@@ -24,7 +20,6 @@ import 'screens/admin/panel_admin_home.dart';
 import 'screens/admin/lista_profesionales_screen.dart';
 import 'screens/admin/registrar_profesional_screen.dart';
 import 'screens/admin/editar_profesional_screen.dart';
-import 'screens/admin/estadisticas_general_screen.dart';
 import 'screens/agente_crediticio/agente_panel.dart';
 
 // Modelos
@@ -39,21 +34,16 @@ import 'screens/agente_imobiliario/agente_imobiliario.dart';
 // ✅ Portales profesionales
 import 'screens/contador/contador_panel.dart';
 import 'screens/auditor/auditor_panel.dart';
+// 🕵️ Panel investigadores
+import 'screens/investigador/investigador.dart';
+
+// 🏠 Panel valuadores
+import 'screens/valuador/valuador.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    // Estadísticas generales
-    final stats = await ApiService.obtenerEstadisticas();
-    debugPrint("📊 Estadísticas iniciales: $stats");
-
-    // Profesionales
-    final profesionales = await ApiServiceProfesionales.obtenerProfesionales();
-    debugPrint("👥 Profesionales iniciales: ${profesionales.length}");
-  } catch (e) {
-    debugPrint("❌ Error al obtener datos iniciales: $e");
-  }
+  // ❌ Quitamos las llamadas a ApiService.obtenerEstadisticas() y ApiServiceProfesionales.obtenerProfesionales()
 
   final prefs = await SharedPreferences.getInstance();
   final introVisto = prefs.getBool('introVisto') ?? false;
@@ -91,7 +81,6 @@ class MyApp extends StatelessWidget {
         '/buscar-abogado': (context) => const BuscarAbogadoMapScreen(),
         '/registro-socio': (context) => const RegistroSocioScreen(),
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
-        '/estadisticas': (context) => const EstadisticasGeneralScreen(),
 
         // ✅ Abogados (usando modelo Profesional)
         '/lista-abogados': (context) => const ListaProfesionalesScreen(),
@@ -125,6 +114,28 @@ class MyApp extends StatelessWidget {
             body: Center(child: Text('❌ Argumentos inválidos para panel psicólogos')),
           );
         },
+        // 🕵️ Investigadores
+'/panel-investigador': (context) {
+  final args = ModalRoute.of(context)?.settings.arguments;
+  if (args is int) {
+    return PanelInvestigadorScreen(investigadorId: args);
+  }
+  return const Scaffold(
+    body: Center(child: Text('❌ Argumentos inválidos para panel investigador')),
+  );
+},
+
+// 🏠 Valuadores
+'/panel-valuador': (context) {
+  final args = ModalRoute.of(context)?.settings.arguments;
+  if (args is int) {
+    return PanelValuadorScreen(valuadorId: args);
+  }
+  return const Scaffold(
+    body: Center(child: Text('❌ Argumentos inválidos para panel valuador')),
+  );
+},
+
 
         // 🏠 Agentes inmobiliarios
         '/panel-inmuebles': (context) {

@@ -79,7 +79,7 @@ class PanelAdminHome extends StatelessWidget {
                                     ),
                                   );
                                   // Alternativa con rutas nombradas:
-                                  // Navigator.pushNamed(context, '/estadisticas-generales');
+                                  // Navigator.pushNamed(context, '/estadisticas');
                                 },
                               ),
                             ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PanelServicios extends StatelessWidget {
-  const PanelServicios({Key? key}) : super(key: key);
+  const PanelServicios({super.key});
 
   @override
   Widget build(BuildContext context) {

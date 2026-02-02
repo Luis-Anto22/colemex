@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class PanelMisCasos extends StatelessWidget {
   final List<Map<String, dynamic>> listaCasos;
 
-  const PanelMisCasos({Key? key, required this.listaCasos}) : super(key: key);
+  const PanelMisCasos({super.key, required this.listaCasos});
 
   @override
   Widget build(BuildContext context) {

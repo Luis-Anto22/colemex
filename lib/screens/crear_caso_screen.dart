@@ -119,7 +119,7 @@ class _CrearCasoScreenState extends State<CrearCasoScreen> {
         child: ListView(
           children: [
             DropdownButtonFormField<int>(
-              value: clienteSeleccionado,
+              initialValue: clienteSeleccionado,
               items: clientes.map<DropdownMenuItem<int>>((cliente) {
                 return DropdownMenuItem<int>(
                   value: int.parse(cliente['id'].toString()),
@@ -142,7 +142,7 @@ class _CrearCasoScreenState extends State<CrearCasoScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: estadoSeleccionado,
+              initialValue: estadoSeleccionado,
               items: ['pendiente', 'en proceso', 'finalizado'].map((estado) {
                 return DropdownMenuItem(value: estado, child: Text(estado));
               }).toList(),

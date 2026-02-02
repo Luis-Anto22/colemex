@@ -12,20 +12,18 @@ class ApiServiceContador {
   static const String ingresosEndpoint = "$baseUrl/contador_ingresos.php";
   static const String actualizarCasoEndpoint = "$baseUrl/contador_actualizar_caso.php";
   static const String documentosEndpoint = "$baseUrl/contador_documentos.php";
-  
+
   /// ✅ Obtener dashboard del contador
   static Future<Map<String, dynamic>> obtenerDashboard(int idContador) async {
     try {
       final response = await http.get(Uri.parse("$dashboardEndpoint?id=$idContador"));
       if (kDebugMode) debugPrint("Respuesta dashboard: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return data;
-        throw Exception(data["mensaje"] ?? "Error en dashboard");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data;
       }
+      throw Exception(data["mensaje"] ?? "Error en dashboard");
     } catch (e) {
       throw Exception("Error al obtener dashboard: $e");
     }
@@ -37,13 +35,11 @@ class ApiServiceContador {
       final response = await http.get(Uri.parse("$casosEndpoint?id=$idContador"));
       if (kDebugMode) debugPrint("Respuesta casos: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return data["casos"];
-        throw Exception(data["mensaje"] ?? "Error en casos");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data["casos"] ?? [];
       }
+      throw Exception(data["mensaje"] ?? "Error en casos");
     } catch (e) {
       throw Exception("Error al obtener casos: $e");
     }
@@ -55,13 +51,12 @@ class ApiServiceContador {
       final response = await http.get(Uri.parse("$perfilEndpoint?id=$idContador"));
       if (kDebugMode) debugPrint("Respuesta perfil: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return data["perfil"];
-        throw Exception(data["mensaje"] ?? "Error en perfil");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        // 🔹 Ajuste: el backend devuelve "usuario", no "perfil"
+        return data["usuario"];
       }
+      throw Exception(data["mensaje"] ?? "Error en perfil");
     } catch (e) {
       throw Exception("Error al obtener perfil: $e");
     }
@@ -73,13 +68,11 @@ class ApiServiceContador {
       final response = await http.get(Uri.parse("$ingresosEndpoint?id=$idContador"));
       if (kDebugMode) debugPrint("Respuesta ingresos: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return data["ingresos"];
-        throw Exception(data["mensaje"] ?? "Error en ingresos");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data["ingresos"] ?? [];
       }
+      throw Exception(data["mensaje"] ?? "Error en ingresos");
     } catch (e) {
       throw Exception("Error al obtener ingresos: $e");
     }
@@ -97,19 +90,17 @@ class ApiServiceContador {
       );
       if (kDebugMode) debugPrint("Respuesta actualizar caso: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return data["mensaje"] ?? "Caso actualizado";
-        throw Exception(data["mensaje"] ?? "Error al actualizar caso");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data["mensaje"] ?? "Caso actualizado";
       }
+      throw Exception(data["mensaje"] ?? "Error al actualizar caso");
     } catch (e) {
       throw Exception("Error al actualizar caso: $e");
     }
   }
 
-    /// ✅ Listar documentos por contador
+  /// ✅ Listar documentos por contador
   static Future<List<dynamic>> obtenerDocumentos(int idContador) async {
     try {
       final response = await http.get(
@@ -117,12 +108,9 @@ class ApiServiceContador {
       );
       if (kDebugMode) debugPrint("Respuesta documentos: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data; // devuelve lista de documentos
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
-      }
+      final data = json.decode(response.body);
+      // 🔹 Ajuste: puede venir como lista o como objeto con "documentos"
+      return data is List ? data : (data["documentos"] ?? []);
     } catch (e) {
       throw Exception("Error al obtener documentos: $e");
     }
@@ -136,12 +124,8 @@ class ApiServiceContador {
       );
       if (kDebugMode) debugPrint("Respuesta detalle documento: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data; // devuelve el detalle del documento
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
-      }
+      final data = json.decode(response.body);
+      return data;
     } catch (e) {
       throw Exception("Error al obtener detalle documento: $e");
     }
@@ -155,24 +139,16 @@ class ApiServiceContador {
         headers: {"Content-Type": "application/json"},
         body: json.encode({
           "accion": "insertar",
-          "ticket": documento["ticket"],
-          "contador_id": documento["contador_id"],
-          "cliente_id": documento["cliente_id"],
-          "tipo_documento": documento["tipo_documento"],
-          "archivo_url": documento["archivo_url"],
-          "descripcion": documento["descripcion"],
-          "mes_periodo": documento["mes_periodo"],
+          ...documento,
         }),
       );
       if (kDebugMode) debugPrint("Respuesta insertar documento: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return "Documento insertado correctamente";
-        throw Exception(data["error"] ?? "Error al insertar documento");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data["mensaje"] ?? "Documento insertado correctamente";
       }
+      throw Exception(data["error"] ?? "Error al insertar documento");
     } catch (e) {
       throw Exception("Error al insertar documento: $e");
     }
@@ -194,13 +170,11 @@ class ApiServiceContador {
       );
       if (kDebugMode) debugPrint("Respuesta validar documento: ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data["success"] == true) return "Documento validado correctamente";
-        throw Exception(data["error"] ?? "Error al validar documento");
-      } else {
-        throw Exception("Error HTTP ${response.statusCode}: ${response.body}");
+      final data = json.decode(response.body);
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data["mensaje"] ?? "Documento validado correctamente";
       }
+      throw Exception(data["error"] ?? "Error al validar documento");
     } catch (e) {
       throw Exception("Error al validar documento: $e");
     }

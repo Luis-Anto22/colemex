@@ -197,7 +197,7 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
           children: [
             const Text('Selecciona tu perfil:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButtonFormField<String>(
-              value: perfilSeleccionado,
+              initialValue: perfilSeleccionado,
               items: perfiles.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
               onChanged: (value) => setState(() => perfilSeleccionado = value),
               decoration: const InputDecoration(
@@ -209,7 +209,7 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
               const SizedBox(height: 16),
               const Text('Especialidad:', style: TextStyle(fontSize: 16)),
               DropdownButtonFormField<String>(
-                value: especialidad,
+                initialValue: especialidad,
                 items: especialidades.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                 onChanged: (value) => setState(() => especialidad = value),
                 decoration: const InputDecoration(
