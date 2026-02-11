@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'lista_profesionales_screen.dart';
 import 'estadisticas_general_screen.dart';
+import '../universal_menu.dart'; // 👈 importamos el menú
 
 class PanelAdminHome extends StatelessWidget {
   const PanelAdminHome({Key? key}) : super(key: key);
@@ -11,6 +12,19 @@ class PanelAdminHome extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Panel Administrador'),
         backgroundColor: Colors.indigo,
+        actions: [
+          UniversalMenu(
+            onSelected: (value) {
+              if (value == 'configuracion') {
+                // Navegar a configuración
+                Navigator.pushNamed(context, '/configuracion');
+              } else if (value == 'cerrar') {
+                // Cerrar sesión y volver al login
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -60,8 +74,6 @@ class PanelAdminHome extends StatelessWidget {
                                           const ListaProfesionalesScreen(),
                                     ),
                                   );
-                                  // Alternativa con rutas nombradas:
-                                  // Navigator.pushNamed(context, '/lista-profesionales');
                                 },
                               ),
                             ),
@@ -78,8 +90,6 @@ class PanelAdminHome extends StatelessWidget {
                                           const EstadisticasGeneralScreen(),
                                     ),
                                   );
-                                  // Alternativa con rutas nombradas:
-                                  // Navigator.pushNamed(context, '/estadisticas');
                                 },
                               ),
                             ),

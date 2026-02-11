@@ -53,12 +53,18 @@ class ApiServiceContador {
 
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data["success"] == true) {
-        // 🔹 Ajuste: el backend devuelve "usuario", no "perfil"
-        return data["usuario"];
+        // 🔹 Ajuste: el backend devuelve "perfil"
+        return data["perfil"] as Map<String, dynamic>;
       }
-      throw Exception(data["mensaje"] ?? "Error en perfil");
+      return {
+        "success": false,
+        "mensaje": data["mensaje"] ?? "Error en perfil"
+      };
     } catch (e) {
-      throw Exception("Error al obtener perfil: $e");
+      return {
+        "success": false,
+        "mensaje": "Error al obtener perfil: $e"
+      };
     }
   }
 

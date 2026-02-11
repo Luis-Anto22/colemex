@@ -16,12 +16,12 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
 
   late TextEditingController _nombreController;
   late TextEditingController _telefonoController;
-  late TextEditingController _especialidadController;
   late TextEditingController _ciudadController;
   late TextEditingController _fotoController;
 
   bool _isLoading = false;
   String _perfilSeleccionado = 'Abogados';
+  int? _especialidadSeleccionada;
 
   final List<String> perfiles = [
     'Abogados',
@@ -35,22 +35,52 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
     'Agentes crediticios',
   ];
 
+  final List<Map<String, dynamic>> especialidades = [
+    {"id": 1, "nombre": "Derecho Civil"},
+    {"id": 2, "nombre": "Derecho Penal"},
+    {"id": 3, "nombre": "Derecho Familiar"},
+    {"id": 4, "nombre": "Derecho Laboral"},
+    {"id": 5, "nombre": "Derecho Mercantil / Corporativo"},
+    {"id": 6, "nombre": "Derecho Fiscal / Tributario"},
+    {"id": 7, "nombre": "Derecho Administrativo"},
+    {"id": 8, "nombre": "Derecho Constitucional"},
+    {"id": 9, "nombre": "Derecho Agrario"},
+    {"id": 10, "nombre": "Derecho Inmobiliario"},
+    {"id": 11, "nombre": "Derecho Migratorio"},
+    {"id": 12, "nombre": "Derecho Internacional"},
+    {"id": 13, "nombre": "Derecho Bancario y Financiero"},
+    {"id": 14, "nombre": "Derecho de Propiedad Intelectual"},
+    {"id": 15, "nombre": "Derecho Digital / Tecnológico"},
+    {"id": 16, "nombre": "Derecho Ambiental"},
+    {"id": 17, "nombre": "Derecho Aduanero"},
+    {"id": 18, "nombre": "Derecho Electoral"},
+    {"id": 19, "nombre": "Derecho de Seguridad Social"},
+    {"id": 20, "nombre": "Derecho Médico"},
+    {"id": 21, "nombre": "Derecho Energético"},
+    {"id": 22, "nombre": "Derecho de Amparo"},
+    {"id": 23, "nombre": "Derecho de Seguros"},
+    {"id": 24, "nombre": "Derecho de Consumidor"},
+  ];
+
   @override
   void initState() {
     super.initState();
     _nombreController = TextEditingController(text: widget.profesional.nombre);
     _telefonoController = TextEditingController(text: widget.profesional.telefono);
-    _especialidadController = TextEditingController(text: widget.profesional.especialidad);
     _ciudadController = TextEditingController(text: widget.profesional.ciudad);
     _fotoController = TextEditingController(text: widget.profesional.foto);
     _perfilSeleccionado = widget.profesional.perfil;
+
+    // Inicializar especialidad si es abogado
+    if (widget.profesional.perfil == 'Abogados') {
+      _especialidadSeleccionada = widget.profesional.especialidadId;
+    }
   }
 
   @override
   void dispose() {
     _nombreController.dispose();
     _telefonoController.dispose();
-    _especialidadController.dispose();
     _ciudadController.dispose();
     _fotoController.dispose();
     super.dispose();
@@ -59,13 +89,22 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
   Future<void> _guardarCambios() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_perfilSeleccionado == 'Abogados' && _especialidadSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Selecciona una especialidad")),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final datos = {
       "nombre": _nombreController.text.trim(),
       "telefono": _telefonoController.text.trim(),
       "perfil": _perfilSeleccionado,
-      "especialidad": _especialidadController.text.trim(),
+      "especialidad": _perfilSeleccionado == 'Abogados'
+          ? _especialidadSeleccionada?.toString() ?? ""
+          : "",
       "ciudad": _ciudadController.text.trim(),
       "foto": _fotoController.text.trim(),
     };
@@ -122,7 +161,12 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
                 items: perfiles.map((perfil) {
                   return DropdownMenuItem(value: perfil, child: Text(perfil));
                 }).toList(),
-                onChanged: (value) => setState(() => _perfilSeleccionado = value ?? 'Abogados'),
+                onChanged: (value) {
+                  setState(() {
+                    _perfilSeleccionado = value ?? 'Abogados';
+                    _especialidadSeleccionada = null; // resetear si cambia perfil
+                  });
+                },
                 decoration: const InputDecoration(
                   labelText: "Perfil profesional",
                   border: OutlineInputBorder(),
@@ -130,14 +174,28 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
               ),
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _especialidadController,
-                decoration: const InputDecoration(
-                  labelText: "Especialidad",
-                  border: OutlineInputBorder(),
+              // Solo aparece si el perfil es Abogados
+              if (_perfilSeleccionado == 'Abogados') ...[
+                DropdownButtonFormField<int>(
+                  value: _especialidadSeleccionada,
+                  items: especialidades.map((esp) {
+                    return DropdownMenuItem<int>(
+                      value: esp["id"],
+                      child: Text(esp["nombre"]),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _especialidadSeleccionada = value),
+                  decoration: const InputDecoration(
+                    labelText: "Especialidad",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      _perfilSeleccionado == 'Abogados' && value == null
+                          ? "Selecciona una especialidad"
+                          : null,
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
 
               TextFormField(
                 controller: _ciudadController,

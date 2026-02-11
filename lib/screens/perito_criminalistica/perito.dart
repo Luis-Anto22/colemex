@@ -13,15 +13,17 @@ import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
 class PanelPeritoScreen extends StatefulWidget {
   final int peritoId;
   const PanelPeritoScreen({
-      super.key,
-      required this.peritoId // 🔹 Constructor con parámetro requerido
-    });
+    super.key,
+    required this.peritoId,
+  });
 
   @override
   State<PanelPeritoScreen> createState() => _PanelPeritoScreenState();
 }
 
 class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
+  String estado = "Disponible";
+
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
@@ -280,6 +282,65 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           ),
                         ),
 
+                        const SizedBox(height: 20),
+
+                        // ESTADO PROFESIONAL
+                        _sectionHeader(
+                          "Estado profesional",
+                          subtitle: "Define tu disponibilidad para recibir solicitudes.",
+                        ),
+                        _card(
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                                                            ChoiceChip(
+                                label: const Text("Ocupado"),
+                                selected: estado == "Ocupado",
+                                onSelected: (_) => setState(() => estado = "Ocupado"),
+                                selectedColor: gold,
+                                backgroundColor: Colors.white.withOpacity(.06),
+                              ),
+                              ChoiceChip(
+                                label: const Text("Fuera de servicio"),
+                                selected: estado == "Fuera de servicio",
+                                onSelected: (_) => setState(() => estado = "Fuera de servicio"),
+                                selectedColor: gold,
+                                backgroundColor: Colors.white.withOpacity(.06),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // UBICACIÓN DEL DESPACHO
+                        _sectionHeader("Ubicación del despacho"),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/localizacion-perito',
+                                    arguments: {'id_perito': widget.peritoId},
+                                  );
+                                },
+                                icon: const Icon(Icons.location_on),
+                                label: const Text('Registrar ubicación'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: gold,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
                         // ACCIONES RÁPIDAS
                         _sectionHeader('Acciones rápidas'),
                         Row(
@@ -309,6 +370,8 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                             ),
                           ],
                         ),
+
+                        const SizedBox(height: 20),
 
                         // MÓDULOS
                         _sectionHeader(

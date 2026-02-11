@@ -4,7 +4,8 @@ class Profesional {
   final String correo;
   final String telefono;
   final String perfil;
-  final String especialidad;
+  final int? especialidadId;          // id numérico
+  final String? especialidadNombre;   // nombre legible
   final String ciudad;
   final String foto;
   final int verificado;
@@ -19,7 +20,8 @@ class Profesional {
     required this.correo,
     required this.telefono,
     required this.perfil,
-    required this.especialidad,
+    this.especialidadId,
+    this.especialidadNombre,
     required this.ciudad,
     required this.foto,
     required this.verificado,
@@ -36,7 +38,10 @@ class Profesional {
       correo: json['correo'] ?? '',
       telefono: json['telefono'] ?? '',
       perfil: json['perfil'] ?? '',
-      especialidad: json['especialidad'] ?? '',
+      especialidadId: json['especialidad_id'] != null
+          ? int.tryParse(json['especialidad_id'].toString())
+          : null,
+      especialidadNombre: json['especialidad'] ?? '', // viene del JOIN
       ciudad: json['ciudad'] ?? '',
       foto: json['foto'] ?? '',
       verificado: int.tryParse(json['verificado'].toString()) ?? 0,

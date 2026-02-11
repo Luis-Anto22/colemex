@@ -9,10 +9,7 @@ import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
-import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
-
-// WIDGET COMÚN
-import 'package:advocatus/screens/common/estado_profesional/estado_profesional_widget.dart';
+import '../localizacion.dart';
 
 // INVESTIGADOR
 import 'investigador_modulos/bitacora_screen.dart';
@@ -24,7 +21,7 @@ class PanelInvestigadorScreen extends StatefulWidget {
 
   const PanelInvestigadorScreen({
     super.key,
-    required this.investigadorId, // 🔹 Constructor con parámetro requerido
+    required this.investigadorId,
   });
 
   @override
@@ -38,10 +35,7 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
- 
-
   // ---- UI helpers ----
-
   Widget _sectionHeader(String title, {String? subtitle}) {
     return Padding(
       padding: const EdgeInsets.only(top: 18, bottom: 10),
@@ -156,36 +150,33 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-
     final gold = theme.primaryColor;
 
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withOpacity(.05),
-            border: Border.all(color: gold.withOpacity(.14)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: gold),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12.5,
-                ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: Colors.white.withOpacity(.05),
+          border: Border.all(color: gold.withOpacity(.14)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: gold),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12.5,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -308,117 +299,128 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                             ],
                           ),
                         ),
-
-                        // ✅ ESTADO PROFESIONAL
-                        _sectionHeader(
-                          'Estado profesional',
-                          subtitle: 'Define tu disponibilidad para recibir asignaciones.',
-                        ),
-                        _card(
-                          child: EstadoProfesionalWidget(
-                            estadoActual: estado,
-                            color: gold,
-                            onChanged: (nuevoEstado) => setState(() => estado = nuevoEstado),
-                          ),
-                        ),
-
-                        // ✅ ACCIONES RÁPIDAS
-                        _sectionHeader('Acciones rápidas'),
-                        Row(
-                          children: [
-                            _quickAction(
-                              icon: Icons.assignment_outlined,
-                              label: 'Casos',
-                              onTap: () => _go(const CasosAsignadosScreen()),
-                            ),
-                            const SizedBox(width: 10),
-                            _quickAction(
-                              icon: Icons.camera_alt_outlined,
-                              label: 'Evidencias',
-                              onTap: () => _go(const EvidenciasScreen()),
-                            ),
-                            const SizedBox(width: 10),
-                            _quickAction(
-                              icon: Icons.event_available_outlined,
-                              label: 'Agenda',
-                              onTap: () => _go(const AgendaScreen()),
-                            ),
-                            const SizedBox(width: 10),
-                            _quickAction(
-                              icon: Icons.support_agent_outlined,
-                              label: 'Soporte',
-                              onTap: () => _go(const SoporteScreen()),
-                            ),
-                          ],
-                        ),
-
+// ✅ BOTONES DE ESTADO
+Padding(
+  padding: const EdgeInsets.symmetric(vertical: 12),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      ChoiceChip(
+        label: const Text("Disponible"),
+        selected: estado == "Disponible",
+        onSelected: (_) => setState(() => estado = "Disponible"),
+        selectedColor: Colors.green.withOpacity(.3),
+        backgroundColor: Colors.white.withOpacity(.1),
+        labelStyle: const TextStyle(color: Colors.white),
+      ),
+      const SizedBox(width: 8),
+      ChoiceChip(
+        label: const Text("Ocupado"),
+        selected: estado == "Ocupado",
+        onSelected: (_) => setState(() => estado = "Ocupado"),
+        selectedColor: Colors.orange.withOpacity(.3),
+        backgroundColor: Colors.white.withOpacity(.1),
+        labelStyle: const TextStyle(color: Colors.white),
+      ),
+      const SizedBox(width: 8),
+      ChoiceChip(
+        label: const Text("En proceso"),
+        selected: estado == "En proceso",
+        onSelected: (_) => setState(() => estado = "En proceso"),
+        selectedColor: Colors.blue.withOpacity(.3),
+        backgroundColor: Colors.white.withOpacity(.1),
+        labelStyle: const TextStyle(color: Colors.white),
+      ),
+    ],
+  ),
+),
+                                                // ✅ ACCIONES RÁPIDAS EN HORIZONTAL
+                        // ✅ ACCIONES RÁPIDAS EN HORIZONTAL
+_sectionHeader('Acciones rápidas'),
+Row(
+  children: [
+    Expanded(child: _quickAction(
+      icon: Icons.assignment_outlined,
+      label: 'Casos',
+      onTap: () => _go(const CasosAsignadosScreen()),
+    )),
+    const SizedBox(width: 10),
+    Expanded(child: _quickAction(
+      icon: Icons.camera_alt_outlined,
+      label: 'Evidencias',
+      onTap: () => _go(const EvidenciasScreen()),
+    )),
+    const SizedBox(width: 10),
+    Expanded(child: _quickAction(
+      icon: Icons.event_available_outlined,
+      label: 'Agenda',
+      onTap: () => _go(const AgendaScreen()),
+    )),
+    const SizedBox(width: 10),
+    Expanded(child: _quickAction(
+      icon: Icons.location_on_outlined,
+      label: 'Ubicación',
+      onTap: () => _go(LocalizacionPanel(
+        idProfesional: widget.investigadorId,
+        perfil: "Investigadores",
+      )),
+    )),
+  ],
+),
+                                                // ✅ BASE COMÚN
                         // ✅ BASE COMÚN
-                        _sectionHeader(
-                          'Base común',
-                          subtitle: 'Módulos obligatorios para todos los socios.',
-                        ),
-                        _tile(
-                          icon: Icons.verified_user_outlined,
-                          title: 'Perfil profesional verificado',
-                          subtitle: 'Datos, foto, documentos y verificación.',
-                          onTap: () => _go(const PerfilVerificadoScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.location_on_outlined,
-                          title: 'Ubicación en tiempo real',
-                          subtitle: 'Comparte ubicación cuando estés activo.',
-                          onTap: () => _go(const UbicacionTiempoRealScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.event_available_outlined,
-                          title: 'Agenda / citas',
-                          subtitle: 'Disponibilidad, horarios y visitas.',
-                          onTap: () => _go(const AgendaScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.history,
-                          title: 'Historial de servicios',
-                          subtitle: 'Registros y cierres de investigaciones.',
-                          onTap: () => _go(const HistorialScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.attach_money,
-                          title: 'Ingresos / comisiones',
-                          subtitle: 'Resumen, pagos y facturación.',
-                          onTap: () => _go(const IngresosScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.star_outline,
-                          title: 'Calificaciones',
-                          subtitle: 'Promedio y comentarios.',
-                          onTap: () => _go(const CalificacionesScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.notifications_none,
-                          title: 'Notificaciones',
-                          subtitle: 'Nuevas asignaciones y alertas.',
-                          onTap: () => _go(const NotificacionesScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.settings_outlined,
-                          title: 'Configuración',
-                          subtitle: 'Cuenta, privacidad y preferencias.',
-                          onTap: () => _go(const ConfiguracionScreen()),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.support_agent_outlined,
-                          title: 'Soporte técnico',
-                          subtitle: 'Ayuda técnica y soporte.',
-                          onTap: () => _go(const SoporteScreen()),
-                        ),
+_sectionHeader(
+  'Base común',
+  subtitle: 'Módulos obligatorios para todos los socios.',
+),
+_tile(
+  icon: Icons.verified_user_outlined,
+  title: 'Perfil profesional verificado',
+  subtitle: 'Datos, foto, documentos y verificación.',
+  onTap: () => _go(const PerfilVerificadoScreen()),
+),
+const SizedBox(height: 10),
+_tile(
+  icon: Icons.history,
+  title: 'Historial de servicios',
+  subtitle: 'Registros y cierres de investigaciones.',
+  onTap: () => _go(const HistorialScreen()),
+),
+const SizedBox(height: 10),
+_tile(
+  icon: Icons.attach_money,
+  title: 'Ingresos / comisiones',
+  subtitle: 'Resumen, pagos y facturación.',
+  onTap: () => _go(const IngresosScreen()),
+),
+const SizedBox(height: 10),
+_tile(
+  icon: Icons.star_outline,
+  title: 'Calificaciones',
+  subtitle: 'Promedio y comentarios.',
+  onTap: () => _go(const CalificacionesScreen()),
+),
+const SizedBox(height: 10),
+_tile(
+  icon: Icons.notifications_none,
+  title: 'Notificaciones',
+  subtitle: 'Nuevas asignaciones y alertas.',
+  onTap: () => _go(const NotificacionesScreen()),
+),
+const SizedBox(height: 10),
+_tile(
+  icon: Icons.settings_outlined,
+  title: 'Configuración',
+  subtitle: 'Cuenta, privacidad y preferencias.',
+  onTap: () => _go(const ConfiguracionScreen()),
+),
+const SizedBox(height: 10),
+_tile(
+  icon: Icons.support_agent_outlined,
+  title: 'Soporte técnico',
+  subtitle: 'Ayuda técnica y soporte.',
+  onTap: () => _go(const SoporteScreen()),
+),
 
                         // ✅ MÓDULOS INVESTIGADOR
                         _sectionHeader(
@@ -467,4 +469,3 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     );
   }
 }
-

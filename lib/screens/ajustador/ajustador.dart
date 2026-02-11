@@ -9,20 +9,22 @@ import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import '../localizacion.dart';
 
-  
 class PanelAjustadorScreen extends StatefulWidget {
   final int ajustadorId;
   const PanelAjustadorScreen({
-      super.key,
-      required this.ajustadorId, // 🔹 Constructor con parámetro requerido
-    });
-  
+    super.key,
+    required this.ajustadorId,
+  });
+
   @override
   State<PanelAjustadorScreen> createState() => _PanelAjustadorScreenState();
 }
 
 class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
+  String estado = 'Disponible';
+
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
@@ -239,7 +241,7 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // HERO
+                        // HERO CARD
                         _card(
                           child: Row(
                             children: [
@@ -249,11 +251,9 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border:
-                                      Border.all(color: gold.withOpacity(.20)),
+                                  border: Border.all(color: gold.withOpacity(.20)),
                                 ),
-                                child: Icon(Icons.assignment_outlined,
-                                    color: gold),
+                                child: Icon(Icons.assignment_outlined, color: gold),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
@@ -283,6 +283,40 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           ),
                         ),
 
+                        // BOTONES DE ESTADO
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ChoiceChip(
+                              label: const Text("Disponible"),
+                              selected: estado == "Disponible",
+                              onSelected: (_) => setState(() => estado = "Disponible"),
+                              selectedColor: Colors.green.withOpacity(.3),
+                              backgroundColor: Colors.white.withOpacity(.1),
+                              labelStyle: const TextStyle(color: Colors.white),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text("Ocupado"),
+                              selected: estado == "Ocupado",
+                              onSelected: (_) => setState(() => estado = "Ocupado"),
+                              selectedColor: Colors.orange.withOpacity(.3),
+                              backgroundColor: Colors.white.withOpacity(.1),
+                              labelStyle: const TextStyle(color: Colors.white),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text("En proceso"),
+                              selected: estado == "En proceso",
+                              onSelected: (_) => setState(() => estado = "En proceso"),
+                              selectedColor: Colors.blue.withOpacity(.3),
+                              backgroundColor: Colors.white.withOpacity(.1),
+                              labelStyle: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+
                         // ACCIONES RÁPIDAS
                         _sectionHeader('Acciones rápidas'),
                         Row(
@@ -300,9 +334,12 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
-                              icon: Icons.notifications_none,
-                              label: 'Alertas',
-                              onTap: () => _go(const NotificacionesScreen()),
+                              icon: Icons.location_on_outlined,
+                              label: 'Ubicación',
+                              onTap: () => _go(LocalizacionPanel(
+                                idProfesional: widget.ajustadorId,
+                                perfil: "Ajustadores",
+                              )),
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
@@ -313,12 +350,11 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           ],
                         ),
 
-                        // MÓDULOS
+                        // MÓDULOS DEL AJUSTADOR
                         _sectionHeader(
                           'Gestión del ajustador',
                           subtitle: 'Acceso a tus módulos principales.',
                         ),
-
                         _tile(
                           icon: Icons.event_available_outlined,
                           title: 'Agenda',
@@ -326,7 +362,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const AgendaScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.history,
                           title: 'Historial',
@@ -334,7 +369,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const HistorialScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.attach_money,
                           title: 'Ingresos',
@@ -342,7 +376,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const IngresosScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.star_outline,
                           title: 'Calificaciones',
@@ -350,7 +383,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const CalificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.notifications_none,
                           title: 'Notificaciones',
@@ -358,7 +390,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const NotificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.verified_user_outlined,
                           title: 'Perfil profesional',
@@ -366,7 +397,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const PerfilVerificadoScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.settings_outlined,
                           title: 'Configuración',
@@ -374,7 +404,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           onTap: () => _go(const ConfiguracionScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.support_agent_outlined,
                           title: 'Soporte',

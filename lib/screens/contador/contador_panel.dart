@@ -3,7 +3,11 @@ import 'contador_dashboard.dart';
 import 'contador_casos.dart';
 import 'contador_perfil.dart';
 import 'api_service_contador.dart'; // Servicio de contador
-import '../common/ui_helpers.dart'; // Helpers compartidos
+import '../ui_helpers.dart'; // Helpers compartidos
+import '../universal_panel_layout.dart';
+import '../universal_menu.dart';
+import '../universal_location_button.dart';
+import '../localizacion.dart';
 
 class ContadorPanel extends StatefulWidget {
   final int? idContador; // 👈 opcional
@@ -23,6 +27,8 @@ class _ContadorPanelState extends State<ContadorPanel> {
   bool _isLoading = true;
   String? _error;
 
+  Map<String, dynamic>? _perfil; // 👈 aquí guardamos el perfil completo
+
   @override
   void initState() {
     super.initState();
@@ -37,18 +43,19 @@ class _ContadorPanelState extends State<ContadorPanel> {
 
   Future<void> _fetchPerfil(int id) async {
     try {
-      final data = await ApiServiceContador.obtenerPerfil(id);
+      final perfil = await ApiServiceContador.obtenerPerfil(id);
 
-      if (data["success"] == true) {
+      if (perfil.isNotEmpty) {
         setState(() {
-          _activo = data["activo"] == 1;
-          _verificado = data["verificado"] == 1;
-          _rating = data["rating"] ?? 0;
+          _perfil = perfil;
+          _activo = perfil["estado"] == "disponible";
+          _verificado = perfil["verificado"] == 1;
+          _rating = perfil["rating"] ?? 0;
           _isLoading = false;
         });
       } else {
         setState(() {
-          _error = data["mensaje"] ?? "No se pudo cargar el perfil";
+          _error = "No se pudo cargar el perfil";
           _isLoading = false;
         });
       }
@@ -62,7 +69,6 @@ class _ContadorPanelState extends State<ContadorPanel> {
 
   Future<void> _fetchNotificaciones(int id) async {
     try {
-      // 🔹 Aquí podrías conectar a tu API real de notificaciones
       setState(() {
         _notificaciones = 3; // Ejemplo de prueba
       });
@@ -85,8 +91,6 @@ class _ContadorPanelState extends State<ContadorPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final gold = const Color(0xFFD4AF37);
-
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFF121212),
@@ -95,189 +99,174 @@ class _ContadorPanelState extends State<ContadorPanel> {
     }
 
     if (_error != null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF121212),
-        body: Center(child: Text("❌ Error", style: TextStyle(color: Colors.white))),
+      return Scaffold(
+        backgroundColor: const Color(0xFF121212),
+        body: Center(
+          child: Text(
+            "❌ Error: $_error",
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212), // 🔹 Fondo oscuro
-      appBar: AppBar(
-        title: const Text('Panel de Contadores'),
-        backgroundColor: gold,
-        elevation: 6,
-        actions: [
-          // ⭐ Calificación dinámica
-          Row(
-            children: List.generate(5, (index) {
-              return Icon(
-                index < _rating ? Icons.star : Icons.star_border,
-                color: Colors.amber,
-              );
-            }),
+    return UniversalPanelLayout(
+      titulo: "Portal • Contador",
+      accionesAppBar: [
+        IconButton(
+          tooltip: 'Configuración',
+          icon: const Icon(Icons.settings),
+          onPressed: () {
+            // Aquí puedes abrir pantalla de configuración
+          },
+        ),
+        UniversalMenu(
+          onSelected: (value) {
+            if (value == 'cerrar') {
+              Navigator.pushReplacementNamed(context, '/login');
+            }
+          },
+        ),
+      ],
+      children: [
+        // 👤 Encabezado con perfil
+        ListTile(
+          leading: const CircleAvatar(
+            backgroundColor: Colors.blueGrey,
+            child: Icon(Icons.person, color: Colors.white),
           ),
-          const SizedBox(width: 16),
-
-          // 🔘 Switch Activo/Desactivo
-          Row(
+          title: Text(_perfil?["nombre"] ?? "Contador"),
+          subtitle: Text(_activo ? "Disponible" : "No disponible"),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Activo", style: TextStyle(color: Colors.white)),
-              Switch(
-                value: _activo,
-                activeColor: Colors.green,
-                inactiveThumbColor: Colors.red,
-                onChanged: (value) async {
-                  setState(() {
-                    _activo = value;
-                  });
-                  _toast(value
-                      ? "Contador activado: recibirá casos y aparecerá en el mapa"
-                      : "Contador desactivado: no recibirá casos ni aparecerá en el mapa");
-                },
+              // ⭐ Rating
+              Row(
+                children: List.generate(5, (index) {
+                  return Icon(
+                    index < _rating ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                  );
+                }),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                _verificado ? Icons.verified : Icons.error,
+                color: _verificado ? Colors.greenAccent : Colors.redAccent,
               ),
             ],
           ),
-          const SizedBox(width: 16),
+        ),
+        const Divider(),
 
-          // ✅ Verificación
-          Icon(
-            _verificado ? Icons.verified : Icons.error,
-            color: _verificado ? Colors.greenAccent : Colors.redAccent,
-          ),
-          const SizedBox(width: 8),
-
-          // 🔔 Notificaciones con badge
-          Stack(
+        // 🔹 Acciones rápidas
+        UiHelpers.sectionHeader(context, "Acciones rápidas"),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 90,
+          child: Row(
             children: [
-              const Icon(Icons.notifications, color: Colors.white),
-              if (_notificaciones > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: CircleAvatar(
-                    radius: 8,
-                    backgroundColor: Colors.red,
-                    child: Text(
-                      '$_notificaciones',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.dashboard,
+                label: "Dashboard",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ContadorDashboard(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.folder,
+                label: "Casos",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ContadorCasos(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.description,
+                label: "Documentos",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ContadorDashboard(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.person,
+                label: "Perfil",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ContadorPerfil(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.location_on_outlined,
+                label: "Ubicación",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LocalizacionPanel(
+                      idProfesional: widget.idContador ?? 0,
+                      perfil: "Contadores",
                     ),
                   ),
                 ),
+              ),
             ],
           ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            sectionHeader(context, "Acciones rápidas"),
-            const SizedBox(height: 16),
-
-            // 🔹 Primera fila
-            Row(
-              children: [
-                Expanded(
-                  child: card(context,
-                    color: const Color(0xFF1E1E1E), // 🔹 Tarjeta oscura
-                    child: tile(context,
-                      icon: Icons.dashboard,
-                      title: "Dashboard",
-                      subtitle: "Resumen general",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContadorDashboard(
-                              idContador: widget.idContador ?? 0,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: card(context,
-                    color: const Color(0xFF1E1E1E),
-                    child: tile(context,
-                      icon: Icons.folder,
-                      title: "Casos",
-                      subtitle: "Gestión de casos",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContadorCasos(
-                              idContador: widget.idContador ?? 0,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // 🔹 Segunda fila
-            Row(
-              children: [
-                Expanded(
-                  child: card(context,
-                    color: const Color(0xFF1E1E1E),
-                    child: tile(context,
-                      icon: Icons.description,
-                      title: "Documentos",
-                      subtitle: "Tickets y archivos",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContadorDashboard(
-                              idContador: widget.idContador ?? 0,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: card(context,
-                    color: const Color(0xFF1E1E1E),
-                    child: tile(context,
-                      icon: Icons.person,
-                      title: "Perfil",
-                      subtitle: "Información personal",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ContadorPerfil(
-                              idContador: widget.idContador ?? 0,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ),
-      ),
+
+        const Divider(),
+
+        // 🔹 Sección base común
+        UiHelpers.sectionHeader(context, "Base común", subtitle: "Módulos obligatorios"),
+        UiHelpers.tile(
+          context,
+          icon: Icons.attach_money,
+          title: "Ingresos",
+          subtitle: "Comisiones acumuladas",
+          onTap: () {
+            // Aquí abrir pantalla de ingresos
+          },
+        ),
+        const SizedBox(height: 12),
+        UiHelpers.tile(
+          context,
+          icon: Icons.notifications,
+          title: "Notificaciones",
+          subtitle: "Avisos y alertas ($_notificaciones)",
+          onTap: () {
+            _toast("Tienes $_notificaciones notificaciones pendientes");
+          },
+        ),
+
+        const SizedBox(height: 20),
+        if (_perfil?["latitud"] != null && _perfil?["longitud"] != null)
+          UniversalLocationButton(
+            idProfesional: widget.idContador ?? 0,
+            lat: _perfil!["latitud"],
+            lng: _perfil!["longitud"],
+          ),
+
+        const SizedBox(height: 20),
+        Text(
+          'Tip: Mantén tu perfil y estado actualizados para recibir más casos.',
+          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(.65)),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

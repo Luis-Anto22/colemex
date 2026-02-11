@@ -5,114 +5,153 @@ import 'agente_perfil.dart';
 import 'agente_notificaciones.dart';
 import 'agente_calificaciones.dart';
 import 'agente_casos.dart';
-import 'widgets/agente_menu.dart';
+
+import '../universal_panel_layout.dart';
+import '../ui_helpers.dart';
+import '../universal_menu.dart'; // 🔹 Menú universal
+import '../localizacion.dart'; // 🔹 Panel de localización
 
 class AgentePanel extends StatelessWidget {
   final int? idAgente;
 
   const AgentePanel({super.key, this.idAgente});
 
+  void _go(BuildContext context, Widget screen) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text("Portal Agente Crediticio"),
-        backgroundColor: Colors.blueGrey[700],
-        elevation: 2,
-      ),
-      drawer: AgenteMenu(idAgente: idAgente),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return UniversalPanelLayout(
+      titulo: "Portal • Agente Crediticio",
+      accionesAppBar: [
+        IconButton(
+          tooltip: 'Notificaciones',
+          onPressed: () => _go(context, AgenteNotificaciones(idAgente: idAgente)),
+          icon: const Icon(Icons.notifications_none),
+        ),
+        UniversalMenu(
+          onSelected: (value) {
+            if (value == 'cerrar') {
+              Navigator.pushReplacementNamed(context, '/login');
+            } else if (value == 'configuracion') {
+              // Abrir pantalla de configuración
+            }
+          },
+        ),
+      ],
+      children: [
+        // ---------------- ACCIONES RÁPIDAS ----------------
+        UiHelpers.sectionHeader(
+          context,
+          "Acciones rápidas",
+          subtitle: "Accede rápidamente a tus herramientas principales.",
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const SizedBox(height: 20),
-            Text(
-              "Bienvenido Agente",
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blueGrey[800],
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
-
-            // Botón Dashboard
-            _buildButton(
+            UiHelpers.quickAction(
               context,
-              icon: Icons.dashboard,
-              label: "Dashboard",
-              screen: AgenteDashboard(idAgente: idAgente),
+              icon: Icons.assignment,
+              label: "Solicitudes",
+              onTap: () {
+                // lógica de solicitudes
+              },
             ),
-
-            // Botón Clientes
-            _buildButton(
+            UiHelpers.quickAction(
               context,
-              icon: Icons.people,
-              label: "Clientes",
-              screen: AgenteClientes(idAgente: idAgente),
+              icon: Icons.location_on_outlined,
+              label: "Ubicación",
+              onTap: () => _go(
+                context,
+                LocalizacionPanel(
+                  idProfesional: idAgente,
+                  perfil: "Agentes crediticios",
+                ),
+              ),
             ),
-
-            // Botón Perfil
-            _buildButton(
+            UiHelpers.quickAction(
               context,
-              icon: Icons.person,
-              label: "Perfil",
-              screen: AgentePerfil(idAgente: idAgente),
+              icon: Icons.calendar_today,
+              label: "Agenda",
+              onTap: () {
+                // lógica de agenda
+              },
             ),
-
-            // Botón Notificaciones
-            _buildButton(
+            UiHelpers.quickAction(
               context,
-              icon: Icons.notifications,
-              label: "Notificaciones",
-              screen: AgenteNotificaciones(idAgente: idAgente),
-            ),
-
-            // Botón Calificaciones
-            _buildButton(
-              context,
-              icon: Icons.star,
-              label: "Calificaciones",
-              screen: AgenteCalificaciones(idAgente: idAgente),
-            ),
-
-            // Botón Casos
-            _buildButton(
-              context,
-              icon: Icons.folder,
-              label: "Casos",
-              screen: AgenteCasos(idAgente: idAgente),
+              icon: Icons.headset_mic,
+              label: "Soporte",
+              onTap: () {
+                // lógica de soporte
+              },
             ),
           ],
         ),
-      ),
-    );
-  }
 
-  Widget _buildButton(BuildContext context,
-      {required IconData icon, required String label, required Widget screen}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blueGrey[600],
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+        const SizedBox(height: 20),
+
+        // ---------------- BASE COMÚN ----------------
+        UiHelpers.sectionHeader(
+          context,
+          "Base común",
+          subtitle: "Módulos obligatorios para todos los socios.",
         ),
-        icon: Icon(icon),
-        label: Text(label),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => screen),
-          );
-        },
-      ),
+        UiHelpers.tile(
+          context,
+          icon: Icons.dashboard,
+          title: "Dashboard",
+          subtitle: "Resumen de actividad y métricas.",
+          onTap: () => _go(context, AgenteDashboard(idAgente: idAgente)),
+        ),
+        const SizedBox(height: 12),
+
+        UiHelpers.tile(
+          context,
+          icon: Icons.people,
+          title: "Clientes",
+          subtitle: "Lista de clientes asignados.",
+          onTap: () => _go(context, AgenteClientes(idAgente: idAgente)),
+        ),
+        const SizedBox(height: 12),
+
+        UiHelpers.tile(
+          context,
+          icon: Icons.person,
+          title: "Perfil",
+          subtitle: "Información profesional y documentos.",
+          onTap: () => _go(context, AgentePerfil(idAgente: idAgente)),
+        ),
+        const SizedBox(height: 12),
+
+        UiHelpers.tile(
+          context,
+          icon: Icons.star,
+          title: "Calificaciones",
+          subtitle: "Evaluaciones y comentarios recibidos.",
+          onTap: () => _go(context, AgenteCalificaciones(idAgente: idAgente)),
+        ),
+        const SizedBox(height: 12),
+
+        UiHelpers.tile(
+          context,
+          icon: Icons.folder,
+          title: "Casos",
+          subtitle: "Gestión de expedientes y seguimientos.",
+          onTap: () => _go(context, AgenteCasos(idAgente: idAgente)),
+        ),
+
+        const SizedBox(height: 20),
+        Text(
+          'Tip: Mantén tu perfil y ubicación actualizados para recibir más asignaciones.',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withOpacity(.65),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

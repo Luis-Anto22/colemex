@@ -45,7 +45,7 @@ class DetalleProfesionalScreen extends StatelessWidget {
                 _infoRow("Correo", profesional.correo),
                 _infoRow("Teléfono", profesional.telefono),
                 _infoRow("Perfil", profesional.perfil),
-                _infoRow("Especialidad", profesional.especialidad),
+                _infoRow("Especialidad", profesional.especialidadNombre ?? ""),
                 _infoRow("Ciudad", profesional.ciudad),
                 _infoRow("Estado", profesional.estado),
                 _infoRow("Verificado", profesional.verificado == 1 ? "Sí" : "No"),

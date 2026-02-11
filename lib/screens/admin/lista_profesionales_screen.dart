@@ -49,7 +49,7 @@ class _ListaProfesionalesScreenState extends State<ListaProfesionalesScreen> {
       _filteredProfesionales = _profesionales.where((p) {
         return p.nombre.toLowerCase().contains(query) ||
                p.correo.toLowerCase().contains(query) ||
-               p.especialidad.toLowerCase().contains(query) ||
+               (p.especialidadNombre ?? '').toLowerCase().contains(query) ||
                p.ciudad.toLowerCase().contains(query) ||
                p.perfil.toLowerCase().contains(query);
       }).toList();
@@ -137,7 +137,11 @@ class _ListaProfesionalesScreenState extends State<ListaProfesionalesScreen> {
                                   ),
                                   title: Text(profesional.nombre),
                                   subtitle: Text(
-                                    "${profesional.correo}\nTel: ${profesional.telefono}\nPerfil: ${profesional.perfil}\nEsp: ${profesional.especialidad}\nCiudad: ${profesional.ciudad}",
+                                    "${profesional.correo}\n"
+                                    "Tel: ${profesional.telefono}\n"
+                                    "Perfil: ${profesional.perfil}\n"
+                                    "Esp: ${profesional.especialidadNombre ?? 'N/A'}\n"
+                                    "Ciudad: ${profesional.ciudad}",
                                   ),
                                   isThreeLine: true,
                                   trailing: Row(

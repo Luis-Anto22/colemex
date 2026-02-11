@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // comunes
-import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
+import '../localizacion.dart';
 import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
 import 'package:advocatus/screens/common/historial/historial_screen.dart';
 import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
@@ -393,13 +393,16 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                 onTap: () => _go(
                                     const SolicitudesAvaluoScreen()),
                               ),
-                              const SizedBox(width: 10),
                               _quickAction(
                                 icon: Icons
                                     .location_on_outlined,
                                 label: 'Ubicación',
                                 onTap: () => _go(
-                                    const UbicacionTiempoRealScreen()),
+                                    LocalizacionPanel(
+                                      idProfesional: widget.valuadorId,
+                                      perfil: "valuador",
+                                    )
+                                  ),
                               ),
                               const SizedBox(width: 10),
                               _quickAction(

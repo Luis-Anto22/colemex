@@ -120,6 +120,7 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
     }
 
 
+    
     setState(() {
       cargando = true;
       mensaje = '';
