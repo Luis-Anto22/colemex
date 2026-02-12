@@ -3,7 +3,12 @@ import '../../../services/api_client.dart';
 import '../../../services/valuador_api.dart';
 
 class AvaluosInmobiliariosScreen extends StatefulWidget {
-  const AvaluosInmobiliariosScreen({super.key});
+  final int valuadorId;
+
+  const AvaluosInmobiliariosScreen({
+    super.key,
+    required this.valuadorId,
+  });
 
   @override
   State<AvaluosInmobiliariosScreen> createState() =>
@@ -12,7 +17,6 @@ class AvaluosInmobiliariosScreen extends StatefulWidget {
 
 class _AvaluosInmobiliariosScreenState
     extends State<AvaluosInmobiliariosScreen> {
-  final int valuadorId = 1; // TODO: real
   late final ValuadorApi api;
   late Future<List<dynamic>> future;
 
@@ -20,12 +24,12 @@ class _AvaluosInmobiliariosScreenState
   void initState() {
     super.initState();
     api = ValuadorApi(ApiClient());
-    future = api.getAvaluos(valuadorId);
+    future = api.getAvaluos(widget.valuadorId);
   }
 
   Future<void> _reload() async {
     setState(() {
-      future = api.getAvaluos(valuadorId);
+      future = api.getAvaluos(widget.valuadorId);
     });
   }
 
@@ -45,7 +49,7 @@ class _AvaluosInmobiliariosScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: estado,
+              initialValue: estado,
               items: const [
                 DropdownMenuItem(
                     value: 'en proceso', child: Text('En proceso')),
@@ -61,8 +65,7 @@ class _AvaluosInmobiliariosScreenState
               controller: valorCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration:
-                  const InputDecoration(labelText: 'Valor estimado'),
+              decoration: const InputDecoration(labelText: 'Valor estimado'),
             ),
             TextField(
               controller: notasCtrl,
@@ -87,15 +90,19 @@ class _AvaluosInmobiliariosScreenState
     if (ok != true) return;
 
     try {
-      final valor =
-          double.tryParse(valorCtrl.text.trim().replaceAll(',', ' '));
+      // ✅ Soporta valores con coma decimal: "123,45"
+      final valor = double.tryParse(
+        valorCtrl.text.trim().replaceAll(',', '.'),
+      );
+
       await api.guardarAvaluo(
-        valuadorId: valuadorId,
+        valuadorId: widget.valuadorId,
         casoId: casoId,
         estado: estado,
         valorEstimado: valor,
         notas: notasCtrl.text.trim(),
       );
+
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Avalúo guardado')));
@@ -144,9 +151,11 @@ class _AvaluosInmobiliariosScreenState
                 return Card(
                   child: ListTile(
                     title: Text(
-                        'Caso #$casoId • ${(a['titulo'] ?? 'Sin título').toString()}'),
+                      'Caso #$casoId • ${(a['titulo'] ?? 'Sin título').toString()}',
+                    ),
                     subtitle: Text(
-                        'Estado: ${(a['estado'] ?? '').toString()} • Valor: ${(a['valor_estimado'] ?? '—').toString()}'),
+                      'Estado: ${(a['estado'] ?? '').toString()} • Valor: ${(a['valor_estimado'] ?? '—').toString()}',
+                    ),
                     trailing: const Icon(Icons.edit),
                     onTap: () => _editar(a),
                   ),
