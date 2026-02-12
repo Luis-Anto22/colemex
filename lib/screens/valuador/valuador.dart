@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // comunes
-import '../localizacion.dart';
+import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
 import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
 import 'package:advocatus/screens/common/historial/historial_screen.dart';
 import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
@@ -391,18 +391,17 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                     Icons.assignment_outlined,
                                 label: 'Solicitudes',
                                 onTap: () => _go(
-                                    const SolicitudesAvaluoScreen()),
+                                    SolicitudesAvaluoScreen(
+                                      valuadorId: widget.valuadorId,
+                                    )),
                               ),
+                              const SizedBox(width: 10),
                               _quickAction(
                                 icon: Icons
                                     .location_on_outlined,
                                 label: 'Ubicación',
                                 onTap: () => _go(
-                                    LocalizacionPanel(
-                                      idProfesional: widget.valuadorId,
-                                      perfil: "valuador",
-                                    )
-                                  ),
+                                    const UbicacionTiempoRealScreen()),
                               ),
                               const SizedBox(width: 10),
                               _quickAction(
@@ -437,6 +436,14 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                 'Completa datos, documentos y validación.',
                             onTap: () => _go(
                                 const PerfilVerificadoScreen()),
+                          ),
+                          const SizedBox(height: 10),
+                          _tile(
+                            icon: Icons.location_on_outlined,
+                            title: 'Ubicación en tiempo real',
+                            subtitle: 'Comparte ubicación cuando estés activo.',
+                            onTap: () => _go(
+                                const UbicacionTiempoRealScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
@@ -521,7 +528,9 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                             subtitle:
                                 'Aceptar o rechazar solicitudes.',
                             onTap: () => _go(
-                                const SolicitudesAvaluoScreen()),
+                                SolicitudesAvaluoScreen(
+                                  valuadorId: widget.valuadorId,
+                                )),
                           ),
                           const SizedBox(height: 10),
                           _tile(
@@ -532,7 +541,9 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                             subtitle:
                                 'Casas, terrenos y edificios.',
                             onTap: () => _go(
-                                const AvaluosInmobiliariosScreen()),
+                                AvaluosInmobiliariosScreen(
+                                  valuadorId: widget.valuadorId,
+                                )),
                           ),
                           const SizedBox(height: 10),
                           _tile(
@@ -543,7 +554,9 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                             subtitle:
                                 'Generar y subir documentos.',
                             onTap: () => _go(
-                                const DictamenesReportesScreen()),
+                                DictamenesReportesScreen(
+                                  valuadorId: widget.valuadorId,
+                                )),
                           ),
                           const SizedBox(height: 10),
                           _tile(
@@ -554,7 +567,9 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                             subtitle:
                                 'Fotos del inmueble.',
                             onTap: () => _go(
-                                const EvidenciaFotograficaScreen()),
+                                EvidenciaFotograficaScreen(
+                                  valuadorId: widget.valuadorId,
+                                )),
                           ),
 
                           const SizedBox(height: 12),
