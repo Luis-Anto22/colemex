@@ -3,33 +3,55 @@ import '../../../services/api_client.dart';
 import '../../../services/investigador_api.dart';
 
 class BitacoraScreen extends StatefulWidget {
-  const BitacoraScreen({super.key});
+  final int investigadorId;
+  final int? casoId;
+
+  const BitacoraScreen({
+    super.key,
+    required this.investigadorId,
+    this.casoId,
+  });
 
   @override
   State<BitacoraScreen> createState() => _BitacoraScreenState();
 }
 
 class _BitacoraScreenState extends State<BitacoraScreen> {
-  final int investigadorId = 1; // TODO: real
-  final int casoId = 1;         // TODO: real (por ahora fijo)
-
   late final InvestigadorApi api;
-  late Future<List<dynamic>> future;
+  Future<List<dynamic>>? futureBitacora;
+  Future<List<dynamic>>? futureCasos;
+  int? casoSeleccionado;
 
   @override
   void initState() {
     super.initState();
     api = InvestigadorApi(ApiClient());
-    future = api.getBitacora(casoId);
+    if (widget.casoId != null) {
+      casoSeleccionado = widget.casoId;
+      futureBitacora = api.getBitacora(casoSeleccionado!);
+    } else {
+      futureCasos = api.getCasos(widget.investigadorId);
+    }
   }
 
   Future<void> _reload() async {
     setState(() {
-      future = api.getBitacora(casoId);
+      if (casoSeleccionado != null) {
+        futureBitacora = api.getBitacora(casoSeleccionado!);
+      } else if (widget.casoId == null) {
+        futureCasos = api.getCasos(widget.investigadorId);
+      }
     });
   }
 
   Future<void> _agregarNota() async {
+    if (casoSeleccionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona un caso primero')),
+      );
+      return;
+    }
+
     final notaCtrl = TextEditingController();
     String estado = 'en proceso';
 
@@ -47,12 +69,10 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: estado,
+              initialValue: estado,
               items: const [
-                DropdownMenuItem(
-                    value: 'en proceso', child: Text('En proceso')),
-                DropdownMenuItem(
-                    value: 'finalizado', child: Text('Finalizado')),
+                DropdownMenuItem(value: 'en proceso', child: Text('En proceso')),
+                DropdownMenuItem(value: 'finalizado', child: Text('Finalizado')),
               ],
               onChanged: (v) => estado = v ?? 'en proceso',
               decoration: const InputDecoration(labelText: 'Estado del caso'),
@@ -76,8 +96,8 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
 
     try {
       await api.agregarNota(
-        casoId: casoId,
-        profesionalId: investigadorId,
+        casoId: casoSeleccionado!,
+        profesionalId: widget.investigadorId,
         nota: notaCtrl.text.trim(),
         estado: estado,
       );
@@ -92,11 +112,110 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
     }
   }
 
+  Widget _buildSelector() {
+    return FutureBuilder<List<dynamic>>(
+      future: futureCasos,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(12),
+            child: LinearProgressIndicator(),
+          );
+        }
+        if (snap.hasError) {
+          return Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text('Error: ${snap.error}'),
+          );
+        }
+
+        final casos = snap.data ?? [];
+        if (casos.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(12),
+            child: Text('No hay casos para seleccionar.'),
+          );
+        }
+
+        final items = casos.map<DropdownMenuItem<int>>((c) {
+          final id = int.tryParse(c['id'].toString()) ?? 0;
+          final titulo = (c['titulo'] ?? 'Sin titulo').toString();
+          return DropdownMenuItem(
+            value: id,
+            child: Text('Caso #$id · $titulo'),
+          );
+        }).toList();
+
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: DropdownButtonFormField<int>(
+            initialValue: casoSeleccionado,
+            items: items,
+            onChanged: (v) {
+              if (v == null) return;
+              setState(() {
+                casoSeleccionado = v;
+                futureBitacora = api.getBitacora(v);
+              });
+            },
+            decoration: const InputDecoration(
+              labelText: 'Selecciona un caso',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBitacora() {
+    if (casoSeleccionado == null) {
+      return const Center(child: Text('Selecciona un caso.'));
+    }
+
+    return FutureBuilder<List<dynamic>>(
+      future: futureBitacora,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return Center(child: Text('Error: ${snap.error}'));
+        }
+
+        final items = snap.data ?? [];
+        if (items.isEmpty) {
+          return const Center(child: Text('Sin notas todavia.'));
+        }
+
+        return RefreshIndicator(
+          onRefresh: _reload,
+          child: ListView.separated(
+            padding: const EdgeInsets.all(12),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, i) {
+              final b = items[i] as Map<String, dynamic>;
+              return Card(
+                child: ListTile(
+                  title: Text((b['nota'] ?? '').toString()),
+                  subtitle: Text(
+                    'Estado: ${(b['estado'] ?? '').toString()} · ${(b['creado_en'] ?? '').toString()}',
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bitácora'),
+        title: const Text('Bitacora'),
         actions: [
           IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
         ],
@@ -105,40 +224,11 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
         onPressed: _agregarNota,
         child: const Icon(Icons.note_add),
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: future,
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snap.hasError) {
-            return Center(child: Text('Error: ${snap.error}'));
-          }
-
-          final items = snap.data ?? [];
-          if (items.isEmpty) {
-            return const Center(child: Text('Sin notas todavía.'));
-          }
-
-          return RefreshIndicator(
-            onRefresh: _reload,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final b = items[i] as Map<String, dynamic>;
-                return Card(
-                  child: ListTile(
-                    title: Text((b['nota'] ?? '').toString()),
-                    subtitle: Text(
-                        'Estado: ${(b['estado'] ?? '').toString()} • ${(b['creado_en'] ?? '').toString()}'),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+      body: Column(
+        children: [
+          if (widget.casoId == null) _buildSelector(),
+          Expanded(child: _buildBitacora()),
+        ],
       ),
     );
   }
