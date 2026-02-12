@@ -71,7 +71,6 @@ class _PanelClienteState extends State<PanelCliente> {
         MaterialPageRoute(
           builder: (context) => PanelClienteUI(
             nombreUsuario: nombreUsuario,
-            listaCasos: listaCasos,
           ),
         ),
       );
