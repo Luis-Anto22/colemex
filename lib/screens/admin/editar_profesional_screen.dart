@@ -5,7 +5,7 @@ import 'profesional.dart';
 class EditarProfesionalScreen extends StatefulWidget {
   final Profesional profesional;
 
-  const EditarProfesionalScreen({Key? key, required this.profesional}) : super(key: key);
+  const EditarProfesionalScreen({super.key, required this.profesional});
 
   @override
   State<EditarProfesionalScreen> createState() => _EditarProfesionalScreenState();
@@ -157,7 +157,7 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _perfilSeleccionado,
+                initialValue: _perfilSeleccionado,
                 items: perfiles.map((perfil) {
                   return DropdownMenuItem(value: perfil, child: Text(perfil));
                 }).toList(),
@@ -177,7 +177,7 @@ class _EditarProfesionalScreenState extends State<EditarProfesionalScreen> {
               // Solo aparece si el perfil es Abogados
               if (_perfilSeleccionado == 'Abogados') ...[
                 DropdownButtonFormField<int>(
-                  value: _especialidadSeleccionada,
+                  initialValue: _especialidadSeleccionada,
                   items: especialidades.map((esp) {
                     return DropdownMenuItem<int>(
                       value: esp["id"],

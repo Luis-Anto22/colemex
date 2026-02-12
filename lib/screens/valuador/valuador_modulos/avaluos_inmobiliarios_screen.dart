@@ -7,7 +7,7 @@ class AvaluosInmobiliariosScreen extends StatefulWidget {
 
   const AvaluosInmobiliariosScreen({
     super.key,
-    required this.valuadorId,
+    this.valuadorId = 1,
   });
 
   @override
@@ -65,7 +65,8 @@ class _AvaluosInmobiliariosScreenState
               controller: valorCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Valor estimado'),
+              decoration:
+                  const InputDecoration(labelText: 'Valor estimado'),
             ),
             TextField(
               controller: notasCtrl,
@@ -90,11 +91,8 @@ class _AvaluosInmobiliariosScreenState
     if (ok != true) return;
 
     try {
-      // ✅ Soporta valores con coma decimal: "123,45"
-      final valor = double.tryParse(
-        valorCtrl.text.trim().replaceAll(',', '.'),
-      );
-
+      final valor =
+          double.tryParse(valorCtrl.text.trim().replaceAll(',', ' '));
       await api.guardarAvaluo(
         valuadorId: widget.valuadorId,
         casoId: casoId,
@@ -102,7 +100,6 @@ class _AvaluosInmobiliariosScreenState
         valorEstimado: valor,
         notas: notasCtrl.text.trim(),
       );
-
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Avalúo guardado')));
@@ -151,11 +148,9 @@ class _AvaluosInmobiliariosScreenState
                 return Card(
                   child: ListTile(
                     title: Text(
-                      'Caso #$casoId • ${(a['titulo'] ?? 'Sin título').toString()}',
-                    ),
+                        'Caso #$casoId • ${(a['titulo'] ?? 'Sin título').toString()}'),
                     subtitle: Text(
-                      'Estado: ${(a['estado'] ?? '').toString()} • Valor: ${(a['valor_estimado'] ?? '—').toString()}',
-                    ),
+                        'Estado: ${(a['estado'] ?? '').toString()} • Valor: ${(a['valor_estimado'] ?? '—').toString()}'),
                     trailing: const Icon(Icons.edit),
                     onTap: () => _editar(a),
                   ),

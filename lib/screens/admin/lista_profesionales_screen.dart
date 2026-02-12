@@ -7,7 +7,7 @@ import 'editar_profesional_screen.dart';
 import 'registrar_profesional_screen.dart';
 
 class ListaProfesionalesScreen extends StatefulWidget {
-  const ListaProfesionalesScreen({Key? key}) : super(key: key);
+  const ListaProfesionalesScreen({super.key});
 
   @override
   State<ListaProfesionalesScreen> createState() => _ListaProfesionalesScreenState();
@@ -161,8 +161,8 @@ class _ListaProfesionalesScreenState extends State<ListaProfesionalesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _registrarProfesional,
-        child: const Icon(Icons.person_add),
         backgroundColor: Colors.indigo,
+        child: const Icon(Icons.person_add),
       ),
     );
   }

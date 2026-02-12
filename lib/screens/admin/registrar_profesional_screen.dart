@@ -5,7 +5,7 @@ import 'api_service_profesionales.dart';
 const String PERFIL_ABOGADO = 'Abogados';
 
 class RegistrarProfesionalScreen extends StatefulWidget {
-  const RegistrarProfesionalScreen({Key? key}) : super(key: key);
+  const RegistrarProfesionalScreen({super.key});
 
   @override
   State<RegistrarProfesionalScreen> createState() =>
@@ -159,7 +159,7 @@ class _RegistrarProfesionalScreenState
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _perfilSeleccionado,
+                initialValue: _perfilSeleccionado,
                 items: perfiles
                     .map((p) =>
                         DropdownMenuItem(value: p, child: Text(p)))
@@ -180,7 +180,7 @@ class _RegistrarProfesionalScreenState
               if (_perfilSeleccionado == PERFIL_ABOGADO) ...[
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
-                  value: _especialidadSeleccionada,
+                  initialValue: _especialidadSeleccionada,
                   items: especialidades
                       .map((e) => DropdownMenuItem<int>(
                             value: e['id'],

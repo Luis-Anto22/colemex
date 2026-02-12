@@ -34,6 +34,17 @@ class PanelInvestigadorScreen extends StatefulWidget {
 class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
   String estado = 'Disponible';
 
+  // Integracion API (panel investigador):
+  // Este panel no hace llamadas HTTP directas; solo navega entre modulos.
+  // Endpoints consumidos por los modulos de investigador:
+  // - GET/POST /investigador/casos.php      (CasosAsignadosScreen)
+  // - GET/POST /investigador/bitacora.php   (BitacoraScreen)
+  // - GET/POST /investigador/evidencias.php (EvidenciasScreen)
+  // Endpoints comunes usados por pantallas compartidas:
+  // - GET/POST /common/ubicacion.php
+  // - GET/POST /common/agenda.php
+  // - GET      /common/historial.php
+  // - GET      /common/ingresos.php
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }

@@ -32,6 +32,18 @@ class PanelValuadorScreen extends StatefulWidget {
 class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
   String estado = 'Disponible';
 
+  // Integracion API (panel valuador):
+  // Este panel no hace llamadas HTTP directas; solo navega entre modulos.
+  // Endpoints consumidos por los modulos de valuador:
+  // - GET/POST /valuador/solicitudes.php   (SolicitudesAvaluoScreen)
+  // - GET/POST /valuador/avaluos.php       (AvaluosInmobiliariosScreen)
+  // - GET/POST /valuador/reportes.php      (DictamenesReportesScreen)
+  // - GET/POST /valuador/fotos.php         (EvidenciaFotograficaScreen)
+  // Endpoints comunes usados por pantallas compartidas:
+  // - GET/POST /common/ubicacion.php
+  // - GET/POST /common/agenda.php
+  // - GET      /common/historial.php
+  // - GET      /common/ingresos.php
   void _go(Widget screen) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
