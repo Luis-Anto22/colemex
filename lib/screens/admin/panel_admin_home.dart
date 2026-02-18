@@ -4,7 +4,7 @@ import 'estadisticas_general_screen.dart';
 import '../universal_menu.dart'; // 👈 importamos el menú
 
 class PanelAdminHome extends StatelessWidget {
-  const PanelAdminHome({Key? key}) : super(key: key);
+  const PanelAdminHome({super.key});
 
   @override
   Widget build(BuildContext context) {

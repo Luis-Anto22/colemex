@@ -3,7 +3,12 @@ import '../../../services/api_client.dart';
 import '../../../services/valuador_api.dart';
 
 class SolicitudesAvaluoScreen extends StatefulWidget {
-  const SolicitudesAvaluoScreen({super.key});
+  final int valuadorId;
+
+  const SolicitudesAvaluoScreen({
+    super.key,
+    required this.valuadorId,
+  });
 
   @override
   State<SolicitudesAvaluoScreen> createState() =>
@@ -11,7 +16,6 @@ class SolicitudesAvaluoScreen extends StatefulWidget {
 }
 
 class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
-  final int valuadorId = 1; // TODO: real
   late final ValuadorApi api;
   late Future<List<dynamic>> future;
 
@@ -19,12 +23,12 @@ class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
   void initState() {
     super.initState();
     api = ValuadorApi(ApiClient());
-    future = api.getSolicitudes(valuadorId);
+    future = api.getSolicitudes(widget.valuadorId);
   }
 
   Future<void> _reload() async {
     setState(() {
-      future = api.getSolicitudes(valuadorId);
+      future = api.getSolicitudes(widget.valuadorId);
     });
   }
 

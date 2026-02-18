@@ -3,16 +3,20 @@ import '../../../services/api_client.dart';
 import '../../../services/investigador_api.dart';
 
 class BitacoraScreen extends StatefulWidget {
-  const BitacoraScreen({super.key});
+  final int investigadorId;
+  final int casoId;
+
+  const BitacoraScreen({
+    super.key,
+    this.investigadorId = 1,
+    this.casoId = 1,
+  });
 
   @override
   State<BitacoraScreen> createState() => _BitacoraScreenState();
 }
 
 class _BitacoraScreenState extends State<BitacoraScreen> {
-  final int investigadorId = 1; // TODO: real
-  final int casoId = 1;         // TODO: real (por ahora fijo)
-
   late final InvestigadorApi api;
   late Future<List<dynamic>> future;
 
@@ -20,12 +24,12 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
   void initState() {
     super.initState();
     api = InvestigadorApi(ApiClient());
-    future = api.getBitacora(casoId);
+    future = api.getBitacora(widget.casoId);
   }
 
   Future<void> _reload() async {
     setState(() {
-      future = api.getBitacora(casoId);
+      future = api.getBitacora(widget.casoId);
     });
   }
 
@@ -47,7 +51,7 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: estado,
+              initialValue: estado,
               items: const [
                 DropdownMenuItem(
                     value: 'en proceso', child: Text('En proceso')),
@@ -76,8 +80,8 @@ class _BitacoraScreenState extends State<BitacoraScreen> {
 
     try {
       await api.agregarNota(
-        casoId: casoId,
-        profesionalId: investigadorId,
+        casoId: widget.casoId,
+        profesionalId: widget.investigadorId,
         nota: notaCtrl.text.trim(),
         estado: estado,
       );

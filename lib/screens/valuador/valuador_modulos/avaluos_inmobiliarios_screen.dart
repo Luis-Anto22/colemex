@@ -3,7 +3,12 @@ import '../../../services/api_client.dart';
 import '../../../services/valuador_api.dart';
 
 class AvaluosInmobiliariosScreen extends StatefulWidget {
-  const AvaluosInmobiliariosScreen({super.key});
+  final int valuadorId;
+
+  const AvaluosInmobiliariosScreen({
+    super.key,
+    this.valuadorId = 1,
+  });
 
   @override
   State<AvaluosInmobiliariosScreen> createState() =>
@@ -12,7 +17,6 @@ class AvaluosInmobiliariosScreen extends StatefulWidget {
 
 class _AvaluosInmobiliariosScreenState
     extends State<AvaluosInmobiliariosScreen> {
-  final int valuadorId = 1; // TODO: real
   late final ValuadorApi api;
   late Future<List<dynamic>> future;
 
@@ -20,12 +24,12 @@ class _AvaluosInmobiliariosScreenState
   void initState() {
     super.initState();
     api = ValuadorApi(ApiClient());
-    future = api.getAvaluos(valuadorId);
+    future = api.getAvaluos(widget.valuadorId);
   }
 
   Future<void> _reload() async {
     setState(() {
-      future = api.getAvaluos(valuadorId);
+      future = api.getAvaluos(widget.valuadorId);
     });
   }
 
@@ -45,7 +49,7 @@ class _AvaluosInmobiliariosScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: estado,
+              initialValue: estado,
               items: const [
                 DropdownMenuItem(
                     value: 'en proceso', child: Text('En proceso')),
@@ -90,7 +94,7 @@ class _AvaluosInmobiliariosScreenState
       final valor =
           double.tryParse(valorCtrl.text.trim().replaceAll(',', ' '));
       await api.guardarAvaluo(
-        valuadorId: valuadorId,
+        valuadorId: widget.valuadorId,
         casoId: casoId,
         estado: estado,
         valorEstimado: valor,

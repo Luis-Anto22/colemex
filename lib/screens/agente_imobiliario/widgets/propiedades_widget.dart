@@ -161,11 +161,11 @@ class _PropiedadesWidgetState extends State<PropiedadesWidget> {
                                   onPressed: () {
                                     eliminarInmueble(inmuebleId);
                                   },
-                                  child: const Text("Eliminar"),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.grey,
                                     foregroundColor: Colors.white,
                                   ),
+                                  child: const Text("Eliminar"),
                                 ),
                               ],
                             ),

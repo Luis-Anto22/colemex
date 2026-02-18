@@ -74,7 +74,7 @@ class _CalificacionesWidgetState extends State<CalificacionesWidget> {
                     "${c['cliente'] ?? 'Anónimo'} - ${c['estrellas']?.toString() ?? '0'}⭐"),
                 subtitle: Text(c['comentario']?.toString() ?? ""),
                 trailing: Text(c['fecha']?.toString() ?? ""),
-              )).toList(), // ✅ convierte Iterable en List
+              )), // ✅ convierte Iterable en List
         ],
       ),
     );

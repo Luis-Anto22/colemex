@@ -159,7 +159,7 @@ class _ContadorPerfilState extends State<ContadorPerfil> {
                                       const Text("Estado:"),
                                       Switch(
                                         value: _activo,
-                                        activeColor: Colors.green,
+                                        activeThumbColor: Colors.green,
                                         inactiveThumbColor: Colors.red,
                                         onChanged: (value) {
                                           setState(() {

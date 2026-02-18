@@ -4,7 +4,7 @@ import 'profesional.dart';
 class DetalleProfesionalScreen extends StatelessWidget {
   final Profesional profesional;
 
-  const DetalleProfesionalScreen({Key? key, required this.profesional}) : super(key: key);
+  const DetalleProfesionalScreen({super.key, required this.profesional});
 
   @override
   Widget build(BuildContext context) {

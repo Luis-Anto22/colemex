@@ -85,7 +85,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
                         style: TextStyle(color: Colors.grey))
                     : const Text("Nuevo",
                         style: TextStyle(color: Colors.red)),
-              )).toList(),
+              )),
         ],
       ),
     );

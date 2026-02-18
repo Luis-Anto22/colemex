@@ -98,7 +98,7 @@ class _FormularioInmuebleWidgetState extends State<RegistrarInmuebleWidget> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _estado,
+                initialValue: _estado,
                 decoration: const InputDecoration(labelText: "Estado del inmueble"),
                 items: const [
                   DropdownMenuItem(value: "En promoción", child: Text("En promoción")),
