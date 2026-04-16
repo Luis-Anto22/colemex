@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../services/api_client.dart';
-import '../../../services/valuador_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/valuador_api.dart';
 import 'dart:io';
 
 class EvidenciaFotograficaScreen extends StatefulWidget {
@@ -22,14 +22,20 @@ class EvidenciaFotograficaScreen extends StatefulWidget {
 class _EvidenciaFotograficaScreenState
     extends State<EvidenciaFotograficaScreen> {
   late final ValuadorApi api;
+
   Future<List<dynamic>>? futureFotos;
   Future<List<dynamic>>? futureCasos;
+
   int? casoSeleccionado;
+
+  bool uploading = false;
 
   @override
   void initState() {
     super.initState();
+
     api = ValuadorApi(ApiClient());
+
     if (widget.casoId != null) {
       casoSeleccionado = widget.casoId;
       futureFotos = api.getFotos(casoSeleccionado!);
@@ -56,7 +62,10 @@ class _EvidenciaFotograficaScreenState
       return;
     }
 
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+
     if (result == null || result.files.isEmpty) return;
 
     final path = result.files.single.path;
@@ -70,7 +79,9 @@ class _EvidenciaFotograficaScreenState
         title: const Text('Subir foto'),
         content: TextField(
           controller: descCtrl,
-          decoration: const InputDecoration(labelText: 'Descripcion'),
+          decoration: const InputDecoration(
+            labelText: 'Descripción',
+          ),
         ),
         actions: [
           TextButton(
@@ -87,6 +98,10 @@ class _EvidenciaFotograficaScreenState
 
     if (ok != true) return;
 
+    setState(() {
+      uploading = true;
+    });
+
     try {
       await api.subirFoto(
         casoId: casoSeleccionado!,
@@ -94,15 +109,25 @@ class _EvidenciaFotograficaScreenState
         file: File(path),
         descripcion: descCtrl.text.trim(),
       );
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Foto subida')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto subida correctamente')),
+      );
+
       await _reload();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
+
+    setState(() {
+      uploading = false;
+    });
   }
 
   Widget _buildSelector() {
@@ -115,6 +140,7 @@ class _EvidenciaFotograficaScreenState
             child: LinearProgressIndicator(),
           );
         }
+
         if (snap.hasError) {
           return Padding(
             padding: const EdgeInsets.all(12),
@@ -123,16 +149,18 @@ class _EvidenciaFotograficaScreenState
         }
 
         final casos = snap.data ?? [];
+
         if (casos.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(12),
-            child: Text('No hay casos para seleccionar.'),
+            child: Text('No hay casos disponibles.'),
           );
         }
 
         final items = casos.map<DropdownMenuItem<int>>((c) {
           final id = int.tryParse(c['caso_id'].toString()) ?? 0;
           final titulo = (c['titulo'] ?? 'Sin titulo').toString();
+
           return DropdownMenuItem(
             value: id,
             child: Text('Caso #$id · $titulo'),
@@ -146,6 +174,7 @@ class _EvidenciaFotograficaScreenState
             items: items,
             onChanged: (v) {
               if (v == null) return;
+
               setState(() {
                 casoSeleccionado = v;
                 futureFotos = api.getFotos(v);
@@ -163,7 +192,9 @@ class _EvidenciaFotograficaScreenState
 
   Widget _buildFotos() {
     if (casoSeleccionado == null) {
-      return const Center(child: Text('Selecciona un caso.'));
+      return const Center(
+        child: Text('Selecciona un caso.'),
+      );
     }
 
     return FutureBuilder<List<dynamic>>(
@@ -172,13 +203,17 @@ class _EvidenciaFotograficaScreenState
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+
         if (snap.hasError) {
           return Center(child: Text('Error: ${snap.error}'));
         }
 
         final items = snap.data ?? [];
+
         if (items.isEmpty) {
-          return const Center(child: Text('No hay fotos todavia.'));
+          return const Center(
+            child: Text('No hay fotos todavía.'),
+          );
         }
 
         return RefreshIndicator(
@@ -186,21 +221,36 @@ class _EvidenciaFotograficaScreenState
           child: ListView.separated(
             padding: const EdgeInsets.all(12),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (_, i) {
               final f = items[i] as Map<String, dynamic>;
+
+              final url = (f['archivo_url'] ?? '').toString();
+              final desc = (f['descripcion'] ?? 'Foto').toString();
+
               return Card(
-                child: ListTile(
-                  title: Text((f['descripcion'] ?? 'Foto').toString()),
-                  subtitle: Text((f['archivo_url'] ?? '').toString()),
-                  trailing: const Icon(Icons.link),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text((f['archivo_url'] ?? '').toString()),
+                elevation: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (url.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(8),
+                        ),
+                        child: Image.network(
+                          url,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    );
-                  },
+                    ListTile(
+                      title: Text(desc),
+                      subtitle: Text(url),
+                      trailing: const Icon(Icons.image),
+                    )
+                  ],
                 ),
               );
             },
@@ -214,14 +264,19 @@ class _EvidenciaFotograficaScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Evidencia fotografica'),
+        title: const Text('Evidencia fotográfica'),
         actions: [
-          IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _reload,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _subirFoto,
-        child: const Icon(Icons.add_a_photo),
+        onPressed: uploading ? null : _subirFoto,
+        child: uploading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Icon(Icons.add_a_photo),
       ),
       body: Column(
         children: [

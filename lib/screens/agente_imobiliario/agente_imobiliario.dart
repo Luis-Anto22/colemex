@@ -12,7 +12,7 @@ import 'pantalla_contacto_soporte_inmuebles.dart';
 
 // ✅ Importa helpers y layouts universales
 import '../universal_panel_layout.dart';
-import '../ui_helpers.dart';
+import '../../widgets_global/ui_helpers.dart';
 import '../universal_menu.dart';
 import '../universal_location_button.dart';
 import '../localizacion.dart';

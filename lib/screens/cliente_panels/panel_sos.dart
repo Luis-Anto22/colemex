@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../services/cliente_profesionales_api.dart';
+import '../../services/api_services/cliente_profesionales_api.dart';
 
 class PanelSOS extends StatefulWidget {
   const PanelSOS({super.key});

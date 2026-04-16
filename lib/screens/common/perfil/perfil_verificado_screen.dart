@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/api_client.dart';
-import '../../../services/common_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/common_api.dart';
 
 class PerfilVerificadoScreen extends StatefulWidget {
   const PerfilVerificadoScreen({super.key});

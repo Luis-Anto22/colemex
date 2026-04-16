@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_client.dart';
-import '../../../services/investigador_api.dart';
-import '../../../services/common_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/investigador_api.dart';
+import '../../../services/api_services/common_api.dart';
 import 'bitacora_screen.dart';
 import 'evidencias_screen.dart';
 

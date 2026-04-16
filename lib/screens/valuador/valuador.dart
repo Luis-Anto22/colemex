@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 // comunes
-import '../localizacion.dart';
 import 'package:advocatus/screens/common/agenda/agenda_screen.dart';//listo
 import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
-import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
 import 'package:advocatus/screens/common/historial/historial_screen.dart';
 import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';//listo

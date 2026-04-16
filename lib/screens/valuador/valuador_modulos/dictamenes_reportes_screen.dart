@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../services/api_client.dart';
-import '../../../services/valuador_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/valuador_api.dart';
 import 'dart:io';
 
 class DictamenesReportesScreen extends StatefulWidget {
@@ -21,14 +21,18 @@ class DictamenesReportesScreen extends StatefulWidget {
 
 class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   late final ValuadorApi api;
+
   Future<List<dynamic>>? futureReportes;
   Future<List<dynamic>>? futureCasos;
+
   int? casoSeleccionado;
 
   @override
   void initState() {
     super.initState();
+
     api = ValuadorApi(ApiClient());
+
     if (widget.casoId != null) {
       casoSeleccionado = widget.casoId;
       futureReportes = api.getReportes(casoSeleccionado!);
@@ -41,7 +45,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     setState(() {
       if (casoSeleccionado != null) {
         futureReportes = api.getReportes(casoSeleccionado!);
-      } else if (widget.casoId == null) {
+      } else {
         futureCasos = api.getAvaluos(widget.valuadorId);
       }
     });
@@ -56,6 +60,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     }
 
     final result = await FilePicker.platform.pickFiles();
+
     if (result == null || result.files.isEmpty) return;
 
     final path = result.files.single.path;
@@ -69,7 +74,10 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         title: const Text('Subir dictamen / reporte'),
         content: TextField(
           controller: descCtrl,
-          decoration: const InputDecoration(labelText: 'Descripcion'),
+          decoration: const InputDecoration(
+            labelText: 'Descripción',
+            border: OutlineInputBorder(),
+          ),
         ),
         actions: [
           TextButton(
@@ -93,14 +101,20 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         file: File(path),
         descripcion: descCtrl.text.trim(),
       );
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Reporte subido')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reporte subido correctamente')),
+      );
+
       await _reload();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al subir: $e')),
+      );
     }
   }
 
@@ -114,6 +128,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
             child: LinearProgressIndicator(),
           );
         }
+
         if (snap.hasError) {
           return Padding(
             padding: const EdgeInsets.all(12),
@@ -122,16 +137,18 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         }
 
         final casos = snap.data ?? [];
+
         if (casos.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(12),
-            child: Text('No hay casos para seleccionar.'),
+            child: Text('No hay casos disponibles.'),
           );
         }
 
         final items = casos.map<DropdownMenuItem<int>>((c) {
-          final id = int.tryParse(c['caso_id'].toString()) ?? 0;
-          final titulo = (c['titulo'] ?? 'Sin titulo').toString();
+          final id = int.tryParse((c['caso_id'] ?? '').toString()) ?? 0;
+          final titulo = (c['titulo'] ?? 'Sin título').toString();
+
           return DropdownMenuItem(
             value: id,
             child: Text('Caso #$id · $titulo'),
@@ -141,10 +158,11 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         return Padding(
           padding: const EdgeInsets.all(12),
           child: DropdownButtonFormField<int>(
-            initialValue: casoSeleccionado,
+            value: casoSeleccionado,
             items: items,
             onChanged: (v) {
               if (v == null) return;
+
               setState(() {
                 casoSeleccionado = v;
                 futureReportes = api.getReportes(v);
@@ -162,7 +180,9 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
 
   Widget _buildReportes() {
     if (casoSeleccionado == null) {
-      return const Center(child: Text('Selecciona un caso.'));
+      return const Center(
+        child: Text('Selecciona un caso para ver los reportes.'),
+      );
     }
 
     return FutureBuilder<List<dynamic>>(
@@ -171,13 +191,15 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+
         if (snap.hasError) {
           return Center(child: Text('Error: ${snap.error}'));
         }
 
         final items = snap.data ?? [];
+
         if (items.isEmpty) {
-          return const Center(child: Text('No hay reportes todavia.'));
+          return const Center(child: Text('No hay reportes todavía.'));
         }
 
         return RefreshIndicator(
@@ -188,16 +210,24 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final r = items[i] as Map<String, dynamic>;
+
+              final descripcion =
+                  (r['descripcion'] ?? 'Reporte').toString();
+
+              final archivo =
+                  (r['archivo_url'] ?? '').toString();
+
               return Card(
                 child: ListTile(
-                  title: Text((r['descripcion'] ?? 'Reporte').toString()),
-                  subtitle: Text((r['archivo_url'] ?? '').toString()),
-                  trailing: const Icon(Icons.link),
+                  title: Text(descripcion),
+                  subtitle: Text(
+                    archivo,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.insert_drive_file),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text((r['archivo_url'] ?? '').toString()),
-                      ),
+                      SnackBar(content: Text(archivo)),
                     );
                   },
                 ),
@@ -213,9 +243,12 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dictamenes / reportes'),
+        title: const Text('Dictámenes / reportes'),
         actions: [
-          IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _reload,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

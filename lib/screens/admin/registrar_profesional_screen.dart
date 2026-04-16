@@ -37,6 +37,7 @@ class _RegistrarProfesionalScreenState
     'Agentes inmobiliarios',
     'Contadores',
     'Agentes crediticios',
+    'Asistencia Vial',
   ];
 
   // 📚 Especialidades SOLO de Derecho

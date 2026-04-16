@@ -3,7 +3,7 @@ import 'contador_dashboard.dart';
 import 'contador_casos.dart';
 import 'contador_perfil.dart';
 import 'api_service_contador.dart'; // Servicio de contador
-import '../ui_helpers.dart'; // Helpers compartidos
+import '../../widgets_global/ui_helpers.dart'; // Helpers compartidos
 import '../universal_panel_layout.dart';
 import '../universal_menu.dart';
 import '../universal_location_button.dart';

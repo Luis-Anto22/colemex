@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/api_client.dart';
-import '../../../services/common_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/common_api.dart';
 
 class IngresosScreen extends StatefulWidget {
   const IngresosScreen({super.key});

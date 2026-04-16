@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../common/ui_helpers.dart';
+import '../common/widgets/ui_helpers.dart';
 import 'api_service_crediticio.dart';
 import 'agente_detalle_cliente.dart';
 

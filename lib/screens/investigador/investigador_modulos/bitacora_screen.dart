@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_client.dart';
-import '../../../services/investigador_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/investigador_api.dart';
 
 class BitacoraScreen extends StatefulWidget {
   final int investigadorId;

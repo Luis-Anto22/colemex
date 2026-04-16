@@ -7,7 +7,7 @@ import 'agente_calificaciones.dart';
 import 'agente_casos.dart';
 
 import '../universal_panel_layout.dart';
-import '../ui_helpers.dart';
+import '../../widgets_global/ui_helpers.dart';
 import '../universal_menu.dart'; // 🔹 Menú universal
 import '../localizacion.dart'; // 🔹 Panel de localización
 

@@ -7,8 +7,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_dragmarker/flutter_map_dragmarker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../services/api_client.dart';
-import '../../../services/common_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/common_api.dart';
 
 class UbicacionTiempoRealScreen extends StatefulWidget {
   const UbicacionTiempoRealScreen({super.key});

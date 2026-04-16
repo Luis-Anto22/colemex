@@ -4,7 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../services/cliente_profesionales_api.dart';
+import '../../services/api_services/cliente_profesionales_api.dart';
 import 'servicio_selector.dart';
 
 class PanelServicios extends StatefulWidget {
@@ -101,42 +101,57 @@ class _PanelServiciosState extends State<PanelServicios> {
         .replaceAll('é', 'e')
         .replaceAll('í', 'i')
         .replaceAll('ó', 'o')
-        .replaceAll('ú', 'u');
+        .replaceAll('ú', 'u')
+        .replaceAll('ñ', 'n');
   }
 
   IconData _iconoServicio(String servicio) {
-    switch (_normalizarServicio(servicio)) {
-      case 'abogados':
-      case 'abogado':
-        return Icons.gavel_rounded;
-      case 'ajustadores':
-      case 'ajustador':
-        return Icons.health_and_safety_rounded;
-      case 'peritos en criminalistica':
-      case 'perito en criminalistica':
-        return Icons.fingerprint_rounded;
-      case 'valuadores':
-      case 'valuador':
-        return Icons.home_work_rounded;
-      case 'investigadores':
-      case 'investigador':
-        return Icons.search_rounded;
-      case 'psicologos':
-      case 'psicologo':
-        return Icons.psychology_rounded;
-      case 'agentes inmobiliarios':
-      case 'agente inmobiliario':
-        return Icons.apartment_rounded;
-      case 'contadores':
-      case 'contador':
-        return Icons.calculate_rounded;
-      case 'agentes crediticios':
-      case 'agente crediticio':
-        return Icons.account_balance_wallet_rounded;
-      default:
-        return Icons.miscellaneous_services_rounded;
-    }
+  switch (_normalizarServicio(servicio)) {
+    case 'abogados':
+    case 'abogado':
+      return Icons.gavel_rounded;
+
+    case 'ajustadores':
+    case 'ajustador':
+      return Icons.health_and_safety_rounded;
+
+    case 'peritos en criminalistica':
+    case 'perito en criminalistica':
+      return Icons.fingerprint_rounded;
+
+    case 'valuadores':
+    case 'valuador':
+      return Icons.home_work_rounded;
+
+    case 'investigadores':
+    case 'investigador':
+      return Icons.search_rounded;
+
+    case 'psicologos':
+    case 'psicologo':
+      return Icons.psychology_rounded;
+
+    case 'agentes inmobiliarios':
+    case 'agente inmobiliario':
+      return Icons.apartment_rounded;
+
+    case 'contadores':
+    case 'contador':
+      return Icons.calculate_rounded;
+
+    case 'agentes crediticios':
+    case 'agente crediticio':
+      return Icons.account_balance_wallet_rounded;
+
+    /// 🚗 NUEVO SERVICIO
+    case 'asistencia vial':
+    case 'asistencia_vial':
+      return Icons.car_repair_rounded;
+
+    default:
+      return Icons.miscellaneous_services_rounded;
   }
+}
 
   Widget _infoChip({
     required IconData icono,
@@ -924,83 +939,94 @@ class _PanelServiciosState extends State<PanelServicios> {
   }
 
   Widget _mapa() {
-    if (_ubicacionCliente == null) {
-      return Container(
-        color: const Color(0xFFF8FAFC),
-        alignment: Alignment.center,
-        child: const Text(
-          'Ubicacion no disponible.',
-          style: TextStyle(color: Color(0xFF475569)),
-        ),
-      );
-    }
-
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: _ubicacionCliente!,
-        initialZoom: 13,
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: ['a', 'b', 'c'],
-        ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: _ubicacionCliente!,
-              width: 40,
-              height: 40,
-              child: const Icon(
-                Icons.my_location_rounded,
-                color: Color(0xFF1D4ED8),
-                size: 34,
-              ),
-            ),
-            ..._profesionales.map((p) {
-              final lat = double.tryParse(p['latitude']?.toString() ?? '');
-              final lng = double.tryParse(p['longitude']?.toString() ?? '');
-              if (lat == null || lng == null) return null;
-              final estado = p['estado']?.toString() ?? 'disponible';
-              final perfilRaw = p['perfil']?.toString().trim() ?? '';
-              final perfil = perfilRaw.isNotEmpty
-                  ? perfilRaw
-                  : (widget.servicioSeleccionado?.trim() ?? '');
-              final icono = _iconoServicio(perfil);
-              final colorEstado = _colorEstado(estado);
-              return Marker(
-                point: LatLng(lat, lng),
-                width: 40,
-                height: 40,
-                child: GestureDetector(
-                  onTap: () => _mostrarDetalle(p),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colorEstado, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.14),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      icono,
-                      color: colorEstado,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              );
-            }).whereType<Marker>(),
-          ],
-        ),
-      ],
+  if (_ubicacionCliente == null) {
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
+
+  return FlutterMap(
+    options: MapOptions(
+      initialCenter: _ubicacionCliente!,
+      initialZoom: 13,
+      minZoom: 5,
+      maxZoom: 18,
+    ),
+    children: [
+      /// 🗺 MAPA OSM CORRECTAMENTE CONFIGURADO
+      TileLayer(
+        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        userAgentPackageName: 'com.advocatus.app', // 👈 MUY IMPORTANTE
+        maxZoom: 19,
+      ),
+
+      /// 📍 MARCADORES
+      MarkerLayer(
+        markers: [
+          /// 📍 Cliente
+          Marker(
+            point: _ubicacionCliente!,
+            width: 40,
+            height: 40,
+            child: const Icon(
+              Icons.my_location_rounded,
+              color: Color(0xFF1D4ED8),
+              size: 34,
+            ),
+          ),
+
+          /// 👨‍💼 Profesionales
+          ..._profesionales.map((p) {
+            final lat = double.tryParse(p['latitude']?.toString() ?? '');
+            final lng = double.tryParse(p['longitude']?.toString() ?? '');
+
+            if (lat == null || lng == null) return null;
+
+            final estado = p['estado']?.toString() ?? 'disponible';
+            final perfilRaw = p['perfil']?.toString().trim() ?? '';
+            final perfil = perfilRaw.isNotEmpty
+                ? perfilRaw
+                : (widget.servicioSeleccionado?.trim() ?? '');
+
+            final icono = _iconoServicio(perfil);
+            final colorEstado = _colorEstado(estado);
+
+            return Marker(
+              point: LatLng(lat, lng),
+              width: 40,
+              height: 40,
+              child: GestureDetector(
+                onTap: () => _mostrarDetalle(p),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colorEstado,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    icono,
+                    color: colorEstado,
+                    size: 20,
+                  ),
+                ),
+              ),
+            );
+          }).whereType<Marker>().toList(),
+        ],
+      ),
+    ],
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1022,6 +1048,37 @@ class _PanelServiciosState extends State<PanelServicios> {
 
     return Column(
       children: [
+        if (tieneFiltro)
+        Padding(
+          padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: _primary,
+                ),
+                onPressed: () {
+                  widget.onSeleccionarServicio('');
+                  setState(() {
+                    _especialidadAbogado = '';
+                    _profesionales = [];
+                    _mensaje = '';
+                  });
+                },
+              ),
+              const SizedBox(width: 4),
+              const Text(
+                'Servicios',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                ),
+              ),
+            ],
+          ),
+        ),
         Padding(
           padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, isSmallPhone ? 8 : 10),
           child: Container(

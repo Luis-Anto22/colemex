@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 // ✅ Importa tus layouts y helpers universales
 import '../universal_panel_layout.dart';
 import '../universal_location_button.dart';
-import '../ui_helpers.dart';
+import '../../widgets_global/ui_helpers.dart';
 
 // ✅ Importa las pantallas nuevas
 import 'pantalla_historial_servicios.dart';

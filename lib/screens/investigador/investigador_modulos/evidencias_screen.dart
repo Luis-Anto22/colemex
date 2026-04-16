@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../services/api_client.dart';
-import '../../../services/investigador_api.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/investigador_api.dart';
 import 'dart:io';
 
 class EvidenciasScreen extends StatefulWidget {

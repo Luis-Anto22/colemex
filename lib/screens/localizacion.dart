@@ -70,20 +70,22 @@ class _LocalizacionPanelState extends State<LocalizacionPanel> {
   }
 
   // ================= ICONO POR PERFIL =================
-  IconData _getIconForPerfil(String perfil) {
-    switch (perfil) {
-      case "Abogados":
-        return Icons.gavel;
-      case "Psicólogos":
-        return Icons.psychology;
-      case "Contadores":
-        return Icons.calculate;
-      case "Agentes crediticios":
-        return Icons.account_balance;
-      default:
-        return Icons.location_on;
-    }
+IconData _getIconForPerfil(String perfil) {
+  switch (perfil) {
+    case "Abogados":
+      return Icons.gavel;
+    case "Psicólogos":
+      return Icons.psychology;
+    case "Contadores":
+      return Icons.calculate;
+    case "Agentes crediticios":
+      return Icons.account_balance;
+    case "Asistencia Vial":
+      return Icons.local_shipping; // 🚚 grúa / servicio vial
+    default:
+      return Icons.location_on;
   }
+}
 
   @override
   Widget build(BuildContext context) {

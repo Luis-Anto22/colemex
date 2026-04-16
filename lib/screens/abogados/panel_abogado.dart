@@ -5,10 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Rutas locales al mismo nivel
-import 'localizacion.dart';
-import 'ui_helpers.dart';
-import 'universal_menu.dart';
-import 'universal_panel_layout.dart';
+import '../localizacion.dart';
+import '../../widgets_global/ui_helpers.dart';
+import '../universal_menu.dart';
+import '../universal_panel_layout.dart';
 
 class PanelAbogado extends StatefulWidget {
   const PanelAbogado({super.key});

@@ -18,34 +18,34 @@ dependencies:
   url_launcher: ^6.2.5
 
   # 📁 Selector de archivos multiplataforma (Web compatible)
-  file_picker: 10.0.0   # ✅ versión estable y compatible
+  file_picker: 10.0.0
 
   # 📷 Cámara y galería
-  image_picker: ^1.0.4  # ✅ para tomar/seleccionar fotos
+  image_picker: ^1.0.4
 
   # 🔗 Conexión HTTP y multipart
   http: ^1.1.0
-  http_parser: ^4.0.2   # ✅ necesario para MediaType en multipart
+  http_parser: ^4.0.2
 
   # 💾 Preferencias locales
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.0.9
 
   # 📦 Gestión de estado
   provider: ^6.1.1
 
   # 📍 Geolocalización
   geolocator: ^10.1.0
-  geocoding: ^2.1.0   # 👉 Para convertir coordenadas en direcciones
+  geocoding: ^2.1.0
 
-  # 🗺️ Mapas interactivos sin clave API
+  # 🗺️ Mapas interactivos
   flutter_map: ^6.0.0
   latlong2: ^0.9.0
   flutter_map_dragmarker: ^6.0.0
 
-  # 🔑 Permisos en tiempo de ejecución
-  permission_handler: ^11.0.1   # ✅ versión estable
+  # 🔑 Permisos
+  permission_handler: ^11.0.1
 
-  # 🌍 Internacionalización y formatos
+  # 🌍 Internacionalización
   intl: ^0.19.0
 
   fl_chart: ^0.69.0
@@ -54,6 +54,15 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+  # 🔥 GENERADOR DE ICONO
+  flutter_launcher_icons: ^0.13.1
+
+# 🔥 CONFIGURACIÓN DEL ICONO
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/iconos/logo.png"
 
 flutter:
   uses-material-design: true

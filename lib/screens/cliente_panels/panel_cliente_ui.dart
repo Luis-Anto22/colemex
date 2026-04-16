@@ -34,6 +34,7 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
     'Agentes inmobiliarios',
     'Contadores',
     'Agentes crediticios',
+    'Asistencia vial',
   ];
 
   void _cambiarServicio(String servicio) {

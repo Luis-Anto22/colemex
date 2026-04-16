@@ -54,9 +54,8 @@ class ServicioSelector extends StatelessWidget {
         final maxWidth = constraints.maxWidth;
         final columns = maxWidth >= 660 ? 4 : (maxWidth >= 330 ? 3 : 2);
         final tileWidth = (maxWidth - (spacing * (columns - 1))) / columns;
-        final tileHeight = columns == 4
-            ? 74.0
-            : (columns == 3 ? 68.0 : 76.0);
+        final tileHeight =
+            columns == 4 ? 90.0 : (columns == 3 ? 85.0 : 95.0);
 
         return Wrap(
           spacing: spacing,
@@ -75,7 +74,9 @@ class ServicioSelector extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOut,
-                    height: tileHeight,
+                    constraints: BoxConstraints(
+                      minHeight: tileHeight,
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 10,
@@ -145,7 +146,22 @@ class ServicioSelector extends StatelessWidget {
                                     : const Color(0xFF2E3E52),
                               ),
                             ),
-                            if (selected) const SizedBox(height: 1),
+                            const SizedBox(height: 6),
+                            Text(
+                              servicio,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              softWrap: true,
+                              overflow: TextOverflow.visible,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                height: 1.2,
+                                color: selected
+                                    ? Colors.white
+                                    : const Color(0xFF334155),
+                              ),
+                            ),
                           ],
                         ),
                       ],
