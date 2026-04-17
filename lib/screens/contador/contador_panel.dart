@@ -78,7 +78,8 @@ class _ContadorPanelState extends State<ContadorPanel> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.primaryColor,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.primaryColor,
       ),
     );
   }
@@ -150,6 +151,7 @@ class _ContadorPanelState extends State<ContadorPanel> {
           // 🔔 Notificaciones con badge
           Stack(
             children: [
+<<<<<<< Updated upstream
               const Icon(Icons.notifications, color: Colors.white),
               if (_notificaciones > 0)
                 Positioned(
@@ -164,6 +166,66 @@ class _ContadorPanelState extends State<ContadorPanel> {
                         fontSize: 10,
                         color: Colors.white,
                       ),
+=======
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.dashboard,
+                label: "Dashboard",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ContadorDashboard(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.folder,
+                label: "Casos",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ContadorCasos(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.description,
+                label: "Documentos",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ContadorDashboard(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.person,
+                label: "Perfil",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ContadorPerfil(idContador: widget.idContador ?? 0),
+                  ),
+                ),
+              ),
+              UiHelpers.quickAction(
+                context,
+                icon: Icons.location_on_outlined,
+                label: "Ubicación",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LocalizacionPanel(
+                      idProfesional: widget.idContador ?? 0,
+                      perfil: "Contadores",
+>>>>>>> Stashed changes
                     ),
                   ),
                 ),
@@ -227,6 +289,7 @@ class _ContadorPanelState extends State<ContadorPanel> {
               ],
             ),
 
+<<<<<<< Updated upstream
             const SizedBox(height: 16),
 
             // 🔹 Segunda fila
@@ -276,6 +339,45 @@ class _ContadorPanelState extends State<ContadorPanel> {
               ],
             ),
           ],
+=======
+        // 🔹 Sección base común
+        UiHelpers.sectionHeader(context, "Base común",
+            subtitle: "Módulos obligatorios"),
+        UiHelpers.tile(
+          context,
+          icon: Icons.attach_money,
+          title: "Ingresos",
+          subtitle: "Comisiones acumuladas",
+          onTap: () {
+            // Aquí abrir pantalla de ingresos
+          },
+        ),
+        const SizedBox(height: 12),
+        UiHelpers.tile(
+          context,
+          icon: Icons.notifications,
+          title: "Notificaciones",
+          subtitle: "Avisos y alertas ($_notificaciones)",
+          onTap: () {
+            _toast("Tienes $_notificaciones notificaciones pendientes");
+          },
+        ),
+
+        const SizedBox(height: 20),
+        // Integracion:
+        // UniversalLocationButton centraliza el guardado y conecta con
+        // CommonApi/ApiClient sin duplicar logica en este panel.
+        UniversalLocationButton(
+          idProfesional: widget.idContador,
+        ),
+
+        const SizedBox(height: 20),
+        Text(
+          'Tip: Mantén tu perfil y estado actualizados para recibir más casos.',
+          style: TextStyle(
+              fontSize: 12, color: Colors.white.withValues(alpha: .65)),
+          textAlign: TextAlign.center,
+>>>>>>> Stashed changes
         ),
       ),
     );
