@@ -14,28 +14,32 @@ class ServicioSelector extends StatelessWidget {
     required this.onSeleccionar,
   });
 
-  IconData _iconoPorServicio(String servicio) {
-    switch (servicio) {
-      case 'Abogados':
-        return Icons.gavel_rounded;
-      case 'Ajustadores':
-        return Icons.health_and_safety_rounded;
-      case 'Peritos en criminalistica':
-        return Icons.fingerprint_rounded;
-      case 'Valuadores':
-        return Icons.home_work_rounded;
-      case 'Investigadores':
-        return Icons.search_rounded;
-      case 'Psicologos':
-        return Icons.psychology_rounded;
-      case 'Agentes inmobiliarios':
-        return Icons.apartment_rounded;
-      case 'Contadores':
-        return Icons.calculate_rounded;
-      case 'Agentes crediticios':
-        return Icons.account_balance_wallet_rounded;
+  String _iconoPorServicio(String servicio) {
+    final s = servicio.trim().toLowerCase();
+
+    switch (s) {
+      case 'abogados':
+        return 'assets/iconos/abogados.png';
+      case 'ajustadores':
+        return 'assets/iconos/ajustadores.png';
+      case 'peritos en criminalistica':
+        return 'assets/iconos/peritos_criminalistica.png';
+      case 'valuadores':
+        return 'assets/iconos/valuadores.png';
+      case 'investigadores':
+        return 'assets/iconos/investigadores.png';
+      case 'psicologos':
+        return 'assets/iconos/psicologos.png';
+      case 'agentes inmobiliarios':
+        return 'assets/iconos/agentes_inmobiliarios.png';
+      case 'contadores':
+        return 'assets/iconos/contadores.png';
+      case 'agentes crediticios':
+        return 'assets/iconos/agentes_crediticios.png';
+      case 'asistencia vial':
+        return 'assets/iconos/asistencia_vial.png';
       default:
-        return Icons.miscellaneous_services_rounded;
+        return '';
     }
   }
 
@@ -44,9 +48,8 @@ class ServicioSelector extends StatelessWidget {
     final seleccionadoNormalizado = (seleccionado ?? '').trim();
     final tieneSeleccion = seleccionadoNormalizado.isNotEmpty &&
         servicios.contains(seleccionadoNormalizado);
-    final serviciosVisibles = tieneSeleccion
-        ? <String>[seleccionadoNormalizado]
-        : servicios;
+    final serviciosVisibles =
+        tieneSeleccion ? <String>[seleccionadoNormalizado] : servicios;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -55,14 +58,14 @@ class ServicioSelector extends StatelessWidget {
         final columns = maxWidth >= 660 ? 4 : (maxWidth >= 330 ? 3 : 2);
         final tileWidth = (maxWidth - (spacing * (columns - 1))) / columns;
         final tileHeight =
-            columns == 4 ? 90.0 : (columns == 3 ? 85.0 : 95.0);
+            columns == 4 ? 92.0 : (columns == 3 ? 96.0 : 104.0);
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
           children: serviciosVisibles.map((servicio) {
             final selected = servicio == seleccionado;
-            final icon = _iconoPorServicio(servicio);
+            final iconoAsset = _iconoPorServicio(servicio);
 
             return SizedBox(
               width: tileWidth,
@@ -74,12 +77,10 @@ class ServicioSelector extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOut,
-                    constraints: BoxConstraints(
-                      minHeight: tileHeight,
-                    ),
+                    constraints: BoxConstraints(minHeight: tileHeight),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       gradient: selected
@@ -128,25 +129,36 @@ class ServicioSelector extends StatelessWidget {
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              width: selected ? 34 : 36,
-                              height: selected ? 34 : 36,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? Colors.white.withValues(alpha: 0.2)
-                                    : const Color(0xFFEAF2FD),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                icon,
-                                size: columns == 3 ? 19 : 20,
-                                color: selected
-                                    ? Colors.white
-                                    : const Color(0xFF2E3E52),
+                            SizedBox(
+                              width: selected ? 90 : 96,
+                              height: selected ? 90 : 96,
+                              child: Padding(
+                                padding: EdgeInsets.zero,
+                                child: iconoAsset.isEmpty
+                                    ? Icon(
+                                        Icons.miscellaneous_services_rounded,
+                                        size: columns == 3 ? 30 : 34,
+                                        color: selected
+                                            ? Colors.white
+                                            : const Color(0xFF2E3E52),
+                                      )
+                                    : Image.asset(
+                                        iconoAsset,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Icon(
+                                            Icons.miscellaneous_services_rounded,
+                                            size: columns == 3 ? 30 : 34,
+                                            color: selected
+                                                ? Colors.white
+                                                : const Color(0xFF2E3E52),
+                                          );
+                                        },
+                                      ),
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 2),
                             Text(
                               servicio,
                               textAlign: TextAlign.center,

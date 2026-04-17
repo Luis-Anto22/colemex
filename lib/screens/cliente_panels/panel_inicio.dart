@@ -129,8 +129,6 @@ class _PanelInicioState extends State<PanelInicio> {
     }
 
     try {
-      // API (via ClienteProfesionalesApi.getEspecialidades):
-      // GET /common/especialidades.php
       final items = await _api.getEspecialidades(limit: 150);
       if (!mounted) return;
       setState(() {
@@ -224,13 +222,13 @@ class _PanelInicioState extends State<PanelInicio> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                'Buscar servicios o especialidades',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: PanelInicio._primary,
-                  fontSize: compact ? 14 : 15,
+                  'Buscar servicios o especialidades',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: PanelInicio._primary,
+                    fontSize: compact ? 14 : 15,
+                  ),
                 ),
-              ),
               ),
             ],
           ),
@@ -335,8 +333,6 @@ class _PanelInicioState extends State<PanelInicio> {
         return;
       }
 
-      // API (via ClienteProfesionalesApi.getMisCasos):
-      // GET /common/mis_casos_cliente.php
       final casos = await _api.getMisCasos(clienteId: clienteId, limit: 6);
       if (!mounted) return;
 
@@ -573,63 +569,6 @@ class _PanelInicioState extends State<PanelInicio> {
     return ListView(
       padding: EdgeInsets.all(outerPadding),
       children: [
-        Container(
-          padding: EdgeInsets.all(compact ? 14 : 18),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [PanelInicio._primary, PanelInicio._secondary],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: PanelInicio._primary.withValues(alpha: 0.25),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.person_rounded, color: Colors.white),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Bienvenido ${widget.nombreUsuario}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: compact ? 19 : 22,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: compact ? 8 : 10),
-              Text(
-                'Bienvenido, elige alguno de los servicios ofrecidos por la aplicacion.',
-                style: TextStyle(
-                  color: Color(0xFFE7EEF7),
-                  fontSize: compact ? 13 : 14,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: compact ? 12 : 16),
         _buildBuscador(),
         SizedBox(height: compact ? 12 : 16),
         _buildMisCasos(),

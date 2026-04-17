@@ -68,6 +68,5 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/iconos/logo.png
-    - assets/iconos/mazo-libro.png
+    - assets/iconos/
     - assets/fondos/

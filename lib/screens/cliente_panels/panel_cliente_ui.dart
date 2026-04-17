@@ -49,7 +49,7 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
     setState(() {
       _especialidadBusqueda = valor;
       if (valor.isNotEmpty) {
-        _currentIndex = 1;
+        _currentIndex = 0;
       }
     });
   }
@@ -57,6 +57,13 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
   @override
   Widget build(BuildContext context) {
     final panels = [
+      PanelServicios(
+        nombreUsuario: widget.nombreUsuario,
+        serviciosDisponibles: _serviciosDisponibles,
+        servicioSeleccionado: _servicioSeleccionado,
+        especialidadBusqueda: _especialidadBusqueda,
+        onSeleccionarServicio: _cambiarServicio,
+),
       PanelInicio(
         nombreUsuario: widget.nombreUsuario,
         servicioSeleccionado: _servicioSeleccionado,
@@ -64,17 +71,11 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
         especialidadBusqueda: _especialidadBusqueda,
         onAbrirServicios: () {
           setState(() {
-            _currentIndex = 1;
+            _currentIndex = 0;
           });
         },
         onSeleccionarServicio: _cambiarServicio,
         onBuscarEspecialidad: _buscarPorEspecialidad,
-      ),
-      PanelServicios(
-        serviciosDisponibles: _serviciosDisponibles,
-        servicioSeleccionado: _servicioSeleccionado,
-        especialidadBusqueda: _especialidadBusqueda,
-        onSeleccionarServicio: _cambiarServicio,
       ),
       const PanelSOS(),
     ];
@@ -86,9 +87,9 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
         foregroundColor: Colors.white,
         title: Text(
           _currentIndex == 0
-              ? 'Inicio'
+              ? 'Servicios'
               : _currentIndex == 1
-                  ? 'Servicios'
+                  ? 'Casos'
                   : 'SOS',
         ),
       ),
@@ -131,9 +132,18 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
             });
           },
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Inicio'),
-            BottomNavigationBarItem(icon: Icon(Icons.miscellaneous_services_rounded), label: 'Servicios'),
-            BottomNavigationBarItem(icon: Icon(Icons.warning_amber_rounded), label: 'SOS'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.miscellaneous_services_rounded),
+              label: 'Servicios',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: 'Casos',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.warning_amber_rounded),
+              label: 'SOS',
+            ),
           ],
         ),
       ),
