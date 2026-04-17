@@ -10,9 +10,6 @@ class AppBrandBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final logoTint = isDark ? Colors.white : const Color(0xFF0B2545);
-
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -30,19 +27,11 @@ class AppBrandBackground extends StatelessWidget {
               Widget logo(double size, double opacity) {
                 return Opacity(
                   opacity: opacity,
-                  child: ColorFiltered(
-                    // Unifica el color del logo para que se perciba
-                    // consistentemente sobre pantallas claras y oscuras.
-                    colorFilter: ColorFilter.mode(
-                      logoTint.withValues(alpha: 0.45),
-                      BlendMode.srcIn,
-                    ),
-                    child: Image.asset(
-                      'assets/iconos/logo.png',
-                      width: size,
-                      height: size,
-                      fit: BoxFit.contain,
-                    ),
+                  child: Image.asset(
+                    'assets/iconos/logo.png',
+                    width: size,
+                    height: size,
+                    fit: BoxFit.contain,
                   ),
                 );
               }
@@ -52,17 +41,17 @@ class AppBrandBackground extends StatelessWidget {
                   Positioned(
                     left: (width - centerSize) / 2,
                     top: (height - centerSize) / 2,
-                    child: logo(centerSize, 0.12),
+                    child: logo(centerSize, 0.18),
                   ),
                   Positioned(
                     top: -16,
                     right: -16,
-                    child: logo(cornerSize, 0.08),
+                    child: logo(cornerSize, 0.11),
                   ),
                   Positioned(
                     left: -18,
                     bottom: -14,
-                    child: logo(cornerSize * 0.92, 0.07),
+                    child: logo(cornerSize * 0.92, 0.1),
                   ),
                 ],
               );

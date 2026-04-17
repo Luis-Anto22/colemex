@@ -70,7 +70,7 @@ class _AvaluosInmobiliariosScreenState
 
             DropdownButtonFormField<String>(
 
-              value: estados.contains(estado) ? estado : 'en proceso',
+              initialValue: estados.contains(estado) ? estado : 'en proceso',
 
               items: const [
 

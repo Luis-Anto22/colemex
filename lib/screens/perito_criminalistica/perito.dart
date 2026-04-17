@@ -9,6 +9,7 @@ import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/widgets/notification_badge_icon.dart';
 
 class PanelPeritoScreen extends StatefulWidget {
   final int peritoId;
@@ -200,10 +201,11 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Perito en Criminalística'),
         actions: [
-          IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+          NotificationBadgeIcon(
+            profesionalId: widget.peritoId,
+            onPressed: () => _go(
+              NotificacionesScreen(profesionalId: widget.peritoId),
+            ),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -250,9 +252,11 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border: Border.all(color: gold.withOpacity(.20)),
+                                  border:
+                                      Border.all(color: gold.withOpacity(.20)),
                                 ),
-                                child: Icon(Icons.science_outlined, color: gold),
+                                child:
+                                    Icon(Icons.science_outlined, color: gold),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
@@ -287,24 +291,27 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                         // ESTADO PROFESIONAL
                         _sectionHeader(
                           "Estado profesional",
-                          subtitle: "Define tu disponibilidad para recibir solicitudes.",
+                          subtitle:
+                              "Define tu disponibilidad para recibir solicitudes.",
                         ),
                         _card(
                           child: Wrap(
                             spacing: 10,
                             runSpacing: 10,
                             children: [
-                                                            ChoiceChip(
+                              ChoiceChip(
                                 label: const Text("Ocupado"),
                                 selected: estado == "Ocupado",
-                                onSelected: (_) => setState(() => estado = "Ocupado"),
+                                onSelected: (_) =>
+                                    setState(() => estado = "Ocupado"),
                                 selectedColor: gold,
                                 backgroundColor: Colors.white.withOpacity(.06),
                               ),
                               ChoiceChip(
                                 label: const Text("Fuera de servicio"),
                                 selected: estado == "Fuera de servicio",
-                                onSelected: (_) => setState(() => estado = "Fuera de servicio"),
+                                onSelected: (_) => setState(
+                                    () => estado = "Fuera de servicio"),
                                 selectedColor: gold,
                                 backgroundColor: Colors.white.withOpacity(.06),
                               ),
@@ -332,7 +339,8 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: gold,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                 ),
                               ),
                             ),

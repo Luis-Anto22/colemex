@@ -10,6 +10,7 @@ import '../universal_panel_layout.dart';
 import '../../widgets_global/ui_helpers.dart';
 import '../universal_menu.dart'; // 🔹 Menú universal
 import '../localizacion.dart'; // 🔹 Panel de localización
+import '../../widgets/notification_badge_icon.dart';
 
 class AgentePanel extends StatelessWidget {
   final int? idAgente;
@@ -25,10 +26,10 @@ class AgentePanel extends StatelessWidget {
     return UniversalPanelLayout(
       titulo: "Portal • Agente Crediticio",
       accionesAppBar: [
-        IconButton(
-          tooltip: 'Notificaciones',
-          onPressed: () => _go(context, AgenteNotificaciones(idAgente: idAgente)),
-          icon: const Icon(Icons.notifications_none),
+        NotificationBadgeIcon(
+          profesionalId: idAgente,
+          onPressed: () =>
+              _go(context, AgenteNotificaciones(idAgente: idAgente)),
         ),
         UniversalMenu(
           onSelected: (value) {

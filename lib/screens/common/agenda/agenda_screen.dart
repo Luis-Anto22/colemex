@@ -143,7 +143,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
               DropdownButtonFormField<int>(
 
-                value: clienteId,
+                initialValue: clienteId,
 
                 decoration: const InputDecoration(
                   labelText: 'Seleccionar cliente',

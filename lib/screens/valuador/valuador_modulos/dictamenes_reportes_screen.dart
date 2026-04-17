@@ -158,7 +158,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         return Padding(
           padding: const EdgeInsets.all(12),
           child: DropdownButtonFormField<int>(
-            value: casoSeleccionado,
+            initialValue: casoSeleccionado,
             items: items,
             onChanged: (v) {
               if (v == null) return;

@@ -9,6 +9,7 @@ import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/widgets/notification_badge_icon.dart';
 import '../localizacion.dart';
 
 class PanelAjustadorScreen extends StatefulWidget {
@@ -201,10 +202,11 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Ajustador'),
         actions: [
-          IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+          NotificationBadgeIcon(
+            profesionalId: widget.ajustadorId,
+            onPressed: () => _go(
+              NotificacionesScreen(profesionalId: widget.ajustadorId),
+            ),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -251,9 +253,11 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border: Border.all(color: gold.withOpacity(.20)),
+                                  border:
+                                      Border.all(color: gold.withOpacity(.20)),
                                 ),
-                                child: Icon(Icons.assignment_outlined, color: gold),
+                                child: Icon(Icons.assignment_outlined,
+                                    color: gold),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
@@ -291,7 +295,8 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                             ChoiceChip(
                               label: const Text("Disponible"),
                               selected: estado == "Disponible",
-                              onSelected: (_) => setState(() => estado = "Disponible"),
+                              onSelected: (_) =>
+                                  setState(() => estado = "Disponible"),
                               selectedColor: Colors.green.withOpacity(.3),
                               backgroundColor: Colors.white.withOpacity(.1),
                               labelStyle: const TextStyle(color: Colors.white),
@@ -300,7 +305,8 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                             ChoiceChip(
                               label: const Text("Ocupado"),
                               selected: estado == "Ocupado",
-                              onSelected: (_) => setState(() => estado = "Ocupado"),
+                              onSelected: (_) =>
+                                  setState(() => estado = "Ocupado"),
                               selectedColor: Colors.orange.withOpacity(.3),
                               backgroundColor: Colors.white.withOpacity(.1),
                               labelStyle: const TextStyle(color: Colors.white),
@@ -309,7 +315,8 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                             ChoiceChip(
                               label: const Text("En proceso"),
                               selected: estado == "En proceso",
-                              onSelected: (_) => setState(() => estado = "En proceso"),
+                              onSelected: (_) =>
+                                  setState(() => estado = "En proceso"),
                               selectedColor: Colors.blue.withOpacity(.3),
                               backgroundColor: Colors.white.withOpacity(.1),
                               labelStyle: const TextStyle(color: Colors.white),

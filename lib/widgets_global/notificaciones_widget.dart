@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
+import '../services/api_services/api_client.dart';
+import '../services/api_services/notificaciones_api.dart';
 
 class NotificacionesWidget extends StatefulWidget {
-  final int profesionalId; // 👈 ID del agente o psicólogo
+  final int profesionalId;
 
   const NotificacionesWidget({super.key, required this.profesionalId});
 
@@ -12,80 +13,143 @@ class NotificacionesWidget extends StatefulWidget {
 }
 
 class _NotificacionesWidgetState extends State<NotificacionesWidget> {
-  List<Map<String, dynamic>> notificaciones = [];
-  bool cargando = true;
+  final NotificacionesApi _api = NotificacionesApi(ApiClient());
+  List<Map<String, dynamic>> _notificaciones = [];
+  bool _cargando = true;
+  bool _marcandoTodas = false;
 
   @override
   void initState() {
     super.initState();
-    fetchNotificaciones();
+    _cargar();
   }
 
-  Future<void> fetchNotificaciones() async {
-    final url = Uri.parse(
-        "https://corporativolegaldigital.com/api/notificaciones.php?profesionalId=${widget.profesionalId}");
+  Future<void> _cargar() async {
+    setState(() => _cargando = true);
+    try {
+      final items = await _api.listar(
+        profesionalId: widget.profesionalId,
+        limit: 80,
+      );
+      if (!mounted) return;
+      setState(() {
+        _notificaciones = items;
+        _cargando = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _cargando = false);
+    }
+  }
+
+  Future<void> _marcarLeida(Map<String, dynamic> n) async {
+    final id = int.tryParse(n['id']?.toString() ?? '') ?? 0;
+    final leido = (n['leido']?.toString() ?? '0') == '1';
+    if (id <= 0 || leido) return;
 
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        if (jsonData["success"] == true && jsonData["data"] is List) {
-          setState(() {
-            notificaciones =
-                List<Map<String, dynamic>>.from(jsonData["data"] as List);
-            cargando = false;
-          });
-        } else {
-          setState(() {
-            cargando = false;
-          });
-        }
-      } else {
-        setState(() {
-          cargando = false;
-        });
-      }
-    } catch (e) {
+      await _api.marcarLeida(
+        notificacionId: id,
+        profesionalId: widget.profesionalId,
+      );
+      if (!mounted) return;
       setState(() {
-        cargando = false;
+        n['leido'] = 1;
       });
+    } catch (_) {}
+  }
+
+  Future<void> _marcarTodas() async {
+    if (_marcandoTodas) return;
+    setState(() => _marcandoTodas = true);
+    try {
+      await _api.marcarTodasLeidas(profesionalId: widget.profesionalId);
+      if (!mounted) return;
+      setState(() {
+        for (final item in _notificaciones) {
+          item['leido'] = 1;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('No se pudieron marcar todas como leidas')),
+      );
+    } finally {
+      if (mounted) setState(() => _marcandoTodas = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (cargando) {
+    if (_cargando) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (notificaciones.isEmpty) {
-      return const Center(child: Text("No hay notificaciones"));
+    if (_notificaciones.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _cargar,
+        child: ListView(
+          children: const [
+            SizedBox(height: 140),
+            Center(child: Text('No hay notificaciones')),
+          ],
+        ),
+      );
     }
+
+    final noLeidas = _notificaciones
+        .where((n) => (n['leido']?.toString() ?? '0') != '1')
+        .length;
 
     return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ListTile(
-            leading: Icon(Icons.notifications, color: Colors.blue),
-            title: Text("Notificaciones"),
+          ListTile(
+            leading: const Icon(Icons.notifications, color: Colors.blue),
+            title: const Text('Notificaciones'),
+            subtitle: Text(
+              noLeidas > 0 ? '$noLeidas sin leer' : 'Todo al dia',
+            ),
+            trailing: TextButton(
+              // Conexion con API: marca todas como leidas y actualiza la lista local.
+              onPressed: _marcandoTodas ? null : _marcarTodas,
+              child: Text(_marcandoTodas ? 'Marcando...' : 'Marcar todas'),
+            ),
           ),
-          ...notificaciones.map((n) => ListTile(
-                leading: Icon(
-                  (n['leido']?.toString() == '1')
-                      ? Icons.mark_email_read
-                      : Icons.notifications_active,
-                  color: (n['leido']?.toString() == '1')
-                      ? Colors.grey
-                      : Colors.red,
-                ),
-                title: Text(n['mensaje'] ?? ''),
-                subtitle: Text("Fecha: ${n['fecha'] ?? ''}"),
-                trailing: (n['leido']?.toString() == '1')
-                    ? const Text("Leído",
-                        style: TextStyle(color: Colors.grey))
-                    : const Text("Nuevo",
-                        style: TextStyle(color: Colors.red)),
-              )),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _cargar,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: _notificaciones.length,
+                itemBuilder: (_, i) {
+                  final n = _notificaciones[i];
+                  final leido = (n['leido']?.toString() ?? '0') == '1';
+
+                  return ListTile(
+                    onTap: () => _marcarLeida(n),
+                    leading: Icon(
+                      leido
+                          ? Icons.mark_email_read
+                          : Icons.notifications_active,
+                      color: leido ? Colors.grey : Colors.red,
+                    ),
+                    title: Text(n['mensaje']?.toString() ?? ''),
+                    subtitle: Text('Fecha: ${n['fecha']?.toString() ?? ''}'),
+                    trailing: Text(
+                      leido ? 'Leido' : 'Nuevo',
+                      style: TextStyle(
+                        color: leido ? Colors.grey : Colors.red,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );

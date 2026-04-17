@@ -10,6 +10,7 @@ import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.da
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
+import 'package:advocatus/widgets/notification_badge_icon.dart';
 
 // WIDGET COMÚN
 import 'package:advocatus/screens/common/estado_profesional/estado_profesional_widget.dart';
@@ -28,7 +29,8 @@ class PanelInvestigadorScreen extends StatefulWidget {
   });
 
   @override
-  State<PanelInvestigadorScreen> createState() => _PanelInvestigadorScreenState();
+  State<PanelInvestigadorScreen> createState() =>
+      _PanelInvestigadorScreenState();
 }
 
 class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
@@ -48,8 +50,6 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
-
- 
 
   // ---- UI helpers ----
 
@@ -222,10 +222,11 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Investigador'),
         actions: [
-          IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+          NotificationBadgeIcon(
+            profesionalId: widget.investigadorId,
+            onPressed: () => _go(
+              NotificacionesScreen(profesionalId: widget.investigadorId),
+            ),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -237,9 +238,11 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/iconos/mazo-libro.png', fit: BoxFit.cover),
+            child:
+                Image.asset('assets/iconos/mazo-libro.png', fit: BoxFit.cover),
           ),
-          Positioned.fill(child: Container(color: Colors.black.withOpacity(.62))),
+          Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(.62))),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -267,7 +270,8 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border: Border.all(color: gold.withOpacity(.20)),
+                                  border:
+                                      Border.all(color: gold.withOpacity(.20)),
                                 ),
                                 child: Icon(Icons.search_outlined, color: gold),
                               ),
@@ -296,10 +300,12 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: gold.withOpacity(.22)),
+                                  border:
+                                      Border.all(color: gold.withOpacity(.22)),
                                   color: Colors.white.withOpacity(.04),
                                 ),
                                 child: Row(
@@ -323,13 +329,15 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                         // ✅ ESTADO PROFESIONAL
                         _sectionHeader(
                           'Estado profesional',
-                          subtitle: 'Define tu disponibilidad para recibir asignaciones.',
+                          subtitle:
+                              'Define tu disponibilidad para recibir asignaciones.',
                         ),
                         _card(
                           child: EstadoProfesionalWidget(
                             estadoActual: estado,
                             color: gold,
-                            onChanged: (nuevoEstado) => setState(() => estado = nuevoEstado),
+                            onChanged: (nuevoEstado) =>
+                                setState(() => estado = nuevoEstado),
                           ),
                         ),
 
@@ -374,7 +382,8 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                         // ✅ BASE COMÚN
                         _sectionHeader(
                           'Base común',
-                          subtitle: 'Módulos obligatorios para todos los socios.',
+                          subtitle:
+                              'Módulos obligatorios para todos los socios.',
                         ),
                         _tile(
                           icon: Icons.verified_user_outlined,
@@ -442,7 +451,8 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                         // ✅ MÓDULOS INVESTIGADOR
                         _sectionHeader(
                           'Módulos del investigador',
-                          subtitle: 'Herramientas específicas para tu profesión.',
+                          subtitle:
+                              'Herramientas específicas para tu profesión.',
                         ),
                         _tile(
                           icon: Icons.assignment_outlined,
@@ -498,4 +508,3 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     );
   }
 }
-
