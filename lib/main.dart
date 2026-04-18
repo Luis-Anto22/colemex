@@ -5,10 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
 import 'screens/panel_cliente.dart';
 import 'screens/abogados/panel_abogado.dart';
-import 'screens/abogados/crear_caso_screen.dart';
-import 'screens/abogados/editar_caso_screen.dart';
-import 'screens/abogados/ubicacion_despacho_screen.dart';
-import 'screens/abogados/buscar_abogado_map_screen.dart';
 import 'screens/registro_socio_screen.dart';
 import 'screens/home_public_screen.dart';
 import 'screens/registro_usuario_screen.dart';
@@ -109,6 +105,7 @@ class MyApp extends StatelessWidget {
         case 'agentes_inmobiliarios':
           return '/panel-inmuebles';
 
+        case 'contador':
         case 'contadores':
           return '/panel-contador';
 
@@ -154,20 +151,18 @@ class MyApp extends StatelessWidget {
         ).copyWith(
           secondary: const Color(0xFFD4AF37),
         ),
+        primaryColor: const Color(0xFFD4AF37),
       ),
       initialRoute: initialRoute,
       routes: {
         '/home': (context) => const HomePublicScreen(),
         '/login': (context) => const LoginScreen(),
         '/panel-cliente': (context) => const PanelCliente(),
-        '/panel-abogado': (context) => const PanelAbogado(),
         '/panel-admin-home': (context) => const PanelAdminHome(),
-        '/crear-caso': (context) => const CrearCasoScreen(),
-        '/editar-caso': (context) => const EditarCasoScreen(),
-        '/buscar-abogado': (context) => const BuscarAbogadoMapScreen(),
         '/registro-socio': (context) => const RegistroSocioScreen(),
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
 
+        // Admin / Profesionales
         '/lista-abogados': (context) => const ListaProfesionalesScreen(),
         '/registrar-abogado': (context) => const RegistrarProfesionalScreen(),
         '/editar-abogado': (context) {
@@ -183,7 +178,8 @@ class MyApp extends StatelessWidget {
         },
 
         '/lista-profesionales': (context) => const ListaProfesionalesScreen(),
-        '/registrar-profesional': (context) => const RegistrarProfesionalScreen(),
+        '/registrar-profesional': (context) =>
+            const RegistrarProfesionalScreen(),
         '/editar-profesional': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is Profesional) {
@@ -196,9 +192,12 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Psicólogos
         '/panel-psicologos': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int) return PanelPsicologos(psicologoId: args);
+          if (args is int) {
+            return PanelPsicologos(psicologoId: args);
+          }
           return const Scaffold(
             body: Center(
               child: Text('❌ Argumentos inválidos para panel psicólogos'),
@@ -206,6 +205,7 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Investigadores
         '/panel-investigador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int) {
@@ -218,6 +218,7 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Valuadores
         '/panel-valuador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int) {
@@ -230,9 +231,12 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Inmobiliarios
         '/panel-inmuebles': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int) return PanelAgentesInmobiliarios(agenteId: args);
+          if (args is int) {
+            return PanelAgentesInmobiliarios(agenteId: args);
+          }
           return const Scaffold(
             body: Center(
               child: Text('❌ Argumentos inválidos para panel inmobiliarios'),
@@ -240,6 +244,7 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Contador
         '/panel-contador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -248,8 +253,10 @@ class MyApp extends StatelessWidget {
           return const ContadorPanel();
         },
 
+        // Auditor
         '/panel-auditor': (context) => const AuditorPanel(),
 
+        // Agente crediticio
         '/panel-agente': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -258,6 +265,7 @@ class MyApp extends StatelessWidget {
           return const AgentePanel();
         },
 
+        // Perito
         '/panel-perito': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -270,6 +278,7 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Ajustador
         '/panel-ajustador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -282,6 +291,7 @@ class MyApp extends StatelessWidget {
           );
         },
 
+        // Asistencia vial
         '/panel-asistencia-vial': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -293,29 +303,10 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        '/ubicacion-despacho': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is Map<String, dynamic> && args['id'] is int) {
-            return UbicacionDespachoScreen(idAbogado: args['id'] as int);
-          }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para ubicación del despacho'),
-            ),
-          );
-        },
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/panel-cliente':
-            final args = settings.arguments;
-            if (args is int) {
-              return MaterialPageRoute(
-                builder: (_) => const PanelCliente(),
-                settings: settings,
-              );
-            }
             return MaterialPageRoute(
               builder: (_) => const PanelCliente(),
               settings: settings,
@@ -325,12 +316,12 @@ class MyApp extends StatelessWidget {
             final args = settings.arguments;
             if (args is int) {
               return MaterialPageRoute(
-                builder: (_) => const PanelAbogado(),
+                builder: (_) => PanelAbogadoScreen(abogadoId: args),
                 settings: settings,
               );
             }
             return MaterialPageRoute(
-              builder: (_) => const PanelAbogado(),
+              builder: (_) => const PanelAbogadoScreen(),
               settings: settings,
             );
 
