@@ -5,7 +5,6 @@ import '../../services/api_services/cliente_profesionales_api.dart';
 
 class PanelInicio extends StatefulWidget {
   static const Color _primary = Color(0xFF0B2545);
-  static const Color _secondary = Color(0xFF134074);
 
   final String nombreUsuario;
   final String? servicioSeleccionado;
