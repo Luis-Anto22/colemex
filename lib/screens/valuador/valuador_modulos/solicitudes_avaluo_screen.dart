@@ -57,6 +57,8 @@ class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
       );
     }
 
+    if (!mounted) return;
+
     setState(() {
       loadingEstado = false;
     });
@@ -101,7 +103,7 @@ class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
           IconButton(
             onPressed: _reload,
             icon: const Icon(Icons.refresh),
-          )
+          ),
         ],
       ),
       body: FutureBuilder<List<dynamic>>(
@@ -161,7 +163,7 @@ class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
                         Text(descripcion),
                         const SizedBox(height: 4),
                         Text(
-                          "Fecha: $fecha",
+                          'Fecha: $fecha',
                           style: const TextStyle(fontSize: 12),
                         ),
                       ],

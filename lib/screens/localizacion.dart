@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+
 import 'universal_location_button.dart';
 import 'map_styles.dart';
 
@@ -26,7 +27,6 @@ class _LocalizacionPanelState extends State<LocalizacionPanel> {
 
   final MapController _mapController = MapController();
 
-  /// ✅ Estilo inicial
   TileLayer _currentStyle = MapStyles.osm;
 
   @override
@@ -35,7 +35,6 @@ class _LocalizacionPanelState extends State<LocalizacionPanel> {
     _getCurrentLocation();
   }
 
-  // ================= UBICACIÓN =================
   Future<void> _getCurrentLocation() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
@@ -69,23 +68,22 @@ class _LocalizacionPanelState extends State<LocalizacionPanel> {
     }
   }
 
-  // ================= ICONO POR PERFIL =================
-IconData _getIconForPerfil(String perfil) {
-  switch (perfil) {
-    case "Abogados":
-      return Icons.gavel;
-    case "Psicólogos":
-      return Icons.psychology;
-    case "Contadores":
-      return Icons.calculate;
-    case "Agentes crediticios":
-      return Icons.account_balance;
-    case "Asistencia Vial":
-      return Icons.local_shipping; // 🚚 grúa / servicio vial
-    default:
-      return Icons.location_on;
+  IconData _getIconForPerfil(String perfil) {
+    switch (perfil) {
+      case 'Abogados':
+        return Icons.gavel;
+      case 'Psicólogos':
+        return Icons.psychology;
+      case 'Contadores':
+        return Icons.calculate;
+      case 'Agentes crediticios':
+        return Icons.account_balance;
+      case 'Asistencia Vial':
+        return Icons.local_shipping;
+      default:
+        return Icons.location_on;
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +93,11 @@ IconData _getIconForPerfil(String perfil) {
       data: theme,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Selecciona tu ubicación"),
+          title: const Text('Selecciona tu ubicación'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
           actions: [
             Switch(
               value: _darkMode,
@@ -105,19 +107,19 @@ IconData _getIconForPerfil(String perfil) {
               child: DropdownButton<TileLayer>(
                 icon: const Icon(Icons.map, color: Colors.white),
                 items: [
-                  DropdownMenuItem(
-                    value: MapStyles.osm,
-                    child: Text("OpenStreetMap"),
-                  ),
-                  DropdownMenuItem(
-                    value: MapStyles.cartoLight,
-                    child: Text("Mapa claro"),
-                  ),
-                  DropdownMenuItem(
-                    value: MapStyles.cartoDark,
-                    child: Text("Mapa oscuro"),
-                  ),
-                ],
+  DropdownMenuItem(
+    value: MapStyles.osm,
+    child: const Text('OpenStreetMap'),
+  ),
+  DropdownMenuItem(
+    value: MapStyles.cartoLight,
+    child: const Text('Mapa claro'),
+  ),
+  DropdownMenuItem(
+    value: MapStyles.cartoDark,
+    child: const Text('Mapa oscuro'),
+  ),
+],
                 onChanged: (style) {
                   if (style != null) {
                     setState(() => _currentStyle = style);
@@ -136,8 +138,9 @@ IconData _getIconForPerfil(String perfil) {
                     options: MapOptions(
                       initialCenter: _selectedPosition,
                       initialZoom: 14,
-                      onTap: (_, point) =>
-                          setState(() => _selectedPosition = point),
+                      onTap: (_, point) {
+                        setState(() => _selectedPosition = point);
+                      },
                     ),
                     children: [
                       _currentStyle,
@@ -157,7 +160,6 @@ IconData _getIconForPerfil(String perfil) {
                       ),
                     ],
                   ),
-
             Positioned(
               bottom: 20,
               right: 20,
@@ -167,7 +169,6 @@ IconData _getIconForPerfil(String perfil) {
                 lng: _selectedPosition.longitude,
               ),
             ),
-
             Positioned(
               bottom: 90,
               right: 20,

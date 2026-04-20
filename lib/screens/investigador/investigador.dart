@@ -24,34 +24,20 @@ class PanelInvestigadorScreen extends StatefulWidget {
 
   const PanelInvestigadorScreen({
     super.key,
-    required this.investigadorId, // 🔹 Constructor con parámetro requerido
+    required this.investigadorId,
   });
 
   @override
-  State<PanelInvestigadorScreen> createState() => _PanelInvestigadorScreenState();
+  State<PanelInvestigadorScreen> createState() =>
+      _PanelInvestigadorScreenState();
 }
 
 class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
   String estado = 'Disponible';
 
-  // Integracion API (panel investigador):
-  // Este panel no hace llamadas HTTP directas; solo navega entre modulos.
-  // Endpoints consumidos por los modulos de investigador:
-  // - GET/POST /investigador/casos.php      (CasosAsignadosScreen)
-  // - GET/POST /investigador/bitacora.php   (BitacoraScreen)
-  // - GET/POST /investigador/evidencias.php (EvidenciasScreen)
-  // Endpoints comunes usados por pantallas compartidas:
-  // - GET/POST /common/ubicacion.php
-  // - GET/POST /common/agenda.php
-  // - GET      /common/historial.php
-  // - GET      /common/ingresos.php
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
-
- 
-
-  // ---- UI helpers ----
 
   Widget _sectionHeader(String title, {String? subtitle}) {
     return Padding(
@@ -154,7 +140,10 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.white.withOpacity(.60)),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withOpacity(.60),
+            ),
           ],
         ),
       ),
@@ -167,7 +156,6 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-
     final gold = theme.primaryColor;
 
     return Expanded(
@@ -213,7 +201,7 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
         color: Colors.black.withOpacity(.25),
         blurRadius: 22,
         offset: const Offset(0, 10),
-      )
+      ),
     ];
 
     return Scaffold(
@@ -237,9 +225,14 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/iconos/mazo-libro.png', fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/iconos/mazo-libro.png',
+              fit: BoxFit.cover,
+            ),
           ),
-          Positioned.fill(child: Container(color: Colors.black.withOpacity(.62))),
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(.62)),
+          ),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -257,7 +250,6 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // ✅ HERO CARD
                         _card(
                           child: Row(
                             children: [
@@ -267,9 +259,14 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border: Border.all(color: gold.withOpacity(.20)),
+                                  border: Border.all(
+                                    color: gold.withOpacity(.20),
+                                  ),
                                 ),
-                                child: Icon(Icons.search_outlined, color: gold),
+                                child: Icon(
+                                  Icons.search_outlined,
+                                  color: gold,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -296,10 +293,15 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: gold.withOpacity(.22)),
+                                  border: Border.all(
+                                    color: gold.withOpacity(.22),
+                                  ),
                                   color: Colors.white.withOpacity(.04),
                                 ),
                                 child: Row(
@@ -320,20 +322,20 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                           ),
                         ),
 
-                        // ✅ ESTADO PROFESIONAL
                         _sectionHeader(
                           'Estado profesional',
-                          subtitle: 'Define tu disponibilidad para recibir asignaciones.',
+                          subtitle:
+                              'Define tu disponibilidad para recibir asignaciones.',
                         ),
                         _card(
                           child: EstadoProfesionalWidget(
                             estadoActual: estado,
                             color: gold,
-                            onChanged: (nuevoEstado) => setState(() => estado = nuevoEstado),
+                            onChanged: (nuevoEstado) =>
+                                setState(() => estado = nuevoEstado),
                           ),
                         ),
 
-                        // ✅ ACCIONES RÁPIDAS
                         _sectionHeader('Acciones rápidas'),
                         Row(
                           children: [
@@ -371,10 +373,10 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                           ],
                         ),
 
-                        // ✅ BASE COMÚN
                         _sectionHeader(
                           'Base común',
-                          subtitle: 'Módulos obligatorios para todos los socios.',
+                          subtitle:
+                              'Módulos obligatorios para todos los socios.',
                         ),
                         _tile(
                           icon: Icons.verified_user_outlined,
@@ -439,10 +441,10 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                           onTap: () => _go(const SoporteScreen()),
                         ),
 
-                        // ✅ MÓDULOS INVESTIGADOR
                         _sectionHeader(
                           'Módulos del investigador',
-                          subtitle: 'Herramientas específicas para tu profesión.',
+                          subtitle:
+                              'Herramientas específicas para tu profesión.',
                         ),
                         _tile(
                           icon: Icons.assignment_outlined,
@@ -498,4 +500,3 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     );
   }
 }
-

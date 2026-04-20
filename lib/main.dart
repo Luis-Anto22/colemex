@@ -161,8 +161,6 @@ class MyApp extends StatelessWidget {
         '/panel-admin-home': (context) => const PanelAdminHome(),
         '/registro-socio': (context) => const RegistroSocioScreen(),
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
-
-        // Admin / Profesionales
         '/lista-abogados': (context) => const ListaProfesionalesScreen(),
         '/registrar-abogado': (context) => const RegistrarProfesionalScreen(),
         '/editar-abogado': (context) {
@@ -176,7 +174,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
         '/lista-profesionales': (context) => const ListaProfesionalesScreen(),
         '/registrar-profesional': (context) =>
             const RegistrarProfesionalScreen(),
@@ -191,8 +188,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Psicólogos
         '/panel-psicologos': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int) {
@@ -204,8 +199,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Investigadores
         '/panel-investigador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int) {
@@ -217,8 +210,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Valuadores
         '/panel-valuador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int) {
@@ -230,8 +221,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Inmobiliarios
         '/panel-inmuebles': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int) {
@@ -243,8 +232,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Contador
         '/panel-contador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -252,11 +239,7 @@ class MyApp extends StatelessWidget {
           }
           return const ContadorPanel();
         },
-
-        // Auditor
         '/panel-auditor': (context) => const AuditorPanel(),
-
-        // Agente crediticio
         '/panel-agente': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -264,8 +247,6 @@ class MyApp extends StatelessWidget {
           }
           return const AgentePanel();
         },
-
-        // Perito
         '/panel-perito': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -277,8 +258,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Ajustador
         '/panel-ajustador': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {
@@ -290,8 +269,6 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-
-        // Asistencia vial
         '/panel-asistencia-vial': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is int && args > 0) {

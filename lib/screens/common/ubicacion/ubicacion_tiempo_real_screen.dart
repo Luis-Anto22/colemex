@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_dragmarker/flutter_map_dragmarker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../services/api_services/api_client.dart';
 import '../../../services/api_services/common_api.dart';
+import 'fullscreen_location_picker_screen.dart';
 
 class UbicacionTiempoRealScreen extends StatefulWidget {
   const UbicacionTiempoRealScreen({super.key});
@@ -20,14 +20,17 @@ class UbicacionTiempoRealScreen extends StatefulWidget {
 
 class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
   final CommonApi api = CommonApi(ApiClient());
+
   bool cargando = true;
   bool detectando = false;
   bool compartiendo = false;
+
   int profesionalId = 0;
   double? latitude;
   double? longitude;
   LatLng? preview;
   String? direccion;
+
   StreamSubscription<Position>? _posSub;
   DateTime? _lastSent;
 
@@ -49,6 +52,7 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
 
     try {
       final data = await api.getUbicacion(profesionalId);
+
       final lat = data['latitude'] != null
           ? double.tryParse(data['latitude'].toString())
           : null;
@@ -57,6 +61,7 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
           : null;
 
       if (!mounted) return;
+
       setState(() {
         latitude = lat;
         longitude = lon;
@@ -93,7 +98,7 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Actualizar ubicacion'),
+        title: const Text('Actualizar ubicación'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -124,13 +129,22 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
       ),
     );
 
-    if (ok != true) return;
+    if (ok != true) {
+      latCtrl.dispose();
+      lonCtrl.dispose();
+      return;
+    }
+
     final lat = double.tryParse(latCtrl.text.trim());
     final lon = double.tryParse(lonCtrl.text.trim());
+
+    latCtrl.dispose();
+    lonCtrl.dispose();
+
     if (lat == null || lon == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coordenadas invalidas')),
+        const SnackBar(content: Text('Coordenadas inválidas')),
       );
       return;
     }
@@ -141,14 +155,18 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
         latitude: lat,
         longitude: lon,
       );
+
       if (!mounted) return;
+
       await _updatePreview(LatLng(lat, lon));
+
       setState(() {
         latitude = lat;
         longitude = lon;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ubicacion guardada')),
+        const SnackBar(content: Text('Ubicación guardada')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -160,6 +178,7 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
 
   Future<void> _detectarUbicacion() async {
     if (detectando) return;
+
     setState(() => detectando = true);
 
     try {
@@ -169,74 +188,42 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+
       final posLatLng = LatLng(pos.latitude, pos.longitude);
-      await _updatePreview(posLatLng);
 
       if (!mounted) return;
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Confirmar ubicacion'),
-          content: SizedBox(
-            width: 320,
-            height: 220,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: posLatLng,
-                initialZoom: 16,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
-                ),
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'advocatus',
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: posLatLng,
-                      width: 40,
-                      height: 40,
-                      child: const Icon(
-                        Icons.location_pin,
-                        color: Colors.red,
-                        size: 36,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+
+      final selected = await Navigator.of(context).push<LatLng>(
+        MaterialPageRoute(
+          builder: (_) => FullscreenLocationPickerScreen(
+            initialPoint: posLatLng,
+            title: 'Confirmar ubicación',
+            confirmLabel: 'Sí, guardar',
+            allowDrag: false,
+            allowTapSelection: false,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('No'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Si, guardar'),
-            ),
-          ],
         ),
       );
 
-      if (ok != true) return;
+      if (selected == null) return;
 
       await api.actualizarUbicacion(
         profesionalId: profesionalId,
-        latitude: pos.latitude,
-        longitude: pos.longitude,
+        latitude: selected.latitude,
+        longitude: selected.longitude,
       );
+
       if (!mounted) return;
+
+      await _updatePreview(selected);
+
       setState(() {
-        latitude = pos.latitude;
-        longitude = pos.longitude;
+        latitude = selected.latitude;
+        longitude = selected.longitude;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ubicacion guardada')),
+        const SnackBar(content: Text('Ubicación guardada')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -244,7 +231,9 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
         SnackBar(content: Text('Error: $e')),
       );
     } finally {
-      if (mounted) setState(() => detectando = false);
+      if (mounted) {
+        setState(() => detectando = false);
+      }
     }
   }
 
@@ -283,19 +272,22 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
+
     if (perm == LocationPermission.denied ||
         perm == LocationPermission.deniedForever) {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Permiso de ubicacion denegado')),
+        const SnackBar(content: Text('Permiso de ubicación denegado')),
       );
       return false;
     }
+
     return true;
   }
 
   Future<void> _startTiempoReal() async {
     await _posSub?.cancel();
+
     _posSub = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
@@ -303,8 +295,11 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
       ),
     ).listen((pos) async {
       if (!mounted) return;
+
       final point = LatLng(pos.latitude, pos.longitude);
+
       await _updatePreview(point);
+
       setState(() {
         latitude = pos.latitude;
         longitude = pos.longitude;
@@ -335,13 +330,38 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
     await _reverseGeocode(point);
   }
 
+  Future<void> _abrirMapaCompleto() async {
+    final base = preview ??
+        (latitude != null && longitude != null
+            ? LatLng(latitude!, longitude!)
+            : null);
+
+    if (base == null) return;
+
+    final selected = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (_) => FullscreenLocationPickerScreen(
+          initialPoint: base,
+          title: 'Mapa de ubicación',
+          confirmLabel: 'Usar esta ubicación',
+        ),
+      ),
+    );
+
+    if (selected == null || !mounted) return;
+
+    await _updatePreview(selected);
+  }
+
   Future<void> _reverseGeocode(LatLng point) async {
     try {
       final list = await placemarkFromCoordinates(
         point.latitude,
         point.longitude,
       );
+
       if (list.isEmpty) return;
+
       final p = list.first;
       final parts = [
         if ((p.street ?? '').isNotEmpty) p.street!,
@@ -350,6 +370,7 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
         if ((p.administrativeArea ?? '').isNotEmpty) p.administrativeArea!,
         if ((p.country ?? '').isNotEmpty) p.country!,
       ];
+
       if (!mounted) return;
       setState(() => direccion = parts.join(', '));
     } catch (_) {
@@ -363,7 +384,9 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
     final gold = Theme.of(context).primaryColor;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ubicacion en tiempo real')),
+      appBar: AppBar(
+        title: const Text('Ubicación en tiempo real'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -371,7 +394,7 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
             Icon(Icons.location_on_outlined, size: 64, color: gold),
             const SizedBox(height: 12),
             const Text(
-              'Compartir ubicacion',
+              'Compartir ubicación',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
@@ -384,9 +407,10 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
               value: compartiendo,
               onChanged: (v) => _toggleTiempoReal(v),
               activeThumbColor: gold,
-              title: const Text('Compartir ubicacion en tiempo real'),
+              title: const Text('Compartir ubicación en tiempo real'),
               subtitle: const Text(
-                  'Se actualiza automaticamente cada pocos segundos'),
+                'Se actualiza automáticamente cada pocos segundos',
+              ),
             ),
             if (cargando)
               const Padding(
@@ -405,40 +429,11 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
             if (preview != null) ...[
               const SizedBox(height: 8),
               SizedBox(
-                height: 200,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: preview!,
-                      initialZoom: 15,
-                      interactionOptions: const InteractionOptions(
-                        flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
-                      ),
-                      onTap: (_, p) => _updatePreview(p),
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'advocatus',
-                      ),
-                      DragMarkers(
-                        markers: [
-                          DragMarker(
-                            point: preview!,
-                            size: const Size(40, 40),
-                            builder: (ctx, point, isDragging) => Icon(
-                              Icons.location_pin,
-                              color: isDragging ? Colors.orange : Colors.red,
-                              size: 36,
-                            ),
-                            onDragEnd: (_, newPoint) => _updatePreview(newPoint),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _abrirMapaCompleto,
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('Abrir mapa en pantalla completa'),
                 ),
               ),
               if (direccion != null && direccion!.isNotEmpty) ...[
@@ -457,9 +452,12 @@ class _UbicacionTiempoRealScreenState extends State<UbicacionTiempoRealScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: detectando || compartiendo ? null : _detectarUbicacion,
+                onPressed:
+                    detectando || compartiendo ? null : _detectarUbicacion,
                 icon: const Icon(Icons.gps_fixed),
-                label: Text(detectando ? 'Detectando...' : 'Detectar ubicacion'),
+                label: Text(
+                  detectando ? 'Detectando...' : 'Detectar ubicación',
+                ),
               ),
             ),
             const SizedBox(height: 10),

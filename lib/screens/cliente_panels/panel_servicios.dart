@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/api_services/cliente_profesionales_api.dart';
+import 'profesionales_mapa_fullscreen.dart';
 import 'servicio_selector.dart';
 
 class PanelServicios extends StatefulWidget {
@@ -60,12 +60,15 @@ class _PanelServiciosState extends State<PanelServicios> {
 
   final ClienteProfesionalesApi _api = ClienteProfesionalesApi();
   final Distance _distance = const Distance();
+
   bool _cargando = false;
   bool _enviandoSolicitud = false;
   bool _cargandoEspecialidadesAbogado = false;
+
   List<String> _especialidadesAbogado = [];
   String _especialidadAbogado = '';
   String _mensaje = '';
+
   LatLng? _ubicacionCliente;
   List<Map<String, dynamic>> _profesionales = [];
 
@@ -79,6 +82,7 @@ class _PanelServiciosState extends State<PanelServicios> {
   @override
   void didUpdateWidget(covariant PanelServicios oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     final servicio = widget.servicioSeleccionado?.trim() ?? '';
     if (_esServicioAbogados(servicio)) {
       final especialidadInicio = widget.especialidadBusqueda?.trim() ?? '';
@@ -87,6 +91,7 @@ class _PanelServiciosState extends State<PanelServicios> {
         _especialidadAbogado = especialidadInicio;
       }
     }
+
     if (widget.servicioSeleccionado != oldWidget.servicioSeleccionado ||
         widget.especialidadBusqueda != oldWidget.especialidadBusqueda) {
       _cargarSiHayServicio();
@@ -193,7 +198,7 @@ class _PanelServiciosState extends State<PanelServicios> {
           ),
           SizedBox(height: compact ? 8 : 10),
           Text(
-            'Bienvenido, elige alguno de los servicios ofrecidos por la aplicacion.',
+            'Bienvenido, elige alguno de los servicios ofrecidos por la aplicación.',
             style: TextStyle(
               color: const Color(0xFFE7EEF7),
               fontSize: compact ? 13 : 14,
@@ -276,17 +281,21 @@ class _PanelServiciosState extends State<PanelServicios> {
     try {
       final items = await _api.getEspecialidades(limit: 200);
       var legales = items
-          .where((e) =>
-              e.toLowerCase().contains('derecho') ||
-              e.toLowerCase().contains('amparo'))
+          .where(
+            (e) =>
+                e.toLowerCase().contains('derecho') ||
+                e.toLowerCase().contains('amparo'),
+          )
           .toSet()
           .toList()
         ..sort();
+
       if (legales.isEmpty) {
         legales = [..._especialidadesLegalesFallback];
       }
 
       if (!mounted) return;
+
       setState(() {
         _especialidadesAbogado = legales;
         final especialidadInicio = widget.especialidadBusqueda?.trim() ?? '';
@@ -300,6 +309,7 @@ class _PanelServiciosState extends State<PanelServicios> {
       });
     } catch (_) {
       if (!mounted) return;
+
       setState(() {
         _especialidadesAbogado = [..._especialidadesLegalesFallback];
         final especialidadInicio = widget.especialidadBusqueda?.trim() ?? '';
@@ -313,7 +323,9 @@ class _PanelServiciosState extends State<PanelServicios> {
 
   Future<void> _abrirSelectorEspecialidadAbogado() async {
     if (_cargandoEspecialidadesAbogado) return;
+
     final buscadorController = TextEditingController();
+
     try {
       final seleccion = await showModalBottomSheet<String>(
         context: context,
@@ -443,13 +455,13 @@ class _PanelServiciosState extends State<PanelServicios> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     title: Text(especialidad),
-                                    trailing: _especialidadAbogado ==
-                                            especialidad
-                                        ? const Icon(
-                                            Icons.check_circle_rounded,
-                                            color: _primary,
-                                          )
-                                        : null,
+                                    trailing:
+                                        _especialidadAbogado == especialidad
+                                            ? const Icon(
+                                                Icons.check_circle_rounded,
+                                                color: _primary,
+                                              )
+                                            : null,
                                     onTap: () =>
                                         Navigator.of(context).pop(especialidad),
                                   ),
@@ -468,9 +480,11 @@ class _PanelServiciosState extends State<PanelServicios> {
       );
 
       if (!mounted || seleccion == null) return;
+
       setState(() {
         _especialidadAbogado = seleccion.trim();
       });
+
       _cargarSiHayServicio();
     } finally {
       buscadorController.dispose();
@@ -500,12 +514,14 @@ class _PanelServiciosState extends State<PanelServicios> {
       }
       return;
     }
+
     await _cargarProfesionales();
   }
 
   Future<void> _cargarProfesionales() async {
     final servicio = widget.servicioSeleccionado?.trim() ?? '';
     final especialidad = _especialidadFiltroActual(servicio);
+
     if (servicio.isEmpty && especialidad.isEmpty) return;
 
     setState(() {
@@ -517,6 +533,7 @@ class _PanelServiciosState extends State<PanelServicios> {
 
     final ubicacion = await _obtenerUbicacion();
     if (!mounted) return;
+
     if (ubicacion == null) {
       setState(() {
         _cargando = false;
@@ -539,7 +556,8 @@ class _PanelServiciosState extends State<PanelServicios> {
       _ordenarPorDistancia();
 
       if (_profesionales.isEmpty) {
-        _mensaje = 'No hay profesionales disponibles para el filtro indicado.';
+        _mensaje =
+            'No hay profesionales disponibles para el filtro indicado.';
       }
     } catch (_) {
       _mensaje = 'Error al cargar profesionales.';
@@ -581,6 +599,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     final posicion = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
+
     return LatLng(posicion.latitude, posicion.longitude);
   }
 
@@ -590,9 +609,12 @@ class _PanelServiciosState extends State<PanelServicios> {
     if (parsed != null) return parsed;
 
     if (_ubicacionCliente == null) return null;
+
     final lat = double.tryParse(profesional['latitude']?.toString() ?? '');
     final lng = double.tryParse(profesional['longitude']?.toString() ?? '');
+
     if (lat == null || lng == null) return null;
+
     return _distance.as(
       LengthUnit.Kilometer,
       _ubicacionCliente!,
@@ -628,7 +650,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     if (profesionalId == null || profesionalId <= 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profesional invalido.')),
+        const SnackBar(content: Text('Profesional inválido.')),
       );
       return;
     }
@@ -650,13 +672,13 @@ class _PanelServiciosState extends State<PanelServicios> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Se enviara una solicitud de caso a $nombre para que la acepte o rechace.',
+                  'Se enviará una solicitud de caso a $nombre para que la acepte o rechace.',
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: tituloController,
                   decoration: const InputDecoration(
-                    labelText: 'Titulo del caso',
+                    labelText: 'Título del caso',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -666,7 +688,7 @@ class _PanelServiciosState extends State<PanelServicios> {
                   minLines: 3,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    labelText: 'Descripcion (opcional)',
+                    labelText: 'Descripción (opcional)',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -695,13 +717,14 @@ class _PanelServiciosState extends State<PanelServicios> {
 
     final titulo = tituloController.text.trim();
     final descripcion = descripcionController.text.trim();
+
     tituloController.dispose();
     descripcionController.dispose();
 
     if (titulo.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El titulo es obligatorio.')),
+        const SnackBar(content: Text('El título es obligatorio.')),
       );
       return;
     }
@@ -729,6 +752,7 @@ class _PanelServiciosState extends State<PanelServicios> {
       );
 
       if (!mounted) return;
+
       final creado = resp['creado'] == true;
       final message = resp['message']?.toString() ??
           (creado
@@ -744,6 +768,7 @@ class _PanelServiciosState extends State<PanelServicios> {
       );
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('No se pudo enviar la solicitud: $e'),
@@ -768,9 +793,11 @@ class _PanelServiciosState extends State<PanelServicios> {
         double.tryParse(profesional['rating_promedio']?.toString() ?? '') ?? 0.0;
     final totalCalificaciones =
         int.tryParse(profesional['total_calificaciones']?.toString() ?? '') ?? 0;
+
     final ratingTexto = totalCalificaciones > 0
         ? '${rating.toStringAsFixed(1)} ($totalCalificaciones)'
-        : 'Sin calificacion';
+        : 'Sin calificación';
+
     final distanciaTexto = distancia != null
         ? '${distancia.toStringAsFixed(2)} km'
         : 'Distancia N/D';
@@ -986,477 +1013,324 @@ class _PanelServiciosState extends State<PanelServicios> {
     );
   }
 
-  Widget _mapa() {
-    if (_ubicacionCliente == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
+  Future<void> _abrirMapaPantallaCompleta() async {
+    if (_ubicacionCliente == null) return;
+    if (_profesionales.isEmpty) return;
 
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: _ubicacionCliente!,
-        initialZoom: 13,
-        minZoom: 5,
-        maxZoom: 18,
+    final seleccionado = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (_) => ProfesionalesMapaFullscreen(
+          ubicacionCliente: _ubicacionCliente!,
+          profesionales: _profesionales,
+          servicioSeleccionado: widget.servicioSeleccionado ?? '',
+        ),
       ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.advocatus.app',
-          maxZoom: 19,
-        ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: _ubicacionCliente!,
-              width: 40,
-              height: 40,
-              child: const Icon(
-                Icons.my_location_rounded,
-                color: Color(0xFF1D4ED8),
-                size: 34,
-              ),
-            ),
-            ..._profesionales.map((p) {
-              final lat = double.tryParse(p['latitude']?.toString() ?? '');
-              final lng = double.tryParse(p['longitude']?.toString() ?? '');
-
-              if (lat == null || lng == null) return null;
-
-              final estado = p['estado']?.toString() ?? 'disponible';
-              final perfilRaw = p['perfil']?.toString().trim() ?? '';
-              final perfil = perfilRaw.isNotEmpty
-                  ? perfilRaw
-                  : (widget.servicioSeleccionado?.trim() ?? '');
-
-              final icono = _iconoServicio(perfil);
-              final colorEstado = _colorEstado(estado);
-
-              return Marker(
-                point: LatLng(lat, lng),
-                width: 40,
-                height: 40,
-                child: GestureDetector(
-                  onTap: () => _mostrarDetalle(p),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colorEstado,
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      icono,
-                      color: colorEstado,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              );
-            }).whereType<Marker>().toList(),
-          ],
-        ),
-      ],
     );
+
+    if (!mounted || seleccionado == null) return;
+    _mostrarDetalle(seleccionado);
   }
 
-@override
-Widget build(BuildContext context) {
-  final screen = MediaQuery.of(context).size;
-  final servicioSel = widget.servicioSeleccionado?.trim() ?? '';
-  final especialidadSelGlobal = widget.especialidadBusqueda?.trim() ?? '';
-  final especialidadSelActiva = _especialidadFiltroActual(servicioSel);
-  final esAbogados = _esServicioAbogados(servicioSel);
-  final tieneFiltro =
-      servicioSel.isNotEmpty || especialidadSelActiva.isNotEmpty;
-  final isSmallPhone = screen.width < 380 || screen.height < 700;
-  final hPad = isSmallPhone ? 12.0 : 16.0;
-  final mapHeight =
-      screen.height < 680 ? 220.0 : (screen.height < 750 ? 250.0 : 300.0);
-  final mapTagMaxWidth = isSmallPhone ? 145.0 : 190.0;
-  final mapHintText =
-      isSmallPhone ? 'Toca un pin' : 'Toca un pin para ver ficha';
-  final titleSize = isSmallPhone ? 16.0 : 17.0;
+  @override
+  Widget build(BuildContext context) {
+    final screen = MediaQuery.of(context).size;
+    final servicioSel = widget.servicioSeleccionado?.trim() ?? '';
+    final especialidadSelGlobal = widget.especialidadBusqueda?.trim() ?? '';
+    final especialidadSelActiva = _especialidadFiltroActual(servicioSel);
+    final esAbogados = _esServicioAbogados(servicioSel);
+    final tieneFiltro =
+        servicioSel.isNotEmpty || especialidadSelActiva.isNotEmpty;
+    final isSmallPhone = screen.width < 380 || screen.height < 700;
+    final hPad = isSmallPhone ? 12.0 : 16.0;
+    final titleSize = isSmallPhone ? 16.0 : 17.0;
 
-  return ListView(
-    padding: EdgeInsets.only(bottom: hPad),
-    children: [
-      Padding(
-        padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
-        child: _buildBienvenida(isSmallPhone),
-      ),
-      if (tieneFiltro)
+    return ListView(
+      padding: EdgeInsets.only(bottom: hPad),
+      children: [
         Padding(
           padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_rounded,
-                  color: _primary,
-                ),
-                onPressed: () {
-                  widget.onSeleccionarServicio('');
-                  setState(() {
-                    _especialidadAbogado = '';
-                    _profesionales = [];
-                    _mensaje = '';
-                  });
-                },
-              ),
-              const SizedBox(width: 4),
-              const Text(
-                'Servicios',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: _primary,
-                ),
-              ),
-            ],
-          ),
+          child: _buildBienvenida(isSmallPhone),
         ),
-      Padding(
-        padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, isSmallPhone ? 8 : 10),
-        child: Container(
-          padding: EdgeInsets.all(isSmallPhone ? 12 : 14),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFFDFEFF), Color(0xFFF1F6FF)],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFDDE6F2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.045),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE4EDFA),
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: const Icon(
-                      Icons.travel_explore_rounded,
-                      color: _primary,
-                      size: 22,
-                    ),
+        if (tieneFiltro)
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: _primary,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Encuentra profesionales cercanos',
-                      style: TextStyle(
-                        fontSize: titleSize,
-                        fontWeight: FontWeight.w800,
-                        color: _primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Selecciona un servicio y/o usa la especialidad para filtrar profesionales.',
-                style: TextStyle(
-                  color: const Color(0xFF475569),
-                  height: 1.3,
-                  fontSize: isSmallPhone ? 12.8 : 14,
+                  onPressed: () {
+                    widget.onSeleccionarServicio('');
+                    setState(() {
+                      _especialidadAbogado = '';
+                      _profesionales = [];
+                      _mensaje = '';
+                    });
+                  },
                 ),
-              ),
-              if (tieneFiltro) ...[
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (servicioSel.isNotEmpty)
-                      _filtroChip(
-                        icono: _iconoServicio(servicioSel),
-                        texto: servicioSel,
-                      ),
-                    if (especialidadSelActiva.isNotEmpty)
-                      _filtroChip(
-                        icono: Icons.balance_rounded,
-                        texto: especialidadSelActiva,
-                        fondo: const Color(0xFFEAF7EC),
-                        colorTexto: const Color(0xFF0F5132),
-                      ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              ServicioSelector(
-                servicios: widget.serviciosDisponibles,
-                seleccionado: widget.servicioSeleccionado,
-                onSeleccionar: widget.onSeleccionarServicio,
-              ),
-              if (esAbogados) ...[
-                const SizedBox(height: 12),
+                const SizedBox(width: 4),
                 const Text(
-                  'Especialidad para abogados',
+                  'Servicios',
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                     color: _primary,
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (_cargandoEspecialidadesAbogado)
-                  const SizedBox(
-                    height: 36,
-                    child: Center(
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                  )
-                else
-                  InkWell(
-                    onTap: _abrirSelectorEspecialidadAbogado,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFC6D4E6)),
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.white,
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.balance_rounded,
-                            size: 18,
-                            color: Color(0xFF475569),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _especialidadAbogado.isEmpty
-                                  ? 'Todas las especialidades'
-                                  : _especialidadAbogado,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: _especialidadAbogado.isEmpty
-                                    ? const Color(0xFF64748B)
-                                    : _primary,
-                                fontWeight: _especialidadAbogado.isEmpty
-                                    ? FontWeight.w500
-                                    : FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: Color(0xFF475569),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               ],
-              if (!esAbogados && especialidadSelGlobal.isNotEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text(
-                    'Filtro recibido desde Inicio.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-      if (!tieneFiltro)
-        Padding(
-          padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
-          child: _estadoVacio(
-            icono: Icons.travel_explore_rounded,
-            titulo: 'Elige un servicio o una especialidad',
-            subtitulo:
-                'Mostraremos en el mapa a los profesionales mas cercanos que coincidan con tu filtro.',
-          ),
-        )
-      else ...[
-        if (_cargando)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: hPad),
-            child: const LinearProgressIndicator(minHeight: 3),
-          ),
-        if (_mensaje.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
-            child: _mensajeBanner(),
+            ),
           ),
         Padding(
-          padding: EdgeInsets.fromLTRB(hPad, isSmallPhone ? 8 : 10, hPad, 0),
+          padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, isSmallPhone ? 8 : 10),
           child: Container(
-            height: mapHeight,
+            padding: EdgeInsets.all(isSmallPhone ? 12 : 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFFDFEFF), Color(0xFFF1F6FF)],
+              ),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFD8E3F0)),
+              border: Border.all(color: const Color(0xFFDDE6F2)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: 0.045),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: _mapa(),
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    child: IgnorePointer(
-                      child: Container(
-                        height: 62,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.white.withValues(alpha: 0.92),
-                              Colors.white.withValues(alpha: 0.0),
-                            ],
-                          ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE4EDFA),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(
+                        Icons.travel_explore_rounded,
+                        color: _primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Encuentra profesionales cercanos',
+                        style: TextStyle(
+                          fontSize: titleSize,
+                          fontWeight: FontWeight.w800,
+                          color: _primary,
                         ),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Selecciona un servicio y/o usa la especialidad para filtrar profesionales.',
+                  style: TextStyle(
+                    color: const Color(0xFF475569),
+                    height: 1.3,
+                    fontSize: isSmallPhone ? 12.8 : 14,
                   ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                ),
+                if (tieneFiltro) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (servicioSel.isNotEmpty)
+                        _filtroChip(
+                          icono: _iconoServicio(servicioSel),
+                          texto: servicioSel,
+                        ),
+                      if (especialidadSelActiva.isNotEmpty)
+                        _filtroChip(
+                          icono: Icons.balance_rounded,
+                          texto: especialidadSelActiva,
+                          fondo: const Color(0xFFEAF7EC),
+                          colorTexto: const Color(0xFF0F5132),
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                ServicioSelector(
+                  servicios: widget.serviciosDisponibles,
+                  seleccionado: widget.servicioSeleccionado,
+                  onSeleccionar: widget.onSeleccionarServicio,
+                ),
+                if (esAbogados) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Especialidad para abogados',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: _primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_cargandoEspecialidadesAbogado)
+                    const SizedBox(
+                      height: 36,
+                      child: Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFD6E1EF)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            servicioSel.isNotEmpty
-                                ? _iconoServicio(servicioSel)
-                                : Icons.balance_rounded,
-                            size: 14,
-                            color: _primary,
-                          ),
-                          const SizedBox(width: 6),
-                          ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: mapTagMaxWidth,
+                    )
+                  else
+                    InkWell(
+                      onTap: _abrirSelectorEspecialidadAbogado,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFC6D4E6)),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.balance_rounded,
+                              size: 18,
+                              color: Color(0xFF475569),
                             ),
-                            child: Text(
-                              servicioSel.isNotEmpty
-                                  ? servicioSel
-                                  : 'Especialidad: $especialidadSelActiva',
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: _primary,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _especialidadAbogado.isEmpty
+                                    ? 'Todas las especialidades'
+                                    : _especialidadAbogado,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: _especialidadAbogado.isEmpty
+                                      ? const Color(0xFF64748B)
+                                      : _primary,
+                                  fontWeight: _especialidadAbogado.isEmpty
+                                      ? FontWeight.w500
+                                      : FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.93),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFD6E1EF)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.touch_app_rounded,
-                            size: 14,
-                            color: Color(0xFF334155),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            mapHintText,
-                            style: TextStyle(
-                              fontSize: isSmallPhone ? 10.8 : 11.5,
-                              color: const Color(0xFF334155),
-                              fontWeight: FontWeight.w600,
+                            const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Color(0xFF475569),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+                if (!esAbogados && especialidadSelGlobal.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Filtro recibido desde Inicio.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+              ],
+            ),
+          ),
+        ),
+        if (!tieneFiltro)
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, 0, hPad, hPad),
+            child: _estadoVacio(
+              icono: Icons.travel_explore_rounded,
+              titulo: 'Elige un servicio o una especialidad',
+              subtitulo:
+                  'Mostraremos en el mapa a los profesionales más cercanos que coincidan con tu filtro.',
+            ),
+          )
+        else ...[
+          if (_cargando)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPad),
+              child: const LinearProgressIndicator(minHeight: 3),
+            ),
+          if (_mensaje.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 0),
+              child: _mensajeBanner(),
+            ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(hPad, isSmallPhone ? 8 : 10, hPad, 0),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFD8E3F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        servicioSel.isNotEmpty
+                            ? _iconoServicio(servicioSel)
+                            : Icons.balance_rounded,
+                        size: 18,
+                        color: _primary,
                       ),
-                      decoration: BoxDecoration(
-                        color: _primary.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        '${_profesionales.length} cercanos',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Mapa de profesionales cercanos',
+                          style: TextStyle(
+                            color: _primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: isSmallPhone ? 14.5 : 15.5,
+                          ),
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Abre el mapa en pantalla completa para ver mejor y tocar un pin.',
+                    style: TextStyle(
+                      color: const Color(0xFF475569),
+                      fontSize: isSmallPhone ? 12.5 : 13.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _abrirMapaPantallaCompleta,
+                      icon: const Icon(Icons.map_outlined),
+                      label: Text(
+                        'Abrir mapa completo (${_profesionales.length})',
                       ),
                     ),
                   ),
@@ -1464,19 +1338,18 @@ Widget build(BuildContext context) {
               ),
             ),
           ),
-        ),
-        if (_profesionales.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.fromLTRB(hPad, 12, hPad, 0),
-            child: _estadoVacio(
-              icono: Icons.touch_app_rounded,
-              titulo: 'Selecciona un pin en el mapa',
-              subtitulo:
-                  'La ficha del profesional y la opcion para solicitar caso solo se muestran al tocar un marcador.',
+          if (_profesionales.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(hPad, 12, hPad, hPad),
+              child: _estadoVacio(
+                icono: Icons.touch_app_rounded,
+                titulo: 'Selecciona un pin en el mapa',
+                subtitulo:
+                    'La ficha del profesional y la opción para solicitar caso solo se muestran al tocar un marcador.',
+              ),
             ),
-          ),
+        ],
       ],
-    ],
-  );
-}
+    );
+  }
 }

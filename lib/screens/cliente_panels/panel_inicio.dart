@@ -5,6 +5,7 @@ import '../../services/api_services/cliente_profesionales_api.dart';
 
 class PanelInicio extends StatefulWidget {
   static const Color _primary = Color(0xFF0B2545);
+  static const Color _secondary = Color(0xFF134074);
 
   final String nombreUsuario;
   final String? servicioSeleccionado;
@@ -32,9 +33,11 @@ class PanelInicio extends StatefulWidget {
 class _PanelInicioState extends State<PanelInicio> {
   final ClienteProfesionalesApi _api = ClienteProfesionalesApi();
   late final TextEditingController _busquedaController;
+
   bool _cargandoEspecialidades = false;
   List<String> _especialidades = [];
   List<Map<String, String>> _sugerenciasBusqueda = [];
+
   bool _cargandoCasos = true;
   String _errorCasos = '';
   List<Map<String, dynamic>> _casos = [];
@@ -42,7 +45,8 @@ class _PanelInicioState extends State<PanelInicio> {
   @override
   void initState() {
     super.initState();
-    _busquedaController = TextEditingController(text: widget.especialidadBusqueda);
+    _busquedaController =
+        TextEditingController(text: widget.especialidadBusqueda);
     _busquedaController.addListener(_onBusquedaChanged);
     _cargarEspecialidades();
     _cargarMisCasos();
@@ -66,6 +70,7 @@ class _PanelInicioState extends State<PanelInicio> {
 
   void _onBusquedaChanged() {
     final q = _busquedaController.text.trim().toLowerCase();
+
     if (q.isEmpty) {
       if (mounted && _sugerenciasBusqueda.isNotEmpty) {
         setState(() {
@@ -85,6 +90,7 @@ class _PanelInicioState extends State<PanelInicio> {
     }) {
       final key = '${tipo.toLowerCase()}::${valor.toLowerCase()}';
       if (!seen.add(key)) return;
+
       sugerencias.add({
         'tipo': tipo,
         'valor': valor,
@@ -92,9 +98,9 @@ class _PanelInicioState extends State<PanelInicio> {
       });
     }
 
-    final serviciosMatch = widget.serviciosDisponibles
-        .where((s) => s.toLowerCase().contains(q))
-        .take(5);
+    final serviciosMatch =
+        widget.serviciosDisponibles.where((s) => s.toLowerCase().contains(q)).take(5);
+
     for (final servicio in serviciosMatch) {
       addSugerencia(
         tipo: 'servicio',
@@ -103,9 +109,9 @@ class _PanelInicioState extends State<PanelInicio> {
       );
     }
 
-    final especialidadesMatch = _especialidades
-        .where((e) => e.toLowerCase().contains(q))
-        .take(7);
+    final especialidadesMatch =
+        _especialidades.where((e) => e.toLowerCase().contains(q)).take(7);
+
     for (final especialidad in especialidadesMatch) {
       addSugerencia(
         tipo: 'especialidad',
@@ -115,6 +121,7 @@ class _PanelInicioState extends State<PanelInicio> {
     }
 
     if (!mounted) return;
+
     setState(() {
       _sugerenciasBusqueda = sugerencias.take(8).toList();
     });
@@ -129,7 +136,9 @@ class _PanelInicioState extends State<PanelInicio> {
 
     try {
       final items = await _api.getEspecialidades(limit: 150);
+
       if (!mounted) return;
+
       setState(() {
         _especialidades = items.toSet().toList()..sort();
         _cargandoEspecialidades = false;
@@ -145,14 +154,18 @@ class _PanelInicioState extends State<PanelInicio> {
   String? _servicioExacto(String q) {
     final objetivo = q.trim().toLowerCase();
     if (objetivo.isEmpty) return null;
+
     for (final servicio in widget.serviciosDisponibles) {
-      if (servicio.trim().toLowerCase() == objetivo) return servicio;
+      if (servicio.trim().toLowerCase() == objetivo) {
+        return servicio;
+      }
     }
     return null;
   }
 
   void _buscar() {
     final valor = _busquedaController.text.trim();
+
     if (valor.isEmpty) {
       widget.onBuscarEspecialidad('');
       return;
@@ -173,12 +186,14 @@ class _PanelInicioState extends State<PanelInicio> {
   void _seleccionarSugerencia(Map<String, String> sugerencia) {
     final valor = sugerencia['valor']?.trim() ?? '';
     final tipo = sugerencia['tipo']?.toLowerCase().trim() ?? '';
+
     if (valor.isEmpty) return;
 
     _busquedaController.text = valor;
     _busquedaController.selection = TextSelection.fromPosition(
       TextPosition(offset: _busquedaController.text.length),
     );
+
     setState(() {
       _sugerenciasBusqueda = [];
     });
@@ -205,6 +220,7 @@ class _PanelInicioState extends State<PanelInicio> {
 
   Widget _buildBuscador() {
     final compact = MediaQuery.of(context).size.width < 380;
+
     return Container(
       padding: EdgeInsets.all(compact ? 12 : 14),
       decoration: BoxDecoration(
@@ -285,6 +301,7 @@ class _PanelInicioState extends State<PanelInicio> {
                   final tipo = sugerencia['tipo']?.toLowerCase().trim() ?? '';
                   final valor = sugerencia['valor'] ?? '';
                   final icono = sugerencia['icono'] ?? '';
+
                   return ListTile(
                     dense: true,
                     leading: Icon(
@@ -333,6 +350,7 @@ class _PanelInicioState extends State<PanelInicio> {
       }
 
       final casos = await _api.getMisCasos(clienteId: clienteId, limit: 6);
+
       if (!mounted) return;
 
       setState(() {
@@ -371,6 +389,7 @@ class _PanelInicioState extends State<PanelInicio> {
 
   Widget _buildMisCasos() {
     final compact = MediaQuery.of(context).size.width < 380;
+
     return Container(
       padding: EdgeInsets.all(compact ? 14 : 16),
       decoration: BoxDecoration(
@@ -565,9 +584,67 @@ class _PanelInicioState extends State<PanelInicio> {
   Widget build(BuildContext context) {
     final compact = MediaQuery.of(context).size.width < 380;
     final outerPadding = compact ? 12.0 : 16.0;
+
     return ListView(
       padding: EdgeInsets.all(outerPadding),
       children: [
+        Container(
+          padding: EdgeInsets.all(compact ? 14 : 18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [PanelInicio._primary, PanelInicio._secondary],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: PanelInicio._primary.withValues(alpha: 0.25),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.person_rounded, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Bienvenido ${widget.nombreUsuario}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: compact ? 19 : 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: compact ? 8 : 10),
+              const Text(
+                'Bienvenido, elige alguno de los servicios ofrecidos por la aplicación.',
+                style: TextStyle(
+                  color: Color(0xFFE7EEF7),
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: compact ? 12 : 16),
         _buildBuscador(),
         SizedBox(height: compact ? 12 : 16),
         _buildMisCasos(),

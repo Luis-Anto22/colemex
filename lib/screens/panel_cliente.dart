@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-// Importa tu nuevo contenedor modular
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'cliente_panels/panel_cliente_ui.dart';
 
 class PanelCliente extends StatefulWidget {
@@ -36,14 +36,21 @@ class _PanelClienteState extends State<PanelCliente> {
   }
 
   Future<void> cargarCasos() async {
-    final url = Uri.parse('https://corporativolegaldigital.com/api/panel-cliente.php');
+    final url = Uri.parse(
+      'https://corporativolegaldigital.com/api/panel-cliente.php',
+    );
+
     try {
-      final respuesta = await http.post(url, body: {
-        'id_cliente': idUsuario.toString(),
-      });
+      final respuesta = await http.post(
+        url,
+        body: {
+          'id_cliente': idUsuario.toString(),
+        },
+      );
 
       if (respuesta.statusCode == 200) {
         final datos = json.decode(respuesta.body);
+
         if (datos is Map &&
             datos['status'] == 'success' &&
             datos['casos'] != null &&
@@ -60,26 +67,24 @@ class _PanelClienteState extends State<PanelCliente> {
       listaCasos = [];
     }
 
-    if (mounted) {
-      setState(() {
-        cargando = false;
-      });
+    if (!mounted) return;
 
-      // 🚀 Redirige al nuevo PanelClienteUI
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PanelClienteUI(
-            nombreUsuario: nombreUsuario,
-          ),
+    setState(() {
+      cargando = false;
+    });
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PanelClienteUI(
+          nombreUsuario: nombreUsuario,
         ),
-      );
-    }
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Mientras carga datos, muestra un loader
     return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(),

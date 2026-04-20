@@ -23,17 +23,11 @@ class _HomePublicScreenState extends State<HomePublicScreen> {
     final prefs = await SharedPreferences.getInstance();
     final yaMostrado = prefs.getBool('beneficiosMostrados') ?? false;
 
-    if (!yaMostrado) {
-      // Primera vez → mostrar beneficios
-      setState(() {
-        mostrarBeneficios = true;
-      });
-    } else {
-      // Ya se mostró antes → saltar directo al login
-      setState(() {
-        mostrarBeneficios = false;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      mostrarBeneficios = !yaMostrado;
+    });
   }
 
   @override
@@ -41,10 +35,10 @@ class _HomePublicScreenState extends State<HomePublicScreen> {
     return Scaffold(
       body: mostrarBeneficios
           ? PageView(
-              children: const [
+              children: [
                 BeneficiosClientePage(),
                 BeneficiosAbogadoPage(),
-                FinalIntroPage(), // ✅ Nueva página con botón "Continuar"
+                FinalIntroPage(),
               ],
             )
           : const LoginScreen(),
@@ -52,7 +46,6 @@ class _HomePublicScreenState extends State<HomePublicScreen> {
   }
 }
 
-// 🔹 Función para abrir URLs
 Future<void> abrirPagina(String url) async {
   final uri = Uri.parse(url);
   if (await canLaunchUrl(uri)) {
@@ -62,7 +55,6 @@ Future<void> abrirPagina(String url) async {
   }
 }
 
-// 🔹 Widget base con fondo y logo
 class BasePage extends StatelessWidget {
   final String title;
   final String content;
@@ -80,7 +72,7 @@ class BasePage extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage("assets/iconos/mazo-libro.png"), // 👈 Fondo institucional
+          image: AssetImage('assets/iconos/mazo-libro.png'),
           fit: BoxFit.cover,
           opacity: 0.15,
         ),
@@ -90,7 +82,7 @@ class BasePage extends StatelessWidget {
         children: [
           Center(
             child: Image.asset(
-              "assets/iconos/logo.png",
+              'assets/iconos/logo.png',
               height: 100,
             ),
           ),
@@ -108,7 +100,10 @@ class BasePage extends StatelessWidget {
           Text(
             content,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.black87),
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
           ),
           if (extra != null) ...[
             const SizedBox(height: 24),
@@ -126,11 +121,10 @@ class BeneficiosClientePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const BasePage(
-      title: "Beneficios como Cliente",
-      content:
-          "✔ Acceso rápido a seguros personalizados\n"
-          "✔ Atención legal inmediata\n"
-          "✔ Plataforma digital segura",
+      title: 'Beneficios como Cliente',
+      content: '✔ Acceso rápido a seguros personalizados\n'
+          '✔ Atención legal inmediata\n'
+          '✔ Plataforma digital segura',
     );
   }
 }
@@ -141,36 +135,37 @@ class BeneficiosAbogadoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const BasePage(
-      title: "Beneficios como Abogado",
-      content:
-          "✔ Mayor visibilidad con clientes\n"
-          "✔ Herramientas digitales para gestión de casos\n"
-          "✔ Red profesional de colegas",
+      title: 'Beneficios como Abogado',
+      content: '✔ Mayor visibilidad con clientes\n'
+          '✔ Herramientas digitales para gestión de casos\n'
+          '✔ Red profesional de colegas',
     );
   }
 }
 
-// ✅ Página final con botón para continuar al login
 class FinalIntroPage extends StatelessWidget {
   const FinalIntroPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      title: "Bienvenido a COLEMEX",
-      content: "Tu plataforma legal digital segura y confiable.",
+      title: 'Bienvenido a COLEMEX',
+      content: 'Tu plataforma legal digital segura y confiable.',
       extra: ElevatedButton(
         onPressed: () async {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool('beneficiosMostrados', true);
 
-          // ✅ Redirigir al login y no volver atrás
+          if (!context.mounted) return;
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            MaterialPageRoute(
+              builder: (_) => const LoginScreen(),
+            ),
           );
         },
-        child: const Text("Continuar"),
+        child: const Text('Continuar'),
       ),
     );
   }

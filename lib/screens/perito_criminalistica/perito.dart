@@ -9,9 +9,11 @@ import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/widgets/notification_badge_icon.dart';
 
 class PanelPeritoScreen extends StatefulWidget {
   final int peritoId;
+
   const PanelPeritoScreen({
     super.key,
     required this.peritoId,
@@ -22,13 +24,11 @@ class PanelPeritoScreen extends StatefulWidget {
 }
 
 class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
-  String estado = "Disponible";
+  String estado = 'Disponible';
 
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
-
-  // ─────────────── UI HELPERS ───────────────
 
   Widget _sectionHeader(String title, {String? subtitle}) {
     return Padding(
@@ -178,8 +178,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
     );
   }
 
-  // ─────────────── BUILD ───────────────
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -200,10 +198,11 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Perito en Criminalística'),
         actions: [
-          IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+          NotificationBadgeIcon(
+            profesionalId: widget.peritoId,
+            onPressed: () => _go(
+              NotificacionesScreen(profesionalId: widget.peritoId),
+            ),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -240,7 +239,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // HERO
                         _card(
                           child: Row(
                             children: [
@@ -284,27 +282,37 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
 
                         const SizedBox(height: 20),
 
-                        // ESTADO PROFESIONAL
                         _sectionHeader(
-                          "Estado profesional",
-                          subtitle: "Define tu disponibilidad para recibir solicitudes.",
+                          'Estado profesional',
+                          subtitle:
+                              'Define tu disponibilidad para recibir solicitudes.',
                         ),
                         _card(
                           child: Wrap(
                             spacing: 10,
                             runSpacing: 10,
                             children: [
-                                                            ChoiceChip(
-                                label: const Text("Ocupado"),
-                                selected: estado == "Ocupado",
-                                onSelected: (_) => setState(() => estado = "Ocupado"),
+                              ChoiceChip(
+                                label: const Text('Disponible'),
+                                selected: estado == 'Disponible',
+                                onSelected: (_) =>
+                                    setState(() => estado = 'Disponible'),
                                 selectedColor: gold,
                                 backgroundColor: Colors.white.withOpacity(.06),
                               ),
                               ChoiceChip(
-                                label: const Text("Fuera de servicio"),
-                                selected: estado == "Fuera de servicio",
-                                onSelected: (_) => setState(() => estado = "Fuera de servicio"),
+                                label: const Text('Ocupado'),
+                                selected: estado == 'Ocupado',
+                                onSelected: (_) =>
+                                    setState(() => estado = 'Ocupado'),
+                                selectedColor: gold,
+                                backgroundColor: Colors.white.withOpacity(.06),
+                              ),
+                              ChoiceChip(
+                                label: const Text('Fuera de servicio'),
+                                selected: estado == 'Fuera de servicio',
+                                onSelected: (_) =>
+                                    setState(() => estado = 'Fuera de servicio'),
                                 selectedColor: gold,
                                 backgroundColor: Colors.white.withOpacity(.06),
                               ),
@@ -314,8 +322,7 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
 
                         const SizedBox(height: 20),
 
-                        // UBICACIÓN DEL DESPACHO
-                        _sectionHeader("Ubicación del despacho"),
+                        _sectionHeader('Ubicación del despacho'),
                         Row(
                           children: [
                             Expanded(
@@ -332,7 +339,8 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: gold,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                 ),
                               ),
                             ),
@@ -341,7 +349,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
 
                         const SizedBox(height: 20),
 
-                        // ACCIONES RÁPIDAS
                         _sectionHeader('Acciones rápidas'),
                         Row(
                           children: [
@@ -360,7 +367,11 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                             _quickAction(
                               icon: Icons.notifications_none,
                               label: 'Alertas',
-                              onTap: () => _go(const NotificacionesScreen()),
+                              onTap: () => _go(
+                                NotificacionesScreen(
+                                  profesionalId: widget.peritoId,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
@@ -373,12 +384,10 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
 
                         const SizedBox(height: 20),
 
-                        // MÓDULOS
                         _sectionHeader(
                           'Gestión pericial',
                           subtitle: 'Herramientas y módulos principales.',
                         ),
-
                         _tile(
                           icon: Icons.event_available_outlined,
                           title: 'Agenda',
@@ -386,7 +395,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           onTap: () => _go(const AgendaScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.history,
                           title: 'Historial',
@@ -394,7 +402,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           onTap: () => _go(const HistorialScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.attach_money,
                           title: 'Ingresos',
@@ -402,7 +409,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           onTap: () => _go(const IngresosScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.star_outline,
                           title: 'Calificaciones',
@@ -410,15 +416,17 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           onTap: () => _go(const CalificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.notifications_none,
                           title: 'Notificaciones',
                           subtitle: 'Avisos y alertas del sistema.',
-                          onTap: () => _go(const NotificacionesScreen()),
+                          onTap: () => _go(
+                            NotificacionesScreen(
+                              profesionalId: widget.peritoId,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.verified_user_outlined,
                           title: 'Perfil profesional',
@@ -426,7 +434,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           onTap: () => _go(const PerfilVerificadoScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.settings_outlined,
                           title: 'Configuración',
@@ -434,7 +441,6 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           onTap: () => _go(const ConfiguracionScreen()),
                         ),
                         const SizedBox(height: 10),
-
                         _tile(
                           icon: Icons.support_agent_outlined,
                           title: 'Soporte',

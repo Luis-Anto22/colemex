@@ -78,7 +78,10 @@ class _PanelAbogadoScreenState extends State<PanelAbogadoScreen> {
   }
 
   void _go(Widget screen) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    );
   }
 
   Widget _sectionHeader(String title, {String? subtitle}) {
@@ -347,7 +350,8 @@ class _PanelAbogadoScreenState extends State<PanelAbogadoScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '$saludo, $nombreMostrado',
@@ -429,7 +433,8 @@ class _PanelAbogadoScreenState extends State<PanelAbogadoScreen> {
                               _quickAction(
                                 icon: Icons.people_alt_outlined,
                                 label: 'Clientes',
-                                onTap: () => _go(const ClientesAbogadoScreen()),
+                                onTap: () =>
+                                    _go(const ClientesAbogadoScreen()),
                               ),
                               const SizedBox(width: 10),
                               _quickAction(
@@ -464,7 +469,8 @@ class _PanelAbogadoScreenState extends State<PanelAbogadoScreen> {
                             title: 'Ubicación en tiempo real',
                             subtitle:
                                 'Comparte ubicación cuando estés activo.',
-                            onTap: () => _go(const UbicacionTiempoRealScreen()),
+                            onTap: () =>
+                                _go(const UbicacionTiempoRealScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
@@ -518,7 +524,8 @@ class _PanelAbogadoScreenState extends State<PanelAbogadoScreen> {
                           _tile(
                             icon: Icons.support_agent_outlined,
                             title: 'Soporte técnico',
-                            subtitle: 'Ayuda y contacto con soporte.',
+                            subtitle:
+                                'Ayuda y contacto con soporte.',
                             onTap: () => _go(const SoporteScreen()),
                           ),
                           _sectionHeader(
@@ -547,7 +554,8 @@ class _PanelAbogadoScreenState extends State<PanelAbogadoScreen> {
                             title: 'Generador de documentos',
                             subtitle:
                                 'Crea formatos simples con datos preestablecidos.',
-                            onTap: () => _go(const GeneradorDocumentosScreen()),
+                            onTap: () =>
+                                _go(const GeneradorDocumentosScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(

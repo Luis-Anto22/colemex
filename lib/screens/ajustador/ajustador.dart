@@ -9,10 +9,13 @@ import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/widgets/notification_badge_icon.dart';
+
 import '../localizacion.dart';
 
 class PanelAjustadorScreen extends StatefulWidget {
   final int ajustadorId;
+
   const PanelAjustadorScreen({
     super.key,
     required this.ajustadorId,
@@ -28,8 +31,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
   void _go(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
-
-  // ───────────────── UI HELPERS ─────────────────
 
   Widget _sectionHeader(String title, {String? subtitle}) {
     return Padding(
@@ -132,7 +133,10 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.white.withOpacity(.60)),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withOpacity(.60),
+            ),
           ],
         ),
       ),
@@ -179,8 +183,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
     );
   }
 
-  // ───────────────── BUILD ─────────────────
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -201,10 +203,11 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Ajustador'),
         actions: [
-          IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+          NotificationBadgeIcon(
+            profesionalId: widget.ajustadorId,
+            onPressed: () => _go(
+              NotificacionesScreen(profesionalId: widget.ajustadorId),
+            ),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -241,7 +244,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // HERO CARD
                         _card(
                           child: Row(
                             children: [
@@ -251,9 +253,14 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border: Border.all(color: gold.withOpacity(.20)),
+                                  border: Border.all(
+                                    color: gold.withOpacity(.20),
+                                  ),
                                 ),
-                                child: Icon(Icons.assignment_outlined, color: gold),
+                                child: Icon(
+                                  Icons.assignment_outlined,
+                                  color: gold,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               const Expanded(
@@ -283,33 +290,35 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           ),
                         ),
 
-                        // BOTONES DE ESTADO
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ChoiceChip(
-                              label: const Text("Disponible"),
-                              selected: estado == "Disponible",
-                              onSelected: (_) => setState(() => estado = "Disponible"),
+                              label: const Text('Disponible'),
+                              selected: estado == 'Disponible',
+                              onSelected: (_) =>
+                                  setState(() => estado = 'Disponible'),
                               selectedColor: Colors.green.withOpacity(.3),
                               backgroundColor: Colors.white.withOpacity(.1),
                               labelStyle: const TextStyle(color: Colors.white),
                             ),
                             const SizedBox(width: 8),
                             ChoiceChip(
-                              label: const Text("Ocupado"),
-                              selected: estado == "Ocupado",
-                              onSelected: (_) => setState(() => estado = "Ocupado"),
+                              label: const Text('Ocupado'),
+                              selected: estado == 'Ocupado',
+                              onSelected: (_) =>
+                                  setState(() => estado = 'Ocupado'),
                               selectedColor: Colors.orange.withOpacity(.3),
                               backgroundColor: Colors.white.withOpacity(.1),
                               labelStyle: const TextStyle(color: Colors.white),
                             ),
                             const SizedBox(width: 8),
                             ChoiceChip(
-                              label: const Text("En proceso"),
-                              selected: estado == "En proceso",
-                              onSelected: (_) => setState(() => estado = "En proceso"),
+                              label: const Text('En proceso'),
+                              selected: estado == 'En proceso',
+                              onSelected: (_) =>
+                                  setState(() => estado = 'En proceso'),
                               selectedColor: Colors.blue.withOpacity(.3),
                               backgroundColor: Colors.white.withOpacity(.1),
                               labelStyle: const TextStyle(color: Colors.white),
@@ -317,7 +326,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           ],
                         ),
 
-                        // ACCIONES RÁPIDAS
                         _sectionHeader('Acciones rápidas'),
                         Row(
                           children: [
@@ -336,10 +344,12 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                             _quickAction(
                               icon: Icons.location_on_outlined,
                               label: 'Ubicación',
-                              onTap: () => _go(LocalizacionPanel(
-                                idProfesional: widget.ajustadorId,
-                                perfil: "Ajustadores",
-                              )),
+                              onTap: () => _go(
+                                LocalizacionPanel(
+                                  idProfesional: widget.ajustadorId,
+                                  perfil: 'Ajustadores',
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
@@ -350,7 +360,6 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           ],
                         ),
 
-                        // MÓDULOS DEL AJUSTADOR
                         _sectionHeader(
                           'Gestión del ajustador',
                           subtitle: 'Acceso a tus módulos principales.',
@@ -387,7 +396,11 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           icon: Icons.notifications_none,
                           title: 'Notificaciones',
                           subtitle: 'Alertas y avisos del sistema.',
-                          onTap: () => _go(const NotificacionesScreen()),
+                          onTap: () => _go(
+                            NotificacionesScreen(
+                              profesionalId: widget.ajustadorId,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 10),
                         _tile(

@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+
 import '../../../services/api_services/api_client.dart';
 import '../../../services/api_services/valuador_api.dart';
-import 'dart:io';
 
 class DictamenesReportesScreen extends StatefulWidget {
   final int valuadorId;
@@ -60,7 +62,6 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     }
 
     final result = await FilePicker.platform.pickFiles();
-
     if (result == null || result.files.isEmpty) return;
 
     final path = result.files.single.path;
@@ -92,7 +93,10 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
       ),
     );
 
-    if (ok != true) return;
+    if (ok != true) {
+      descCtrl.dispose();
+      return;
+    }
 
     try {
       await api.subirReporte(
@@ -102,6 +106,8 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         descripcion: descCtrl.text.trim(),
       );
 
+      descCtrl.dispose();
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -110,6 +116,8 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
 
       await _reload();
     } catch (e) {
+      descCtrl.dispose();
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -149,7 +157,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
           final id = int.tryParse((c['caso_id'] ?? '').toString()) ?? 0;
           final titulo = (c['titulo'] ?? 'Sin título').toString();
 
-          return DropdownMenuItem(
+          return DropdownMenuItem<int>(
             value: id,
             child: Text('Caso #$id · $titulo'),
           );
@@ -158,7 +166,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         return Padding(
           padding: const EdgeInsets.all(12),
           child: DropdownButtonFormField<int>(
-            value: casoSeleccionado,
+            initialValue: casoSeleccionado,
             items: items,
             onChanged: (v) {
               if (v == null) return;
@@ -210,12 +218,8 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final r = items[i] as Map<String, dynamic>;
-
-              final descripcion =
-                  (r['descripcion'] ?? 'Reporte').toString();
-
-              final archivo =
-                  (r['archivo_url'] ?? '').toString();
+              final descripcion = (r['descripcion'] ?? 'Reporte').toString();
+              final archivo = (r['archivo_url'] ?? '').toString();
 
               return Card(
                 child: ListTile(

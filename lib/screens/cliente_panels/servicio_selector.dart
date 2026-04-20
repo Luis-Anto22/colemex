@@ -48,6 +48,7 @@ class ServicioSelector extends StatelessWidget {
     final seleccionadoNormalizado = (seleccionado ?? '').trim();
     final tieneSeleccion = seleccionadoNormalizado.isNotEmpty &&
         servicios.contains(seleccionadoNormalizado);
+
     final serviciosVisibles =
         tieneSeleccion ? <String>[seleccionadoNormalizado] : servicios;
 
@@ -57,8 +58,7 @@ class ServicioSelector extends StatelessWidget {
         final maxWidth = constraints.maxWidth;
         final columns = maxWidth >= 660 ? 4 : (maxWidth >= 330 ? 3 : 2);
         final tileWidth = (maxWidth - (spacing * (columns - 1))) / columns;
-        final tileHeight =
-            columns == 4 ? 92.0 : (columns == 3 ? 96.0 : 104.0);
+        final tileHeight = columns == 4 ? 92.0 : (columns == 3 ? 96.0 : 104.0);
 
         return Wrap(
           spacing: spacing,

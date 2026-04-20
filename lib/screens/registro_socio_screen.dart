@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -12,13 +13,16 @@ class RegistroSocioScreen extends StatefulWidget {
   @override
   State<RegistroSocioScreen> createState() => _RegistroSocioScreenState();
 }
+
 class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
   String? perfilSeleccionado;
   String? especialidad;
+
   final nombreController = TextEditingController();
   final correoController = TextEditingController();
   final telefonoController = TextEditingController();
   final contrasenaController = TextEditingController();
+
   String mensaje = '';
   bool cargando = false;
 
@@ -48,9 +52,18 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
   ];
 
   final ImagePicker _picker = ImagePicker();
-    /// 📷 Tomar foto con la cámara
+
+  @override
+  void dispose() {
+    nombreController.dispose();
+    correoController.dispose();
+    telefonoController.dispose();
+    contrasenaController.dispose();
+    super.dispose();
+  }
+
   Future<void> tomarFoto() async {
-    var permiso = await Permission.camera.request();
+    final permiso = await Permission.camera.request();
     if (!permiso.isGranted) {
       setState(() => mensaje = '⚠️ Permiso de cámara denegado');
       return;
@@ -68,38 +81,39 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
     }
   }
 
-  /// 🖼️ Seleccionar foto desde la galería
   Future<void> seleccionarDeGaleria() async {
-  // ✅ Solicita permiso correcto para Android
-  var permiso = await Permission.storage.request();
+    final permiso = await Permission.storage.request();
 
-  if (!permiso.isGranted) {
-    setState(() => mensaje = '⚠️ Permiso de galería denegado');
-    return;
+    if (!permiso.isGranted) {
+      setState(() => mensaje = '⚠️ Permiso de galería denegado');
+      return;
+    }
+
+    final imagen = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      final bytes = await imagen.readAsBytes();
+      setState(() {
+        fotoBytes = bytes;
+        fotoNombre = imagen.name;
+        fotoPath = imagen.path;
+        mensaje = '📸 Foto seleccionada correctamente';
+      });
+    } else {
+      setState(() => mensaje = '⚠️ No se seleccionó ninguna imagen');
+    }
   }
 
-  final imagen = await _picker.pickImage(source: ImageSource.gallery);
-
-  if (imagen != null) {
-    final bytes = await imagen.readAsBytes();
-    setState(() {
-      fotoBytes = bytes;
-      fotoNombre = imagen.name;
-      fotoPath = imagen.path;
-      mensaje = '📸 Foto seleccionada correctamente';
-    });
-  } else {
-    setState(() => mensaje = '⚠️ No se seleccionó ninguna imagen');
-  }
-}
-
-    Future<void> continuarRegistro() async {
+  Future<void> continuarRegistro() async {
     final nombre = nombreController.text.trim();
     final correo = correoController.text.trim();
     final telefono = telefonoController.text.trim();
     final contrasena = contrasenaController.text.trim();
 
-    if (nombre.isEmpty || correo.isEmpty || telefono.isEmpty || contrasena.isEmpty) {
+    if (nombre.isEmpty ||
+        correo.isEmpty ||
+        telefono.isEmpty ||
+        contrasena.isEmpty) {
       setState(() => mensaje = '❌ Completa todos los campos');
       return;
     }
@@ -115,18 +129,18 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
     }
 
     if ((fotoPath == null || fotoPath!.isEmpty) && fotoBytes == null) {
-  setState(() => mensaje = '❌ Debes subir una foto de rostro');
-  return;
+      setState(() => mensaje = '❌ Debes subir una foto de rostro');
+      return;
     }
 
-
-    
     setState(() {
       cargando = true;
       mensaje = '';
     });
 
-    final url = Uri.parse('https://corporativolegaldigital.com/api/registro-abogado.php');
+    final url = Uri.parse(
+      'https://corporativolegaldigital.com/api/registro-abogado.php',
+    );
     final request = http.MultipartRequest('POST', url);
 
     request.fields['usuario'] = nombre;
@@ -138,38 +152,44 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
     request.fields['ciudad'] = 'Ciudad de México';
 
     if (fotoBytes != null) {
-  // Si tienes los bytes (imagen cargada en memoria)
-  request.files.add(http.MultipartFile.fromBytes(
-    'foto',
-    fotoBytes!,
-    filename: fotoNombre ?? 'imagen.jpg',
-    contentType: MediaType('image', 'jpeg'),
-  ));
-} else if (fotoPath != null && fotoPath!.isNotEmpty) {
-  // Si tienes un path válido (Android/iOS)
-  request.files.add(await http.MultipartFile.fromPath(
-    'foto',
-    fotoPath!,
-    filename: fotoNombre,
-    contentType: MediaType('image', 'jpeg'),
-  ));
-}
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'foto',
+          fotoBytes!,
+          filename: fotoNombre ?? 'imagen.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+    } else if (fotoPath != null && fotoPath!.isNotEmpty) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'foto',
+          fotoPath!,
+          filename: fotoNombre,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+    }
 
     try {
       final respuesta = await request.send();
       final cuerpo = await respuesta.stream.bytesToString();
+
+      if (!mounted) return;
 
       setState(() => cargando = false);
 
       if (respuesta.statusCode == 200 && cuerpo.startsWith('{')) {
         final datos = json.decode(cuerpo);
         final exito = datos['success'] == true;
-        final texto = datos['mensaje'] ?? (exito ? '✅ Registro completado' : '❌ Error inesperado');
+        final texto = datos['mensaje'] ??
+            (exito ? '✅ Registro completado' : '❌ Error inesperado');
 
         setState(() => mensaje = texto);
 
-        if (exito && mounted) {
+        if (exito) {
           Future.delayed(const Duration(seconds: 2), () {
+            if (!mounted) return;
             Navigator.pushReplacementNamed(context, '/login');
           });
         }
@@ -177,13 +197,15 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
         setState(() => mensaje = '❌ Error al conectar con el servidor');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         cargando = false;
         mensaje = '❌ Error al enviar datos: $e';
       });
     }
   }
-    @override
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -196,10 +218,15 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Selecciona tu perfil:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Selecciona tu perfil:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             DropdownButtonFormField<String>(
               initialValue: perfilSeleccionado,
-              items: perfiles.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+              items: perfiles
+                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                  .toList(),
               onChanged: (value) => setState(() => perfilSeleccionado = value),
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
@@ -211,7 +238,9 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
               const Text('Especialidad:', style: TextStyle(fontSize: 16)),
               DropdownButtonFormField<String>(
                 initialValue: especialidad,
-                items: especialidades.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                items: especialidades
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 onChanged: (value) => setState(() => especialidad = value),
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -220,8 +249,6 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
               ),
             ],
             const SizedBox(height: 16),
-
-            // ✅ Botones separados para foto
             ElevatedButton.icon(
               onPressed: cargando ? null : tomarFoto,
               icon: const Icon(Icons.camera_alt),
@@ -241,31 +268,38 @@ class _RegistroSocioScreenState extends State<RegistroSocioScreen> {
                 foregroundColor: Colors.white,
               ),
             ),
-
             if (fotoBytes != null) ...[
               const SizedBox(height: 12),
               Image.memory(fotoBytes!, height: 150),
             ],
-
             const SizedBox(height: 16),
             TextField(
               controller: nombreController,
-              decoration: const InputDecoration(labelText: 'Nombres completos', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Nombres completos',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: correoController,
-              decoration: const InputDecoration(labelText: 'Correo electrónico', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Correo electrónico',
+                border: OutlineInputBorder(),
+              ),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             TextField(
               controller: telefonoController,
-              decoration: const InputDecoration(labelText: 'Teléfono', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Teléfono',
+                border: OutlineInputBorder(),
+              ),
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
-                        TextField(
+            TextField(
               controller: contrasenaController,
               decoration: const InputDecoration(
                 labelText: 'Contraseña',

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
 // comunes
-import 'package:advocatus/screens/common/agenda/agenda_screen.dart';//listo
+import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
 import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
 import 'package:advocatus/screens/common/historial/historial_screen.dart';
 import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
-import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';//listo
+import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
-import 'package:advocatus/screens/common/configuracion/configuracion_screen.dart';//pendiente
+import 'package:advocatus/screens/common/configuracion/configuracion_screen.dart';
 import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/widgets/notification_badge_icon.dart';
 
 // módulos valuador
 import 'valuador_modulos/solicitudes_avaluo_screen.dart';
@@ -22,7 +23,7 @@ class PanelValuadorScreen extends StatefulWidget {
 
   const PanelValuadorScreen({
     super.key,
-    required this.valuadorId, // 🔹 Constructor con parámetro requerido
+    required this.valuadorId,
   });
 
   @override
@@ -32,22 +33,9 @@ class PanelValuadorScreen extends StatefulWidget {
 class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
   String estado = 'Disponible';
 
-  // Integracion API (panel valuador):
-  // Este panel no hace llamadas HTTP directas; solo navega entre modulos.
-  // Endpoints consumidos por los modulos de valuador:
-  // - GET/POST /valuador/solicitudes.php   (SolicitudesAvaluoScreen)
-  // - GET/POST /valuador/avaluos.php       (AvaluosInmobiliariosScreen)
-  // - GET/POST /valuador/reportes.php      (DictamenesReportesScreen)
-  // - GET/POST /valuador/fotos.php         (EvidenciaFotograficaScreen)
-  // Endpoints comunes usados por pantallas compartidas:
-  // - GET/POST /common/ubicacion.php
-  // - GET/POST /common/agenda.php
-  // - GET      /common/historial.php
-  // - GET      /common/ingresos.php
   void _go(Widget screen) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
-  // ---------------- UI HELPERS ----------------
 
   Widget _sectionHeader(String title, {String? subtitle}) {
     return Padding(
@@ -150,8 +138,10 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right,
-                color: Colors.white.withOpacity(.60)),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withOpacity(.60),
+            ),
           ],
         ),
       ),
@@ -221,21 +211,18 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
     );
   }
 
-  // ---------------- BUILD ----------------
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gold = theme.primaryColor;
-    final headerBg =
-        theme.appBarTheme.backgroundColor ?? theme.primaryColor;
+    final headerBg = theme.appBarTheme.backgroundColor ?? theme.primaryColor;
 
     final shadow = <BoxShadow>[
       BoxShadow(
         color: Colors.black.withOpacity(.25),
         blurRadius: 22,
         offset: const Offset(0, 10),
-      )
+      ),
     ];
 
     return Scaffold(
@@ -244,10 +231,11 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Valuador'),
         actions: [
-          IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+          NotificationBadgeIcon(
+            profesionalId: widget.valuadorId,
+            onPressed: () => _go(
+              NotificacionesScreen(profesionalId: widget.valuadorId),
+            ),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -279,24 +267,19 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                         bodyColor: Colors.white,
                         displayColor: Colors.white,
                       ),
-                      iconTheme:
-                          theme.iconTheme.copyWith(color: Colors.white),
+                      iconTheme: theme.iconTheme.copyWith(color: Colors.white),
                     ),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
-                        border:
-                            Border.all(color: gold.withOpacity(.18)),
-                        color:
-                            const Color(0xFF12161C).withOpacity(.82),
+                        border: Border.all(color: gold.withOpacity(.18)),
+                        color: const Color(0xFF12161C).withOpacity(.82),
                         boxShadow: shadow,
                       ),
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.stretch,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // HERO
                           _card(
                             child: Row(
                               children: [
@@ -304,12 +287,11 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                   width: 46,
                                   height: 46,
                                   decoration: BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(14),
                                     color: gold.withOpacity(.12),
                                     border: Border.all(
-                                        color:
-                                            gold.withOpacity(.20)),
+                                      color: gold.withOpacity(.20),
+                                    ),
                                   ),
                                   child: Icon(
                                     Icons.assessment_outlined,
@@ -326,8 +308,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                         'Portal profesional',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontWeight:
-                                              FontWeight.w900,
+                                          fontWeight: FontWeight.w900,
                                           fontSize: 16,
                                         ),
                                       ),
@@ -335,8 +316,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                       Text(
                                         'Avalúos • Dictámenes • Reportes',
                                         style: TextStyle(
-                                          color: Colors.white
-                                              .withOpacity(.72),
+                                          color: Colors.white.withOpacity(.72),
                                           fontSize: 12.5,
                                         ),
                                       ),
@@ -344,31 +324,26 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.circular(999),
+                                    borderRadius: BorderRadius.circular(999),
                                     border: Border.all(
-                                        color:
-                                            gold.withOpacity(.22)),
-                                    color: Colors.white
-                                        .withOpacity(.04),
+                                      color: gold.withOpacity(.22),
+                                    ),
+                                    color: Colors.white.withOpacity(.04),
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.circle,
-                                          size: 10,
-                                          color: gold),
+                                      Icon(Icons.circle, size: 10, color: gold),
                                       const SizedBox(width: 8),
                                       Text(
                                         estado,
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontWeight:
-                                              FontWeight.w900,
+                                          fontWeight: FontWeight.w900,
                                         ),
                                       ),
                                     ],
@@ -399,37 +374,32 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                           Row(
                             children: [
                               _quickAction(
-                                icon:
-                                    Icons.assignment_outlined,
+                                icon: Icons.assignment_outlined,
                                 label: 'Solicitudes',
                                 onTap: () => _go(
-                                    SolicitudesAvaluoScreen(
-                                      valuadorId: widget.valuadorId,
-                                    )),
+                                  SolicitudesAvaluoScreen(
+                                    valuadorId: widget.valuadorId,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               _quickAction(
-                                icon: Icons
-                                    .location_on_outlined,
+                                icon: Icons.location_on_outlined,
                                 label: 'Ubicación',
-                                onTap: () => _go(
-                                    const UbicacionTiempoRealScreen()),
+                                onTap: () =>
+                                    _go(const UbicacionTiempoRealScreen()),
                               ),
                               const SizedBox(width: 10),
                               _quickAction(
-                                icon: Icons
-                                    .event_available_outlined,
+                                icon: Icons.event_available_outlined,
                                 label: 'Agenda',
-                                onTap: () =>
-                                    _go(const AgendaScreen()),
+                                onTap: () => _go(const AgendaScreen()),
                               ),
                               const SizedBox(width: 10),
                               _quickAction(
-                                icon: Icons
-                                    .support_agent_outlined,
+                                icon: Icons.support_agent_outlined,
                                 label: 'Soporte',
-                                onTap: () =>
-                                    _go(const SoporteScreen()),
+                                onTap: () => _go(const SoporteScreen()),
                               ),
                             ],
                           ),
@@ -440,91 +410,71 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                 'Módulos obligatorios para todos los socios.',
                           ),
                           _tile(
-                            icon: Icons
-                                .verified_user_outlined,
-                            title:
-                                'Perfil profesional verificado',
+                            icon: Icons.verified_user_outlined,
+                            title: 'Perfil profesional verificado',
                             subtitle:
                                 'Completa datos, documentos y validación.',
-                            onTap: () => _go(
-                                const PerfilVerificadoScreen()),
+                            onTap: () => _go(const PerfilVerificadoScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
                             icon: Icons.location_on_outlined,
                             title: 'Ubicación en tiempo real',
                             subtitle: 'Comparte ubicación cuando estés activo.',
-                            onTap: () => _go(
-                                const UbicacionTiempoRealScreen()),
+                            onTap: () => _go(const UbicacionTiempoRealScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon: Icons
-                                .event_available_outlined,
+                            icon: Icons.event_available_outlined,
                             title: 'Agenda / citas',
-                            subtitle:
-                                'Disponibilidad y visitas.',
-                            onTap: () =>
-                                _go(const AgendaScreen()),
+                            subtitle: 'Disponibilidad y visitas.',
+                            onTap: () => _go(const AgendaScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
                             icon: Icons.history,
-                            title:
-                                'Historial de servicios',
-                            subtitle:
-                                'Avalúos realizados y cierres.',
-                            onTap: () =>
-                                _go(const HistorialScreen()),
+                            title: 'Historial de servicios',
+                            subtitle: 'Avalúos realizados y cierres.',
+                            onTap: () => _go(const HistorialScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
                             icon: Icons.attach_money,
-                            title:
-                                'Ingresos / comisiones',
-                            subtitle:
-                                'Pagos, facturación y resumen.',
-                            onTap: () =>
-                                _go(const IngresosScreen()),
+                            title: 'Ingresos / comisiones',
+                            subtitle: 'Pagos, facturación y resumen.',
+                            onTap: () => _go(const IngresosScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
                             icon: Icons.star_outline,
                             title: 'Calificaciones',
-                            subtitle:
-                                'Promedio y comentarios.',
-                            onTap: () =>
-                                _go(const CalificacionesScreen()),
+                            subtitle: 'Promedio y comentarios.',
+                            onTap: () => _go(const CalificacionesScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon:
-                                Icons.notifications_none,
+                            icon: Icons.notifications_none,
                             title: 'Notificaciones',
-                            subtitle:
-                                'Alertas y nuevas asignaciones.',
+                            subtitle: 'Alertas y nuevas asignaciones.',
                             onTap: () => _go(
-                                const NotificacionesScreen()),
+                              NotificacionesScreen(
+                                profesionalId: widget.valuadorId,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon:
-                                Icons.settings_outlined,
+                            icon: Icons.settings_outlined,
                             title: 'Configuración',
-                            subtitle:
-                                'Cuenta y preferencias.',
-                            onTap: () => _go(
-                                const ConfiguracionScreen()),
+                            subtitle: 'Cuenta y preferencias.',
+                            onTap: () => _go(const ConfiguracionScreen()),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon: Icons
-                                .support_agent_outlined,
+                            icon: Icons.support_agent_outlined,
                             title: 'Soporte técnico',
-                            subtitle:
-                                'Ayuda y contacto con soporte.',
-                            onTap: () =>
-                                _go(const SoporteScreen()),
+                            subtitle: 'Ayuda y contacto con soporte.',
+                            onTap: () => _go(const SoporteScreen()),
                           ),
 
                           _sectionHeader(
@@ -533,55 +483,47 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                                 'Herramientas específicas para tu profesión.',
                           ),
                           _tile(
-                            icon: Icons
-                                .assignment_outlined,
-                            title:
-                                'Solicitudes de avalúo',
-                            subtitle:
-                                'Aceptar o rechazar solicitudes.',
+                            icon: Icons.assignment_outlined,
+                            title: 'Solicitudes de avalúo',
+                            subtitle: 'Aceptar o rechazar solicitudes.',
                             onTap: () => _go(
-                                SolicitudesAvaluoScreen(
-                                  valuadorId: widget.valuadorId,
-                                )),
+                              SolicitudesAvaluoScreen(
+                                valuadorId: widget.valuadorId,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon: Icons
-                                .home_work_outlined,
-                            title:
-                                'Avalúos inmobiliarios',
-                            subtitle:
-                                'Casas, terrenos y edificios.',
+                            icon: Icons.home_work_outlined,
+                            title: 'Avalúos inmobiliarios',
+                            subtitle: 'Casas, terrenos y edificios.',
                             onTap: () => _go(
-                                AvaluosInmobiliariosScreen(
-                                  valuadorId: widget.valuadorId,
-                                )),
+                              AvaluosInmobiliariosScreen(
+                                valuadorId: widget.valuadorId,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon: Icons
-                                .picture_as_pdf_outlined,
-                            title:
-                                'Dictámenes / reportes',
-                            subtitle:
-                                'Generar y subir documentos.',
+                            icon: Icons.picture_as_pdf_outlined,
+                            title: 'Dictámenes / reportes',
+                            subtitle: 'Generar y subir documentos.',
                             onTap: () => _go(
-                                DictamenesReportesScreen(
-                                  valuadorId: widget.valuadorId,
-                                )),
+                              DictamenesReportesScreen(
+                                valuadorId: widget.valuadorId,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 10),
                           _tile(
-                            icon:
-                                Icons.camera_alt_outlined,
-                            title:
-                                'Evidencia fotográfica',
-                            subtitle:
-                                'Fotos del inmueble.',
+                            icon: Icons.camera_alt_outlined,
+                            title: 'Evidencia fotográfica',
+                            subtitle: 'Fotos del inmueble.',
                             onTap: () => _go(
-                                EvidenciaFotograficaScreen(
-                                  valuadorId: widget.valuadorId,
-                                )),
+                              EvidenciaFotograficaScreen(
+                                valuadorId: widget.valuadorId,
+                              ),
+                            ),
                           ),
 
                           const SizedBox(height: 12),
@@ -589,8 +531,7 @@ class _PanelValuadorScreenState extends State<PanelValuadorScreen> {
                             'Tip: Mantén tu perfil y ubicación actualizados para recibir más asignaciones.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white
-                                  .withOpacity(.65),
+                              color: Colors.white.withOpacity(.65),
                             ),
                             textAlign: TextAlign.center,
                           ),

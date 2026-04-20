@@ -63,7 +63,7 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
         servicioSeleccionado: _servicioSeleccionado,
         especialidadBusqueda: _especialidadBusqueda,
         onSeleccionarServicio: _cambiarServicio,
-),
+      ),
       PanelInicio(
         nombreUsuario: widget.nombreUsuario,
         servicioSeleccionado: _servicioSeleccionado,
