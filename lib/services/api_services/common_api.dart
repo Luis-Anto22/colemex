@@ -30,20 +30,22 @@ class CommonApi {
   }
 
   // ==============================
-  // AGENDA
+  // AGENDA / CITAS - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getAgenda(int profesionalId) async {
     final res = await client.get(
-      '/common/agenda.php',
-      params: {'profesional_id': profesionalId},
+      '/citas',
+      params: {
+        'profesional_id': profesionalId,
+      },
     );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener agenda');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['citas'];
 
     if (data is List) {
       return data;
@@ -58,10 +60,10 @@ class CommonApi {
     required String inicio,
   }) async {
     final res = await client.post(
-      '/common/agenda.php',
+      '/citas',
       {
-        'profesional_id': '$profesionalId',
-        'cliente_id': '$clienteId',
+        'profesional_id': profesionalId,
+        'cliente_id': clienteId,
         'inicio': inicio,
       },
     );
@@ -72,7 +74,7 @@ class CommonApi {
   }
 
   // ==============================
-  // HISTORIAL
+  // HISTORIAL - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getHistorial({
@@ -80,18 +82,14 @@ class CommonApi {
     required String perfil,
   }) async {
     final res = await client.get(
-      '/common/historial.php',
-      params: {
-        'profesional_id': profesionalId,
-        'perfil': perfil,
-      },
+      '/casos/mis-casos/$profesionalId',
     );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener historial');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['casos'];
 
     if (data is List) {
       return data;
@@ -185,13 +183,15 @@ class CommonApi {
   }
 
   // ==============================
-  // INGRESOS
+  // INGRESOS - LARAVEL
   // ==============================
 
   Future<Map<String, dynamic>> getIngresos(int profesionalId) async {
     final res = await client.get(
-      '/common/ingresos.php',
-      params: {'profesional_id': profesionalId},
+      '/common/ingresos',
+      params: {
+        'profesional_id': profesionalId,
+      },
     );
 
     if (res['success'] != true) {
@@ -204,21 +204,26 @@ class CommonApi {
       return data;
     }
 
-    return {};
+    return {
+      'total': 0,
+      'pagado': 0,
+      'pendiente': 0,
+      'items': [],
+    };
   }
 
   // ==============================
-  // CLIENTES
+  // CLIENTES - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getClientes() async {
-    final res = await client.get('/common/clientes.php');
+    final res = await client.get('/clientes');
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener clientes');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['clientes'];
 
     if (data is List) {
       return data;
@@ -228,13 +233,15 @@ class CommonApi {
   }
 
   // ==============================
-  // CALIFICACIONES
+  // CALIFICACIONES - LARAVEL
   // ==============================
 
   Future<Map<String, dynamic>> getCalificaciones(int profesionalId) async {
     final res = await client.get(
-      '/common/calificaciones.php',
-      params: {'profesional_id': profesionalId},
+      '/common/calificaciones',
+      params: {
+        'profesional_id': profesionalId,
+      },
     );
 
     if (res['success'] != true) {
@@ -248,9 +255,9 @@ class CommonApi {
     }
 
     return {
-      "items": [],
-      "promedio": 0,
-      "total": 0,
+      'items': [],
+      'promedio': 0,
+      'total': 0,
     };
   }
 
@@ -261,11 +268,11 @@ class CommonApi {
     String comentario = '',
   }) async {
     final res = await client.post(
-      '/common/calificaciones.php',
+      '/common/calificaciones',
       {
-        'profesional_id': '$profesionalId',
-        'cliente_id': '$clienteId',
-        'estrellas': '$estrellas',
+        'profesional_id': profesionalId,
+        'cliente_id': clienteId,
+        'estrellas': estrellas,
         'comentario': comentario,
       },
     );

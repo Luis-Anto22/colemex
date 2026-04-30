@@ -64,27 +64,31 @@ class _PanelSOSState extends State<PanelSOS> {
   }
 
   Future<void> _buscarEmergencia(String tipo) async {
-    if (_buscando) return;
+  if (_buscando) return;
 
+  setState(() {
+    _buscando = true;
+    _mensaje = '';
+  });
+
+  final ubicacion = await _obtenerUbicacion();
+  if (!mounted) return;
+
+  if (ubicacion == null) {
     setState(() {
-      _buscando = true;
-      _mensaje = '';
+      _buscando = false;
+      if (_mensaje.isEmpty) {
+        _mensaje = 'No se pudo obtener tu ubicación.';
+      }
     });
+    return;
+  }
 
-    final ubicacion = await _obtenerUbicacion();
-    if (!mounted) return;
-    if (ubicacion == null) {
-      setState(() {
-        _buscando = false;
-      });
-      return;
-    }
+  List<Map<String, dynamic>> candidatos = [];
 
-    List<Map<String, dynamic>> candidatos = [];
-    try {
-      if (tipo == 'penal') {
-        // API (via ClienteProfesionalesApi.getProfesionalesCercanos):
-        // GET /common/profesionales_cercanos.php
+  try {
+    if (tipo == 'penal') {
+      try {
         candidatos = await _api.getProfesionalesCercanos(
           perfil: 'Abogados',
           especialidad: 'Derecho Penal',
@@ -92,15 +96,46 @@ class _PanelSOSState extends State<PanelSOS> {
           lng: ubicacion.longitude,
           limit: 20,
         );
-      } else {
-        // API (via ClienteProfesionalesApi.getProfesionalesCercanos):
-        // GET /common/profesionales_cercanos.php
+      } catch (e) {
+        debugPrint('Error buscando abogado penal exacto: $e');
+
+        // Respaldo: si falla Derecho Penal exacto, busca abogados sin especialidad.
+        candidatos = await _api.getProfesionalesCercanos(
+          perfil: 'Abogados',
+          lat: ubicacion.latitude,
+          lng: ubicacion.longitude,
+          limit: 50,
+        );
+
+        // Si vienen especialidades, intentamos priorizar penal.
+        final penales = candidatos.where((p) {
+          final especialidad =
+              (p['especialidad']?.toString() ?? '').toLowerCase();
+
+          return especialidad.contains('penal') ||
+              especialidad.contains('criminal');
+        }).toList();
+
+        if (penales.isNotEmpty) {
+          candidatos = penales;
+        }
+      }
+    } else {
+      final List<Map<String, dynamic>> resultados = [];
+
+      try {
         final ajustadores = await _api.getProfesionalesCercanos(
           perfil: 'Ajustadores',
           lat: ubicacion.latitude,
           lng: ubicacion.longitude,
           limit: 20,
         );
+        resultados.addAll(ajustadores);
+      } catch (e) {
+        debugPrint('Error buscando ajustadores: $e');
+      }
+
+      try {
         final civiles = await _api.getProfesionalesCercanos(
           perfil: 'Abogados',
           especialidad: 'Derecho Civil',
@@ -108,29 +143,69 @@ class _PanelSOSState extends State<PanelSOS> {
           lng: ubicacion.longitude,
           limit: 20,
         );
-        candidatos = [...ajustadores, ...civiles];
+        resultados.addAll(civiles);
+      } catch (e) {
+        debugPrint('Error buscando abogados civiles exactos: $e');
+
+        try {
+          final abogados = await _api.getProfesionalesCercanos(
+            perfil: 'Abogados',
+            lat: ubicacion.latitude,
+            lng: ubicacion.longitude,
+            limit: 50,
+          );
+
+          final civilesFiltrados = abogados.where((p) {
+            final especialidad =
+                (p['especialidad']?.toString() ?? '').toLowerCase();
+
+            return especialidad.contains('civil') ||
+                especialidad.contains('familiar') ||
+                especialidad.contains('mercantil');
+          }).toList();
+
+          resultados.addAll(
+            civilesFiltrados.isNotEmpty ? civilesFiltrados : abogados,
+          );
+        } catch (e2) {
+          debugPrint('Error buscando abogados generales para civil: $e2');
+        }
       }
-    } catch (_) {
-      _mensaje = 'Error al buscar emergencia.';
+
+      candidatos = resultados;
     }
 
-    if (_mensaje.isEmpty) {
-      if (candidatos.isEmpty) {
+    if (!mounted) return;
+
+    if (candidatos.isEmpty) {
+      setState(() {
         _mensaje = 'No hay profesionales disponibles para la emergencia.';
-      } else {
-        candidatos.sort((a, b) =>
-            _distanciaKm(a, ubicacion).compareTo(_distanciaKm(b, ubicacion)));
-        final seleccionado = candidatos.first;
-        _mostrarContacto(seleccionado, ubicacion, tipo);
-      }
+      });
+      return;
     }
 
+    candidatos.sort(
+      (a, b) => _distanciaKm(a, ubicacion).compareTo(
+        _distanciaKm(b, ubicacion),
+      ),
+    );
+
+    final seleccionado = candidatos.first;
+    _mostrarContacto(seleccionado, ubicacion, tipo);
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      _mensaje = 'Error al buscar emergencia: $e';
+    });
+  } finally {
     if (mounted) {
       setState(() {
         _buscando = false;
       });
     }
   }
+}
 
   void _mostrarContacto(
     Map<String, dynamic> profesional,

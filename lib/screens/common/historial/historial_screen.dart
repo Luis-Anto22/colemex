@@ -73,30 +73,42 @@ class _HistorialScreenState extends State<HistorialScreen> {
   }
 
   String _subtitleFor(Map<String, dynamic> item) {
-    if (item['ubicacion'] != null) {
-      return 'Ubicacion: ${item['ubicacion']}';
-    }
-    if (item['estado_anterior'] != null || item['estado_nuevo'] != null) {
-      final a = (item['estado_anterior'] ?? '').toString();
-      final n = (item['estado_nuevo'] ?? '').toString();
-      if (a.isNotEmpty || n.isNotEmpty) {
-        return 'Estado: $a -> $n';
-      }
-    }
-    if (item['detalle'] != null) {
-      return item['detalle'].toString();
-    }
-    if (item['estado'] != null) {
-      return 'Estado: ${item['estado']}';
-    }
-    return '';
+  if (item['ubicacion'] != null) {
+    return 'Ubicacion: ${item['ubicacion']}';
   }
 
-  String _trailingFor(Map<String, dynamic> item) {
-    if (item['fecha'] != null) return item['fecha'].toString();
-    if (item['creado_en'] != null) return item['creado_en'].toString();
-    return '';
+  if (item['estado_anterior'] != null || item['estado_nuevo'] != null) {
+    final a = (item['estado_anterior'] ?? '').toString();
+    final n = (item['estado_nuevo'] ?? '').toString();
+
+    if (a.isNotEmpty || n.isNotEmpty) {
+      return 'Estado: $a -> $n';
+    }
   }
+
+  if (item['descripcion'] != null &&
+      item['descripcion'].toString().trim().isNotEmpty) {
+    return item['descripcion'].toString();
+  }
+
+  if (item['detalle'] != null) {
+    return item['detalle'].toString();
+  }
+
+  if (item['estado'] != null) {
+    return 'Estado: ${item['estado']}';
+  }
+
+  return '';
+}
+
+  String _trailingFor(Map<String, dynamic> item) {
+  if (item['fecha'] != null) return item['fecha'].toString();
+  if (item['creado_en'] != null) return item['creado_en'].toString();
+  if (item['fecha_creacion'] != null) return item['fecha_creacion'].toString();
+  if (item['created_at'] != null) return item['created_at'].toString();
+  return '';
+}
 
   @override
   Widget build(BuildContext context) {
