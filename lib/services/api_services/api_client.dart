@@ -4,12 +4,12 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
-  // Ajusta si cambia tu ruta base
   final String baseUrl = 'https://corporativolegaldigital.com/api';
 
   Uri _buildUri(String path, [Map<String, dynamic>? query]) {
     final uri = Uri.parse('$baseUrl$path');
     if (query == null || query.isEmpty) return uri;
+
     return uri.replace(
       queryParameters: {
         ...uri.queryParameters,
@@ -18,8 +18,10 @@ class ApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> get(String path,
-      {Map<String, dynamic>? params}) async {
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? params,
+  }) async {
     final res = await http.get(_buildUri(path, params));
 
     if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -32,12 +34,46 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> post(
-      String path, Map<String, dynamic> data) async {
+    String path,
+    Map<String, dynamic> data,
+  ) async {
     final res = await http.post(
       _buildUri(path),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: data.map((k, v) => MapEntry(k, '$v')),
     );
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final body = jsonDecode(res.body);
+      if (body is Map<String, dynamic>) return body;
+      throw Exception('Respuesta inesperada');
+    } else {
+      throw Exception('HTTP ${res.statusCode}: ${res.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> put(
+    String path,
+    Map<String, dynamic> data,
+  ) async {
+    final res = await http.put(
+      _buildUri(path),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: data.map((k, v) => MapEntry(k, '$v')),
+    );
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final body = jsonDecode(res.body);
+      if (body is Map<String, dynamic>) return body;
+      throw Exception('Respuesta inesperada');
+    } else {
+      throw Exception('HTTP ${res.statusCode}: ${res.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> delete(String path) async {
+    final res = await http.delete(_buildUri(path));
+
     if (res.statusCode >= 200 && res.statusCode < 300) {
       final body = jsonDecode(res.body);
       if (body is Map<String, dynamic>) return body;

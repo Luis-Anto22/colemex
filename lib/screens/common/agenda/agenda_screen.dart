@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../services/api_services/api_client.dart';
 import '../../../services/api_services/common_api.dart';
 
@@ -70,19 +71,79 @@ class _AgendaScreenState extends State<AgendaScreen> {
         '${_two(dt.hour)}:${_two(dt.minute)}:00';
   }
 
+  String _fmtBonito(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Sin fecha';
+    final raw = value.trim().replaceFirst('T', ' ');
+    if (raw.length >= 16) return raw.substring(0, 16);
+    return raw;
+  }
+
+  int? _toInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    return int.tryParse(value.toString());
+  }
+
   String _nombreCliente(int? id) {
     if (id == null) return 'Cliente';
 
     try {
-      final c = clientes.firstWhere((c) => c['id'] == id);
-      return c['nombre'] ?? 'Cliente';
+      final c = clientes.firstWhere((c) => _toInt(c['id']) == id);
+      return (c['nombre'] ?? 'Cliente').toString();
     } catch (_) {
       return 'Cliente #$id';
     }
   }
 
-  Future<DateTime?> _pickDateTime() async {
-    final now = DateTime.now();
+  Color _colorEstado(String estado) {
+    switch (estado.toLowerCase()) {
+      case 'pendiente':
+        return Colors.orange;
+      case 'confirmada':
+        return Colors.blue;
+      case 'cancelada':
+        return Colors.red;
+      case 'completada':
+        return Colors.green;
+      case 'no_asistio':
+        return Colors.grey;
+      default:
+        return Colors.black54;
+    }
+  }
+
+  String _labelEstado(String estado) {
+    switch (estado.toLowerCase()) {
+      case 'pendiente':
+        return 'Pendiente';
+      case 'confirmada':
+        return 'Confirmada';
+      case 'cancelada':
+        return 'Cancelada';
+      case 'completada':
+        return 'Completada';
+      case 'no_asistio':
+        return 'No asistió';
+      default:
+        return estado;
+    }
+  }
+
+  String _labelTipo(String tipo) {
+    switch (tipo.toLowerCase()) {
+      case 'presencial':
+        return 'Presencial';
+      case 'virtual':
+        return 'Virtual';
+      case 'telefonica':
+        return 'Telefónica';
+      default:
+        return tipo;
+    }
+  }
+
+  Future<DateTime?> _pickDateTime({DateTime? initial}) async {
+    final now = initial ?? DateTime.now();
 
     final date = await showDatePicker(
       context: context,
@@ -106,60 +167,163 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Future<void> _crearCita() async {
     if (profesionalId <= 0) return;
 
-    DateTime? inicio;
     int? clienteId = clienteSeleccionado;
+    DateTime? inicio;
+    DateTime? fin;
+
+    final tituloCtrl = TextEditingController();
+    final motivoCtrl = TextEditingController();
+    final ubicacionCtrl = TextEditingController();
+    final enlaceCtrl = TextEditingController();
+    final notasCtrl = TextEditingController();
+
+    String tipo = 'presencial';
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
+        builder: (dialogContext, setModalState) => AlertDialog(
           title: const Text('Nueva cita'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<int>(
-                initialValue: clienteId,
-                decoration: const InputDecoration(
-                  labelText: 'Seleccionar cliente',
-                ),
-                items: clientes.map<DropdownMenuItem<int>>((c) {
-                  return DropdownMenuItem<int>(
-                    value: c['id'] as int,
-                    child: Text(c['nombre']),
-                  );
-                }).toList(),
-                onChanged: (v) {
-                  setModalState(() {
-                    clienteId = v;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final dt = await _pickDateTime();
-                  if (dt == null) return;
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<int>(
+                  initialValue: clienteId,
+                  decoration: const InputDecoration(
+                    labelText: 'Seleccionar cliente',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: clientes.map<DropdownMenuItem<int>>((c) {
+                    final id = _toInt(c['id']) ?? 0;
+                    final nombre = (c['nombre'] ?? 'Cliente').toString();
 
-                  setModalState(() {
-                    inicio = dt;
-                  });
-                },
-                icon: const Icon(Icons.calendar_today),
-                label: Text(
-                  inicio == null
-                      ? 'Seleccionar fecha y hora'
-                      : _fmt(inicio!),
+                    return DropdownMenuItem<int>(
+                      value: id,
+                      child: Text(nombre),
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    setModalState(() {
+                      clienteId = v;
+                    });
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: tituloCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Título',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: motivoCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Motivo',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: tipo,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de cita',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'presencial',
+                      child: Text('Presencial'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'virtual',
+                      child: Text('Virtual'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'telefonica',
+                      child: Text('Telefónica'),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    setModalState(() {
+                      tipo = v ?? 'presencial';
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final dt = await _pickDateTime(initial: inicio);
+                    if (dt == null) return;
+
+                    setModalState(() {
+                      inicio = dt;
+                    });
+                  },
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(
+                    inicio == null
+                        ? 'Seleccionar inicio'
+                        : 'Inicio: ${_fmt(inicio!)}',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final dt = await _pickDateTime(
+                      initial: fin ?? inicio ?? DateTime.now(),
+                    );
+                    if (dt == null) return;
+
+                    setModalState(() {
+                      fin = dt;
+                    });
+                  },
+                  icon: const Icon(Icons.stop),
+                  label: Text(
+                    fin == null
+                        ? 'Seleccionar fin (opcional)'
+                        : 'Fin: ${_fmt(fin!)}',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: ubicacionCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ubicación',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: enlaceCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Enlace de reunión',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: notasCtrl,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Notas',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Guardar'),
             ),
           ],
@@ -168,15 +332,43 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
 
     if (ok != true || inicio == null || clienteId == null) {
+      tituloCtrl.dispose();
+      motivoCtrl.dispose();
+      ubicacionCtrl.dispose();
+      enlaceCtrl.dispose();
+      notasCtrl.dispose();
       return;
     }
 
+    final int clienteIdFinal = clienteId!;
+    final DateTime inicioFinal = inicio!;
+    final String tituloFinal = tituloCtrl.text.trim();
+    final String motivoFinal = motivoCtrl.text.trim();
+    final String ubicacionFinal = ubicacionCtrl.text.trim();
+    final String enlaceFinal = enlaceCtrl.text.trim();
+    final String notasFinal = notasCtrl.text.trim();
+    final String tipoFinal = tipo;
+    final String? finFinal = fin == null ? null : _fmt(fin!);
+
+    tituloCtrl.dispose();
+    motivoCtrl.dispose();
+    ubicacionCtrl.dispose();
+    enlaceCtrl.dispose();
+    notasCtrl.dispose();
+
     try {
       await api.crearAgenda(
-  profesionalId: profesionalId,
-  clienteId: clienteId!,
-  inicio: _fmt(inicio!),
-);
+        profesionalId: profesionalId,
+        clienteId: clienteIdFinal,
+        inicio: _fmt(inicioFinal),
+        titulo: tituloFinal.isEmpty ? null : tituloFinal,
+        motivo: motivoFinal.isEmpty ? null : motivoFinal,
+        fin: finFinal,
+        tipo: tipoFinal,
+        ubicacion: ubicacionFinal.isEmpty ? null : ubicacionFinal,
+        enlaceReunion: enlaceFinal.isEmpty ? null : enlaceFinal,
+        notas: notasFinal.isEmpty ? null : notasFinal,
+      );
 
       if (!mounted) return;
 
@@ -192,6 +384,91 @@ class _AgendaScreenState extends State<AgendaScreen> {
         SnackBar(content: Text('Error: $e')),
       );
     }
+  }
+
+  void _verDetalle(Map<String, dynamic> a) {
+    final clienteId = _toInt(a['cliente_id']);
+    final estado = (a['estado'] ?? '').toString();
+    final tipo = (a['tipo'] ?? '').toString();
+    final titulo = (a['titulo'] ?? '').toString();
+    final motivo = (a['motivo'] ?? '').toString();
+    final inicio = (a['inicio'] ?? '').toString();
+    final fin = (a['fin'] ?? '').toString();
+    final ubicacion = (a['ubicacion'] ?? '').toString();
+    final enlace = (a['enlace_reunion'] ?? '').toString();
+    final notas = (a['notas'] ?? '').toString();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo.isEmpty ? 'Cita' : titulo,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text('Cliente: ${_nombreCliente(clienteId)}'),
+                const SizedBox(height: 6),
+                Text('Estado: ${_labelEstado(estado)}'),
+                const SizedBox(height: 6),
+                Text('Tipo: ${_labelTipo(tipo)}'),
+                const SizedBox(height: 6),
+                Text('Inicio: ${_fmtBonito(inicio)}'),
+                if (fin.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text('Fin: ${_fmtBonito(fin)}'),
+                ],
+                if (motivo.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Motivo',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(motivo),
+                ],
+                if (ubicacion.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Ubicación',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(ubicacion),
+                ],
+                if (enlace.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Enlace de reunión',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(enlace),
+                ],
+                if (notas.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Notas',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(notas),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -250,13 +527,43 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   separatorBuilder: (_, __) => const Divider(),
                   itemBuilder: (_, i) {
                     final a = items[i] as Map<String, dynamic>;
-                    final clienteId = a['cliente_id'] as int?;
+                    final clienteId = _toInt(a['cliente_id']);
+                    final estado = (a['estado'] ?? '').toString();
+                    final titulo = (a['titulo'] ?? '').toString().trim();
+                    final tipo = (a['tipo'] ?? '').toString().trim();
 
                     return ListTile(
                       leading: Icon(Icons.calendar_today, color: gold),
-                      title: Text(_nombreCliente(clienteId)),
-                      subtitle: Text((a['inicio'] ?? '').toString()),
-                      trailing: Text((a['estado'] ?? '').toString()),
+                      title: Text(
+                        titulo.isEmpty ? _nombreCliente(clienteId) : titulo,
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_nombreCliente(clienteId)),
+                          Text(_fmtBonito((a['inicio'] ?? '').toString())),
+                          if (tipo.isNotEmpty) Text(_labelTipo(tipo)),
+                        ],
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _colorEstado(estado).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          _labelEstado(estado),
+                          style: TextStyle(
+                            color: _colorEstado(estado),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      onTap: () => _verDetalle(a),
                     );
                   },
                 ),
