@@ -183,6 +183,66 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
     );
   }
 
+  Widget _estadoChip(String label) {
+    final theme = Theme.of(context);
+    final gold = theme.primaryColor;
+    final active = estado == label;
+
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: active ? Colors.black : Colors.white,
+        ),
+      ),
+      selected: active,
+      onSelected: (_) => setState(() => estado = label),
+      selectedColor: gold,
+      backgroundColor: Colors.white.withOpacity(.06),
+      shape: StadiumBorder(
+        side: BorderSide(color: gold.withOpacity(.22)),
+      ),
+    );
+  }
+
+  Widget _estadoActualBadge() {
+    final theme = Theme.of(context);
+    final gold = theme.primaryColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: gold.withOpacity(.22),
+        ),
+        color: Colors.white.withOpacity(.04),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.circle,
+            size: 10,
+            color: gold,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            estado,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -286,44 +346,26 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                                   ],
                                 ),
                               ),
+                              _estadoActualBadge(),
                             ],
                           ),
                         ),
 
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ChoiceChip(
-                              label: const Text('Disponible'),
-                              selected: estado == 'Disponible',
-                              onSelected: (_) =>
-                                  setState(() => estado = 'Disponible'),
-                              selectedColor: Colors.green.withOpacity(.3),
-                              backgroundColor: Colors.white.withOpacity(.1),
-                              labelStyle: const TextStyle(color: Colors.white),
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text('Ocupado'),
-                              selected: estado == 'Ocupado',
-                              onSelected: (_) =>
-                                  setState(() => estado = 'Ocupado'),
-                              selectedColor: Colors.orange.withOpacity(.3),
-                              backgroundColor: Colors.white.withOpacity(.1),
-                              labelStyle: const TextStyle(color: Colors.white),
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text('En proceso'),
-                              selected: estado == 'En proceso',
-                              onSelected: (_) =>
-                                  setState(() => estado = 'En proceso'),
-                              selectedColor: Colors.blue.withOpacity(.3),
-                              backgroundColor: Colors.white.withOpacity(.1),
-                              labelStyle: const TextStyle(color: Colors.white),
-                            ),
-                          ],
+                        _sectionHeader(
+                          'Estado profesional',
+                          subtitle:
+                              'Define tu disponibilidad para recibir nuevos servicios o visitas.',
+                        ),
+                        _card(
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              _estadoChip('Disponible'),
+                              _estadoChip('Ocupado'),
+                              _estadoChip('En proceso'),
+                            ],
+                          ),
                         ),
 
                         _sectionHeader('Acciones rápidas'),

@@ -974,10 +974,10 @@ class _PanelServiciosState extends State<PanelServicios> {
         return Container(
           padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFDDE6F2)),
-          ),
+              color: Colors.white.withValues(alpha: 0.82),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFDDE6F2)),
+            ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1087,10 +1087,13 @@ class _PanelServiciosState extends State<PanelServicios> {
           child: Container(
             padding: EdgeInsets.all(isSmallPhone ? 12 : 14),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFFDFEFF), Color(0xFFF1F6FF)],
+                colors: [
+                  Colors.white.withValues(alpha: 0.84),
+                  const Color(0xFFF1F6FF).withValues(alpha: 0.82),
+                ],
               ),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: const Color(0xFFDDE6F2)),
@@ -1202,7 +1205,7 @@ class _PanelServiciosState extends State<PanelServicios> {
                         decoration: BoxDecoration(
                           border: Border.all(color: const Color(0xFFC6D4E6)),
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
+                          color: Colors.white.withValues(alpha: 0.86),
                         ),
                         child: Row(
                           children: [
@@ -1279,7 +1282,7 @@ class _PanelServiciosState extends State<PanelServicios> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.white.withValues(alpha: 0.84),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFFD8E3F0)),
                 boxShadow: [

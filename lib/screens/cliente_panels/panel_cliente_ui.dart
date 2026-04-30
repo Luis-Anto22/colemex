@@ -17,8 +17,6 @@ class PanelClienteUI extends StatefulWidget {
 
 class _PanelClienteUIState extends State<PanelClienteUI> {
   static const Color _primaryColor = Color(0xFF0B2545);
-  static const Color _bgTop = Color(0xFFF7FAFF);
-  static const Color _bgBottom = Color(0xFFE9F0FA);
 
   int _currentIndex = 0;
   String? _servicioSeleccionado;
@@ -93,22 +91,32 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
                   : 'SOS',
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_bgTop, _bgBottom],
+
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/iconos/mazo-libro.png',
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: IndexedStack(
-          index: _currentIndex,
-          children: panels,
-        ),
+
+          Positioned.fill(
+            child: Container(
+              color: Colors.white.withValues(alpha: 0.55),
+            ),
+          ),
+
+          IndexedStack(
+            index: _currentIndex,
+            children: panels,
+          ),
+        ],
       ),
+
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.white.withValues(alpha: 0.95),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -119,7 +127,7 @@ class _PanelClienteUIState extends State<PanelClienteUI> {
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.white.withValues(alpha: 0.95),
           selectedItemColor: _primaryColor,
           unselectedItemColor: const Color(0xFF6B7280),
           selectedLabelStyle: const TextStyle(

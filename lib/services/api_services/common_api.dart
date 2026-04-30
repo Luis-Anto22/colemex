@@ -30,7 +30,7 @@ class CommonApi {
   }
 
   // ==============================
-  // CITAS / AGENDA
+  // AGENDA / CITAS - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getAgenda(int profesionalId) async {
@@ -43,7 +43,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener agenda');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['citas'];
 
     if (data is List) {
       return data;
@@ -177,26 +177,34 @@ class CommonApi {
   }
 
   // ==============================
-  // HISTORIAL
+  // HISTORIAL - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getHistorial({
     required int profesionalId,
     required String perfil,
   }) async {
-    final res = await client.get(
-      '/common/historial',
-      params: {
-        'profesional_id': profesionalId,
-        'perfil': perfil,
-      },
-    );
+    Map<String, dynamic> res;
+
+    try {
+      // Ruta nueva
+      res = await client.get('/casos/mis-casos/$profesionalId');
+    } catch (_) {
+      // Compatibilidad con ruta anterior
+      res = await client.get(
+        '/common/historial',
+        params: {
+          'profesional_id': profesionalId,
+          'perfil': perfil,
+        },
+      );
+    }
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener historial');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['casos'];
 
     if (data is List) {
       return data;
@@ -290,7 +298,7 @@ class CommonApi {
   }
 
   // ==============================
-  // INGRESOS
+  // INGRESOS - LARAVEL
   // ==============================
 
   Future<Map<String, dynamic>> getIngresos(int profesionalId) async {
@@ -309,11 +317,16 @@ class CommonApi {
       return data;
     }
 
-    return {};
+    return {
+      'total': 0,
+      'pagado': 0,
+      'pendiente': 0,
+      'items': [],
+    };
   }
 
   // ==============================
-  // CLIENTES
+  // CLIENTES - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getClientes() async {
@@ -323,7 +336,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener clientes');
     }
 
-    final data = res['clientes'];
+    final data = res['data'] ?? res['clientes'];
 
     if (data is List) {
       return data;
@@ -339,7 +352,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener clientes activos');
     }
 
-    final data = res['clientes'];
+    final data = res['data'] ?? res['clientes'];
 
     if (data is List) {
       return data;
@@ -355,7 +368,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener cliente');
     }
 
-    final data = res['cliente'];
+    final data = res['data'] ?? res['cliente'];
     if (data is Map<String, dynamic>) {
       return data;
     }
@@ -364,7 +377,7 @@ class CommonApi {
   }
 
   // ==============================
-  // CALIFICACIONES
+  // CALIFICACIONES - LARAVEL
   // ==============================
 
   Future<Map<String, dynamic>> getCalificaciones(int profesionalId) async {
@@ -399,9 +412,9 @@ class CommonApi {
     final res = await client.post(
       '/common/calificaciones',
       {
-        'profesional_id': '$profesionalId',
-        'cliente_id': '$clienteId',
-        'estrellas': '$estrellas',
+        'profesional_id': profesionalId,
+        'cliente_id': clienteId,
+        'estrellas': estrellas,
         'comentario': comentario,
       },
     );

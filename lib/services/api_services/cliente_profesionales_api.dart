@@ -17,25 +17,31 @@ class ClienteProfesionalesApi {
       'lng': lng,
       'limit': limit,
     };
-    if (perfil != null && perfil.isNotEmpty) params['perfil'] = perfil;
-    if (especialidad != null && especialidad.isNotEmpty) {
-      params['especialidad'] = especialidad;
+
+    if (perfil != null && perfil.trim().isNotEmpty) {
+      params['perfil'] = perfil.trim();
     }
 
-    // API: GET /common/profesionales_cercanos.php
-    // Uso: panel cliente (Servicios y SOS) para buscar profesionales por ubicacion/filtros.
+    if (especialidad != null && especialidad.trim().isNotEmpty) {
+      params['especialidad'] = especialidad.trim();
+    }
+
+    // Laravel: GET /api/common/profesionales-cercanos
     final res = await _client.get(
-      '/common/profesionales_cercanos.php',
+      '/common/profesionales-cercanos',
       params: params,
     );
+
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener profesionales');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['profesionales'];
+
     if (data is List) {
       return List<Map<String, dynamic>>.from(data);
     }
+
     return [];
   }
 
@@ -43,23 +49,25 @@ class ClienteProfesionalesApi {
     required int clienteId,
     int limit = 10,
   }) async {
-    // API: GET /common/mis_casos_cliente.php
-    // Uso: panel cliente (Inicio) para mostrar el historial "Mis casos".
+    // Laravel: GET /api/common/mis-casos-cliente
     final res = await _client.get(
-      '/common/mis_casos_cliente.php',
+      '/common/mis-casos-cliente',
       params: {
         'cliente_id': clienteId,
         'limit': limit,
       },
     );
+
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener mis casos');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['casos'];
+
     if (data is List) {
       return List<Map<String, dynamic>>.from(data);
     }
+
     return [];
   }
 
@@ -70,10 +78,9 @@ class ClienteProfesionalesApi {
     required String titulo,
     String descripcion = '',
   }) async {
-    // API: POST /common/solicitar_caso_cliente.php
-    // Uso: panel cliente (Servicios y SOS) para crear solicitud de caso al profesional.
+    // Laravel: POST /api/common/solicitar-caso-cliente
     final res = await _client.post(
-      '/common/solicitar_caso_cliente.php',
+      '/common/solicitar-caso-cliente',
       {
         'cliente_id': clienteId,
         'profesional_id': profesionalId,
@@ -87,9 +94,16 @@ class ClienteProfesionalesApi {
       throw Exception(res['message'] ?? 'Error al enviar solicitud');
     }
 
-    final data = (res['data'] as Map<String, dynamic>? ?? {});
+    final data = res['data'];
+
+    if (data is Map<String, dynamic>) {
+      return {
+        ...data,
+        'message': res['message']?.toString() ?? 'Solicitud enviada',
+      };
+    }
+
     return {
-      ...data,
       'message': res['message']?.toString() ?? 'Solicitud enviada',
     };
   }
@@ -101,30 +115,41 @@ class ClienteProfesionalesApi {
     final params = <String, dynamic>{
       'limit': limit,
     };
+
     if (query != null && query.trim().isNotEmpty) {
       params['q'] = query.trim();
     }
 
-    // API: GET /common/especialidades.php
-    // Uso: panel cliente (Inicio y Servicios) para filtros por especialidad.
+    // Laravel: GET /api/common/especialidades
     final res = await _client.get(
-      '/common/especialidades.php',
+      '/common/especialidades',
       params: params,
     );
+
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener especialidades');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['especialidades'];
+
     if (data is! List) return [];
 
     final nombres = <String>[];
+
     for (final item in data) {
       if (item is Map<String, dynamic>) {
         final nombre = (item['nombre'] ?? '').toString().trim();
-        if (nombre.isNotEmpty) nombres.add(nombre);
+        if (nombre.isNotEmpty) {
+          nombres.add(nombre);
+        }
+      } else {
+        final nombre = item.toString().trim();
+        if (nombre.isNotEmpty) {
+          nombres.add(nombre);
+        }
       }
     }
+
     return nombres;
   }
 }

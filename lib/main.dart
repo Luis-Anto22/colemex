@@ -138,6 +138,40 @@ class MyApp extends StatelessWidget {
     return '/login';
   }
 
+  int _obtenerIdDesdeArgs(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args is int && args > 0) {
+      return args;
+    }
+
+    if (args is Map) {
+      final rawId = args['id'] ??
+          args['profesional_id'] ??
+          args['usuario_id'] ??
+          args['ajustadorId'] ??
+          args['abogadoId'];
+
+      final parsed = int.tryParse(rawId?.toString() ?? '');
+      if (parsed != null && parsed > 0) {
+        return parsed;
+      }
+    }
+
+    return id;
+  }
+
+  Widget _errorSinId(String panel) {
+    return Scaffold(
+      body: Center(
+        child: Text(
+          '❌ No se pudo identificar el ID para $panel. Vuelve a iniciar sesión.',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String initialRoute = _rutaInicial();
@@ -163,6 +197,7 @@ class MyApp extends StatelessWidget {
         '/registro-usuario': (context) => const RegistroUsuarioScreen(),
         '/lista-abogados': (context) => const ListaProfesionalesScreen(),
         '/registrar-abogado': (context) => const RegistrarProfesionalScreen(),
+
         '/editar-abogado': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is Profesional) {
@@ -174,9 +209,11 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
+
         '/lista-profesionales': (context) => const ListaProfesionalesScreen(),
         '/registrar-profesional': (context) =>
             const RegistrarProfesionalScreen(),
+
         '/editar-profesional': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is Profesional) {
@@ -188,97 +225,79 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
+
         '/panel-psicologos': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int) {
-            return PanelPsicologos(psicologoId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelPsicologos(psicologoId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel psicólogos'),
-            ),
-          );
+          return _errorSinId('panel psicólogos');
         },
+
         '/panel-investigador': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int) {
-            return PanelInvestigadorScreen(investigadorId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelInvestigadorScreen(investigadorId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel investigador'),
-            ),
-          );
+          return _errorSinId('panel investigador');
         },
+
         '/panel-valuador': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int) {
-            return PanelValuadorScreen(valuadorId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelValuadorScreen(valuadorId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel valuador'),
-            ),
-          );
+          return _errorSinId('panel valuador');
         },
+
         '/panel-inmuebles': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int) {
-            return PanelAgentesInmobiliarios(agenteId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelAgentesInmobiliarios(agenteId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel inmobiliarios'),
-            ),
-          );
+          return _errorSinId('panel inmobiliarios');
         },
+
         '/panel-contador': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int && args > 0) {
-            return ContadorPanel(idContador: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return ContadorPanel(idContador: profesionalId);
           }
           return const ContadorPanel();
         },
+
         '/panel-auditor': (context) => const AuditorPanel(),
+
         '/panel-agente': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int && args > 0) {
-            return AgentePanel(idAgente: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return AgentePanel(idAgente: profesionalId);
           }
           return const AgentePanel();
         },
+
         '/panel-perito': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int && args > 0) {
-            return PanelPeritoScreen(peritoId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelPeritoScreen(peritoId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel perito'),
-            ),
-          );
+          return _errorSinId('panel perito');
         },
+
         '/panel-ajustador': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int && args > 0) {
-            return PanelAjustadorScreen(ajustadorId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelAjustadorScreen(ajustadorId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel ajustador'),
-            ),
-          );
+          return _errorSinId('panel ajustador');
         },
+
         '/panel-asistencia-vial': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is int && args > 0) {
-            return PanelAsistenciaVial(asistenciaId: args);
+          final profesionalId = _obtenerIdDesdeArgs(context);
+          if (profesionalId > 0) {
+            return PanelAsistenciaVial(asistenciaId: profesionalId);
           }
-          return const Scaffold(
-            body: Center(
-              child: Text('❌ Argumentos inválidos para panel asistencia vial'),
-            ),
-          );
+          return _errorSinId('panel asistencia vial');
         },
       },
       onGenerateRoute: (settings) {
@@ -291,14 +310,25 @@ class MyApp extends StatelessWidget {
 
           case '/panel-abogado':
             final args = settings.arguments;
-            if (args is int) {
-              return MaterialPageRoute(
-                builder: (_) => PanelAbogadoScreen(abogadoId: args),
-                settings: settings,
+            int? abogadoId;
+
+            if (args is int && args > 0) {
+              abogadoId = args;
+            } else if (args is Map) {
+              abogadoId = int.tryParse(
+                (args['id'] ??
+                        args['profesional_id'] ??
+                        args['usuario_id'] ??
+                        args['abogadoId'])
+                    ?.toString() ??
+                    '',
               );
             }
+
             return MaterialPageRoute(
-              builder: (_) => const PanelAbogadoScreen(),
+              builder: (_) => PanelAbogadoScreen(
+                abogadoId: abogadoId != null && abogadoId > 0 ? abogadoId : id,
+              ),
               settings: settings,
             );
 
