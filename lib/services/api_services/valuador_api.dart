@@ -10,139 +10,151 @@ class ValuadorApi {
   // SOLICITUDES (casos pendientes)
   // ===============================
   Future<List<dynamic>> getSolicitudes(int valuadorId) async {
-    try {
-      final res = await client.get(
-        '/valuador/solicitudes.php',
-        params: {'valuador_id': valuadorId},
-      );
+  try {
+    final res = await client.get(
+      '/valuador/solicitudes',
+      params: {'valuador_id': valuadorId},
+    );
 
-      if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al obtener solicitudes');
-      }
-
-      return (res['data'] as List<dynamic>? ?? []);
-    } catch (e) {
-      throw Exception('Error de conexión al obtener solicitudes');
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al obtener solicitudes');
     }
+
+    final data = res['data'];
+
+    if (data is List) {
+      return data;
+    }
+
+    return [];
+  } catch (e) {
+    throw Exception('Error de conexión al obtener solicitudes: $e');
   }
+}
 
   Future<void> actualizarEstadoSolicitud({
-    required int id,
-    required String estado,
-  }) async {
-    try {
-      final res = await client.post('/valuador/solicitudes.php', {
-        'action': 'update_estado',
-        'id': '$id',
+  required int id,
+  required String estado,
+}) async {
+  try {
+    final res = await client.post(
+      '/valuador/solicitudes/$id/estado',
+      {
         'estado': estado,
-      });
+      },
+    );
 
-      if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al actualizar solicitud');
-      }
-    } catch (e) {
-      throw Exception('Error al actualizar estado: $e');
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al actualizar solicitud');
     }
+  } catch (e) {
+    throw Exception('Error al actualizar estado: $e');
   }
+}
 
   // ===============================
   // AVALÚOS
   // ===============================
   Future<List<dynamic>> getAvaluos(int valuadorId) async {
-    try {
-      final res = await client.get(
-        '/valuador/avaluos.php',
-        params: {'valuador_id': valuadorId},
-      );
+  try {
+    final res = await client.get(
+      '/valuador/avaluos',
+      params: {'valuador_id': valuadorId},
+    );
 
-      if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al obtener avalúos');
-      }
-
-      return (res['data'] as List<dynamic>? ?? []);
-    } catch (e) {
-      throw Exception('Error de conexión al obtener avalúos');
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al obtener avalúos');
     }
+
+    final data = res['data'];
+
+    if (data is List) {
+      return data;
+    }
+
+    return [];
+  } catch (e) {
+    throw Exception('Error de conexión al obtener avalúos: $e');
   }
+}
 
   Future<void> guardarAvaluo({
-    required int valuadorId,
-    required int casoId,
-    required String estado,
-    double? valorEstimado,
-    String? notas,
-  }) async {
-    try {
-      final Map<String, String> data = {
-        'action': 'save',
-        'valuador_id': '$valuadorId',
-        'caso_id': '$casoId',
-        'estado': estado,
-        'notas': notas ?? '',
-      };
+  required int valuadorId,
+  required int casoId,
+  required String estado,
+  double? valorEstimado,
+  String? notas,
+}) async {
+  try {
+    final Map<String, dynamic> data = {
+      'valuador_id': valuadorId,
+      'caso_id': casoId,
+      'estado': estado,
+      'notas': notas ?? '',
+    };
 
-      if (valorEstimado != null) {
-        data['valor_estimado'] = valorEstimado.toString();
-      }
-
-      final res = await client.post('/valuador/avaluos.php', data);
-
-      if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al guardar avalúo');
-      }
-    } catch (e) {
-      throw Exception('Error al guardar avalúo: $e');
+    if (valorEstimado != null) {
+      data['valor_estimado'] = valorEstimado;
     }
+
+    final res = await client.post('/valuador/avaluos', data);
+
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al guardar avalúo');
+    }
+  } catch (e) {
+    throw Exception('Error al guardar avalúo: $e');
   }
+}
 
   // ===============================
   // REPORTES
   // ===============================
   Future<List<dynamic>> getReportes(int casoId) async {
-    try {
-      final res = await client.get(
-        '/valuador/reportes.php',
-        params: {'caso_id': casoId},
-      );
+  try {
+    final res = await client.get(
+      '/valuador/reportes',
+      params: {'caso_id': casoId},
+    );
 
-      if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al obtener reportes');
-      }
-
-      return (res['data'] as List<dynamic>? ?? []);
-    } catch (e) {
-      throw Exception('Error al obtener reportes: $e');
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al obtener reportes');
     }
+
+    return (res['data'] as List<dynamic>? ?? []);
+  } catch (e) {
+    throw Exception('Error al obtener reportes: $e');
   }
+}
 
-  Future<void> subirReporte({
-    required int casoId,
-    required int valuadorId,
-    required File file,
-    String? descripcion,
-  }) async {
-    try {
-      if (!file.existsSync()) {
-        throw Exception("El archivo no existe");
-      }
-
-      final res = await client.postMultipart(
-        '/valuador/reportes.php',
-        fields: {
-          'caso_id': '$casoId',
-          'profesional_id': '$valuadorId',
-          'descripcion': descripcion ?? '',
-        },
-        file: file,
-      );
-
-      if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al subir reporte');
-      }
-    } catch (e) {
-      throw Exception('Error al subir reporte: $e');
+Future<void> subirReporte({
+  required int casoId,
+  required int valuadorId,
+  required File file,
+  String? descripcion,
+}) async {
+  try {
+    if (!file.existsSync()) {
+      throw Exception("El archivo no existe");
     }
+
+    final res = await client.postMultipart(
+      '/valuador/reportes',
+      fields: {
+        'caso_id': '$casoId',
+        'profesional_id': '$valuadorId',
+        'descripcion': descripcion ?? '',
+      },
+      file: file,
+    );
+
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al subir reporte');
+    }
+  } catch (e) {
+    throw Exception('Error al subir reporte: $e');
   }
+}
 
   // ===============================
   // FOTOS

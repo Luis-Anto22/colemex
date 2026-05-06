@@ -22,6 +22,7 @@ class CommonApi {
     }
 
     final data = res['data'];
+
     if (data is Map<String, dynamic>) {
       return data;
     }
@@ -43,7 +44,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener agenda');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['citas'];
 
     if (data is List) {
       return data;
@@ -67,8 +68,8 @@ class CommonApi {
     String? estado,
   }) async {
     final payload = <String, dynamic>{
-      'profesional_id': '$profesionalId',
-      'cliente_id': '$clienteId',
+      'profesional_id': profesionalId,
+      'cliente_id': clienteId,
       'inicio': inicio,
       if (titulo != null && titulo.trim().isNotEmpty) 'titulo': titulo.trim(),
       if (motivo != null && motivo.trim().isNotEmpty) 'motivo': motivo.trim(),
@@ -99,6 +100,7 @@ class CommonApi {
     }
 
     final data = res['data'];
+
     if (data is Map<String, dynamic>) {
       return data;
     }
@@ -132,8 +134,7 @@ class CommonApi {
       if (enlaceReunion != null) 'enlace_reunion': enlaceReunion,
       if (notas != null) 'notas': notas,
       if (canceladaPor != null) 'cancelada_por': canceladaPor,
-      if (motivoCancelacion != null)
-        'motivo_cancelacion': motivoCancelacion,
+      if (motivoCancelacion != null) 'motivo_cancelacion': motivoCancelacion,
       if (fechaCancelacion != null) 'fecha_cancelacion': fechaCancelacion,
     };
 
@@ -145,28 +146,31 @@ class CommonApi {
   }
 
   Future<void> actualizarEstadoCita({
-    required int citaId,
-    required String estado,
-    String? canceladaPor,
-    String? motivoCancelacion,
-    String? fechaCancelacion,
-  }) async {
-    final payload = <String, dynamic>{
-      'estado': estado,
-      if (canceladaPor != null && canceladaPor.trim().isNotEmpty)
-        'cancelada_por': canceladaPor.trim(),
-      if (motivoCancelacion != null && motivoCancelacion.trim().isNotEmpty)
-        'motivo_cancelacion': motivoCancelacion.trim(),
-      if (fechaCancelacion != null && fechaCancelacion.trim().isNotEmpty)
-        'fecha_cancelacion': fechaCancelacion.trim(),
-    };
+  required int citaId,
+  required String estado,
+  String? canceladaPor,
+  String? motivoCancelacion,
+  String? fechaCancelacion,
+}) async {
+  final payload = <String, dynamic>{
+    'estado': estado,
+    if (canceladaPor != null && canceladaPor.trim().isNotEmpty)
+      'cancelada_por': canceladaPor.trim(),
+    if (motivoCancelacion != null && motivoCancelacion.trim().isNotEmpty)
+      'motivo_cancelacion': motivoCancelacion.trim(),
+    if (fechaCancelacion != null && fechaCancelacion.trim().isNotEmpty)
+      'fecha_cancelacion': fechaCancelacion.trim(),
+  };
 
-    final res = await client.put('/citas/$citaId/estado', payload);
+  final res = await client.post(
+    '/citas/$citaId/estado',
+    payload,
+  );
 
-    if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al actualizar estado de la cita');
-    }
+  if (res['success'] != true) {
+    throw Exception(res['message'] ?? 'Error al actualizar estado de la cita');
   }
+}
 
   Future<void> eliminarCita(int citaId) async {
     final res = await client.delete('/citas/$citaId');
@@ -185,18 +189,14 @@ class CommonApi {
     required String perfil,
   }) async {
     final res = await client.get(
-      '/common/historial',
-      params: {
-        'profesional_id': profesionalId,
-        'perfil': perfil,
-      },
+      '/casos/mis-casos/$profesionalId',
     );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener historial');
     }
 
-    final data = res['data'];
+    final data = res['data'] ?? res['casos'];
 
     if (data is List) {
       return data;
@@ -225,7 +225,10 @@ class CommonApi {
       return data;
     }
 
-    return {};
+    return {
+      'notificaciones': true,
+      'compartir_ubicacion': false,
+    };
   }
 
   Future<void> actualizarConfiguracion({
@@ -236,9 +239,9 @@ class CommonApi {
     final res = await client.post(
       '/common/configuracion',
       {
-        'profesional_id': '$profesionalId',
-        'notificaciones': notificaciones ? '1' : '0',
-        'compartir_ubicacion': compartirUbicacion ? '1' : '0',
+        'profesional_id': profesionalId,
+        'notificaciones': notificaciones ? 1 : 0,
+        'compartir_ubicacion': compartirUbicacion ? 1 : 0,
       },
     );
 
@@ -278,9 +281,9 @@ class CommonApi {
     final res = await client.post(
       '/common/ubicacion',
       {
-        'profesional_id': '$profesionalId',
-        'latitude': '$latitude',
-        'longitude': '$longitude',
+        'profesional_id': profesionalId,
+        'latitude': latitude,
+        'longitude': longitude,
       },
     );
 
@@ -309,7 +312,12 @@ class CommonApi {
       return data;
     }
 
-    return {};
+    return {
+      'total': 0,
+      'pagado': 0,
+      'pendiente': 0,
+      'items': [],
+    };
   }
 
   // ==============================
@@ -323,7 +331,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener clientes');
     }
 
-    final data = res['clientes'];
+    final data = res['data'] ?? res['clientes'];
 
     if (data is List) {
       return data;
@@ -339,7 +347,7 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener clientes activos');
     }
 
-    final data = res['clientes'];
+    final data = res['data'] ?? res['clientes'];
 
     if (data is List) {
       return data;
@@ -355,7 +363,8 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al obtener cliente');
     }
 
-    final data = res['cliente'];
+    final data = res['data'] ?? res['cliente'];
+
     if (data is Map<String, dynamic>) {
       return data;
     }
@@ -399,9 +408,9 @@ class CommonApi {
     final res = await client.post(
       '/common/calificaciones',
       {
-        'profesional_id': '$profesionalId',
-        'cliente_id': '$clienteId',
-        'estrellas': '$estrellas',
+        'profesional_id': profesionalId,
+        'cliente_id': clienteId,
+        'estrellas': estrellas,
         'comentario': comentario,
       },
     );
@@ -422,7 +431,7 @@ class CommonApi {
     String? comentarios,
   }) async {
     final res = await client.postMultipart(
-      '/common/perfil_documentos',
+      '/common/perfil-documentos',
       fields: {
         'profesional_id': '$profesionalId',
         'tipo': tipo,
@@ -452,7 +461,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -463,13 +476,16 @@ class CommonApi {
     String estado = 'activo',
     String? notas,
   }) async {
-    final res = await client.post('/psicologos/pacientes', {
-      'psicologo_id': '$psicologoId',
-      'cliente_id': '$clienteId',
-      'origen': origen,
-      'estado': estado,
-      if (notas != null && notas.trim().isNotEmpty) 'notas': notas.trim(),
-    });
+    final res = await client.post(
+      '/psicologos/pacientes',
+      {
+        'psicologo_id': psicologoId,
+        'cliente_id': clienteId,
+        'origen': origen,
+        'estado': estado,
+        if (notas != null && notas.trim().isNotEmpty) 'notas': notas.trim(),
+      },
+    );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al vincular paciente');
@@ -480,11 +496,17 @@ class CommonApi {
     final res = await client.get('/psicologos/pacientes/$relacionId');
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al obtener paciente del psicólogo');
+      throw Exception(
+        res['message'] ?? 'Error al obtener paciente del psicólogo',
+      );
     }
 
     final data = res['data'];
-    if (data is Map<String, dynamic>) return data;
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
     return {};
   }
 
@@ -528,7 +550,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -540,7 +566,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is Map<String, dynamic>) return data;
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
     return {};
   }
 
@@ -560,25 +590,29 @@ class CommonApi {
     String? fechaApertura,
     String? notasGenerales,
   }) async {
-    final res = await client.post('/psicologos/expedientes', {
-      'psicologo_id': '$psicologoId',
-      'cliente_id': '$clienteId',
-      if (profesionalClienteId != null)
-        'profesional_cliente_id': '$profesionalClienteId',
-      if (motivoConsulta != null) 'motivo_consulta': motivoConsulta,
-      if (antecedentes != null) 'antecedentes': antecedentes,
-      if (diagnosticoInicial != null) 'diagnostico_inicial': diagnosticoInicial,
-      if (objetivoGeneral != null) 'objetivo_general': objetivoGeneral,
-      if (objetivosEspecificos != null)
-        'objetivos_especificos': objetivosEspecificos,
-      if (enfoqueTerapeutico != null)
-        'enfoque_terapeutico': enfoqueTerapeutico,
-      if (planTratamiento != null) 'plan_tratamiento': planTratamiento,
-      'nivel_riesgo': nivelRiesgo,
-      'estado': estado,
-      if (fechaApertura != null) 'fecha_apertura': fechaApertura,
-      if (notasGenerales != null) 'notas_generales': notasGenerales,
-    });
+    final res = await client.post(
+      '/psicologos/expedientes',
+      {
+        'psicologo_id': psicologoId,
+        'cliente_id': clienteId,
+        if (profesionalClienteId != null)
+          'profesional_cliente_id': profesionalClienteId,
+        if (motivoConsulta != null) 'motivo_consulta': motivoConsulta,
+        if (antecedentes != null) 'antecedentes': antecedentes,
+        if (diagnosticoInicial != null)
+          'diagnostico_inicial': diagnosticoInicial,
+        if (objetivoGeneral != null) 'objetivo_general': objetivoGeneral,
+        if (objetivosEspecificos != null)
+          'objetivos_especificos': objetivosEspecificos,
+        if (enfoqueTerapeutico != null)
+          'enfoque_terapeutico': enfoqueTerapeutico,
+        if (planTratamiento != null) 'plan_tratamiento': planTratamiento,
+        'nivel_riesgo': nivelRiesgo,
+        'estado': estado,
+        if (fechaApertura != null) 'fecha_apertura': fechaApertura,
+        if (notasGenerales != null) 'notas_generales': notasGenerales,
+      },
+    );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al crear expediente');
@@ -603,7 +637,8 @@ class CommonApi {
     final payload = <String, dynamic>{
       if (motivoConsulta != null) 'motivo_consulta': motivoConsulta,
       if (antecedentes != null) 'antecedentes': antecedentes,
-      if (diagnosticoInicial != null) 'diagnostico_inicial': diagnosticoInicial,
+      if (diagnosticoInicial != null)
+        'diagnostico_inicial': diagnosticoInicial,
       if (objetivoGeneral != null) 'objetivo_general': objetivoGeneral,
       if (objetivosEspecificos != null)
         'objetivos_especificos': objetivosEspecificos,
@@ -617,7 +652,10 @@ class CommonApi {
       if (notasGenerales != null) 'notas_generales': notasGenerales,
     };
 
-    final res = await client.put('/psicologos/expedientes/$expedienteId', payload);
+    final res = await client.put(
+      '/psicologos/expedientes/$expedienteId',
+      payload,
+    );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al actualizar expediente');
@@ -645,8 +683,10 @@ class CommonApi {
     final params = <String, dynamic>{
       'psicologo_id': psicologoId,
     };
+
     if (clienteId != null) params['cliente_id'] = clienteId;
     if (expedienteId != null) params['expediente_id'] = expedienteId;
+
     if (tipoSesion != null && tipoSesion.isNotEmpty) {
       params['tipo_sesion'] = tipoSesion;
     }
@@ -658,7 +698,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -670,7 +714,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is Map<String, dynamic>) return data;
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
     return {};
   }
 
@@ -695,30 +743,33 @@ class CommonApi {
     String? acuerdosSesion,
     String estado = 'registrada',
   }) async {
-    final res = await client.post('/psicologos/sesiones', {
-      'psicologo_id': '$psicologoId',
-      'cliente_id': '$clienteId',
-      'expediente_id': '$expedienteId',
-      'fecha_sesion': fechaSesion,
-      if (profesionalClienteId != null)
-        'profesional_cliente_id': '$profesionalClienteId',
-      'tipo_sesion': tipoSesion,
-      'modalidad': modalidad,
-      if (estadoEmocional != null) 'estado_emocional': estadoEmocional,
-      if (nivelAnimo != null) 'nivel_animo': nivelAnimo,
-      'nivel_riesgo': nivelRiesgo,
-      if (evaluacionNombre != null) 'evaluacion_nombre': evaluacionNombre,
-      if (evaluacionResultado != null)
-        'evaluacion_resultado': evaluacionResultado,
-      if (avances != null) 'avances': avances,
-      if (retrocesos != null) 'retrocesos': retrocesos,
-      if (observaciones != null) 'observaciones': observaciones,
-      if (tareasTerapeuticas != null)
-        'tareas_terapeuticas': tareasTerapeuticas,
-      if (objetivoSesion != null) 'objetivo_sesion': objetivoSesion,
-      if (acuerdosSesion != null) 'acuerdos_sesion': acuerdosSesion,
-      'estado': estado,
-    });
+    final res = await client.post(
+      '/psicologos/sesiones',
+      {
+        'psicologo_id': psicologoId,
+        'cliente_id': clienteId,
+        'expediente_id': expedienteId,
+        'fecha_sesion': fechaSesion,
+        if (profesionalClienteId != null)
+          'profesional_cliente_id': profesionalClienteId,
+        'tipo_sesion': tipoSesion,
+        'modalidad': modalidad,
+        if (estadoEmocional != null) 'estado_emocional': estadoEmocional,
+        if (nivelAnimo != null) 'nivel_animo': nivelAnimo,
+        'nivel_riesgo': nivelRiesgo,
+        if (evaluacionNombre != null) 'evaluacion_nombre': evaluacionNombre,
+        if (evaluacionResultado != null)
+          'evaluacion_resultado': evaluacionResultado,
+        if (avances != null) 'avances': avances,
+        if (retrocesos != null) 'retrocesos': retrocesos,
+        if (observaciones != null) 'observaciones': observaciones,
+        if (tareasTerapeuticas != null)
+          'tareas_terapeuticas': tareasTerapeuticas,
+        if (objetivoSesion != null) 'objetivo_sesion': objetivoSesion,
+        if (acuerdosSesion != null) 'acuerdos_sesion': acuerdosSesion,
+        'estado': estado,
+      },
+    );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al crear sesión');
@@ -789,7 +840,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -804,7 +859,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -819,7 +878,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -835,6 +898,7 @@ class CommonApi {
     final params = <String, dynamic>{
       'psicologo_id': psicologoId,
     };
+
     if (clienteId != null) params['cliente_id'] = clienteId;
     if (expedienteId != null) params['expediente_id'] = expedienteId;
 
@@ -845,7 +909,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is List) return data;
+
+    if (data is List) {
+      return data;
+    }
+
     return [];
   }
 
@@ -857,7 +925,11 @@ class CommonApi {
     }
 
     final data = res['data'];
-    if (data is Map<String, dynamic>) return data;
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
     return {};
   }
 
@@ -875,21 +947,24 @@ class CommonApi {
     String? observaciones,
     String? archivoUrl,
   }) async {
-    final res = await client.post('/psicologos/reportes', {
-      'psicologo_id': '$psicologoId',
-      'cliente_id': '$clienteId',
-      'expediente_id': '$expedienteId',
-      if (profesionalClienteId != null)
-        'profesional_cliente_id': '$profesionalClienteId',
-      'tipo_reporte': tipoReporte,
-      if (fechaReporte != null) 'fecha_reporte': fechaReporte,
-      'estado': estado,
-      if (motivo != null) 'motivo': motivo,
-      if (conclusiones != null) 'conclusiones': conclusiones,
-      if (recomendaciones != null) 'recomendaciones': recomendaciones,
-      if (observaciones != null) 'observaciones': observaciones,
-      if (archivoUrl != null) 'archivo_url': archivoUrl,
-    });
+    final res = await client.post(
+      '/psicologos/reportes',
+      {
+        'psicologo_id': psicologoId,
+        'cliente_id': clienteId,
+        'expediente_id': expedienteId,
+        if (profesionalClienteId != null)
+          'profesional_cliente_id': profesionalClienteId,
+        'tipo_reporte': tipoReporte,
+        if (fechaReporte != null) 'fecha_reporte': fechaReporte,
+        'estado': estado,
+        if (motivo != null) 'motivo': motivo,
+        if (conclusiones != null) 'conclusiones': conclusiones,
+        if (recomendaciones != null) 'recomendaciones': recomendaciones,
+        if (observaciones != null) 'observaciones': observaciones,
+        if (archivoUrl != null) 'archivo_url': archivoUrl,
+      },
+    );
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al crear reporte');
