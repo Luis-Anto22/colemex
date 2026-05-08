@@ -30,7 +30,7 @@ import 'screens/contador/contador_panel.dart';
 import 'screens/auditor/auditor_panel.dart';
 import 'screens/investigador/investigador.dart';
 import 'screens/perito_criminalistica/perito.dart';
-import 'screens/ajustador/ajustador.dart';
+import 'screens/ajustadores/ajustador.dart';
 import 'screens/valuador/valuador.dart';
 import 'screens/asistencia_vial/asistencia_vial_panel.dart';
 
