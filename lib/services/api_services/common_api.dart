@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 
 import 'api_client.dart';
 
@@ -68,8 +68,8 @@ class CommonApi {
     String? estado,
   }) async {
     final payload = <String, dynamic>{
-      'profesional_id': profesionalId,
-      'cliente_id': clienteId,
+      'profesional_id': '$profesionalId',
+      'cliente_id': '$clienteId',
       'inicio': inicio,
       if (titulo != null && titulo.trim().isNotEmpty) 'titulo': titulo.trim(),
       if (motivo != null && motivo.trim().isNotEmpty) 'motivo': motivo.trim(),
@@ -146,31 +146,31 @@ class CommonApi {
   }
 
   Future<void> actualizarEstadoCita({
-  required int citaId,
-  required String estado,
-  String? canceladaPor,
-  String? motivoCancelacion,
-  String? fechaCancelacion,
-}) async {
-  final payload = <String, dynamic>{
-    'estado': estado,
-    if (canceladaPor != null && canceladaPor.trim().isNotEmpty)
-      'cancelada_por': canceladaPor.trim(),
-    if (motivoCancelacion != null && motivoCancelacion.trim().isNotEmpty)
-      'motivo_cancelacion': motivoCancelacion.trim(),
-    if (fechaCancelacion != null && fechaCancelacion.trim().isNotEmpty)
-      'fecha_cancelacion': fechaCancelacion.trim(),
-  };
+    required int citaId,
+    required String estado,
+    String? canceladaPor,
+    String? motivoCancelacion,
+    String? fechaCancelacion,
+  }) async {
+    final payload = <String, dynamic>{
+      'estado': estado,
+      if (canceladaPor != null && canceladaPor.trim().isNotEmpty)
+        'cancelada_por': canceladaPor.trim(),
+      if (motivoCancelacion != null && motivoCancelacion.trim().isNotEmpty)
+        'motivo_cancelacion': motivoCancelacion.trim(),
+      if (fechaCancelacion != null && fechaCancelacion.trim().isNotEmpty)
+        'fecha_cancelacion': fechaCancelacion.trim(),
+    };
 
-  final res = await client.post(
-    '/citas/$citaId/estado',
-    payload,
-  );
+    final res = await client.post(
+      '/citas/$citaId/estado',
+      payload,
+    );
 
-  if (res['success'] != true) {
-    throw Exception(res['message'] ?? 'Error al actualizar estado de la cita');
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'Error al actualizar estado de la cita');
+    }
   }
-}
 
   Future<void> eliminarCita(int citaId) async {
     final res = await client.delete('/citas/$citaId');
@@ -239,9 +239,9 @@ class CommonApi {
     final res = await client.post(
       '/common/configuracion',
       {
-        'profesional_id': profesionalId,
-        'notificaciones': notificaciones ? 1 : 0,
-        'compartir_ubicacion': compartirUbicacion ? 1 : 0,
+        'profesional_id': '$profesionalId',
+        'notificaciones': notificaciones ? '1' : '0',
+        'compartir_ubicacion': compartirUbicacion ? '1' : '0',
       },
     );
 
@@ -281,9 +281,9 @@ class CommonApi {
     final res = await client.post(
       '/common/ubicacion',
       {
-        'profesional_id': profesionalId,
-        'latitude': latitude,
-        'longitude': longitude,
+        'profesional_id': '$profesionalId',
+        'latitude': '$latitude',
+        'longitude': '$longitude',
       },
     );
 
@@ -408,9 +408,9 @@ class CommonApi {
     final res = await client.post(
       '/common/calificaciones',
       {
-        'profesional_id': profesionalId,
-        'cliente_id': clienteId,
-        'estrellas': estrellas,
+        'profesional_id': '$profesionalId',
+        'cliente_id': '$clienteId',
+        'estrellas': '$estrellas',
         'comentario': comentario,
       },
     );
@@ -427,7 +427,7 @@ class CommonApi {
   Future<void> subirDocumentoPerfil({
     required int profesionalId,
     required String tipo,
-    required File file,
+    required PlatformFile file,
     String? comentarios,
   }) async {
     final res = await client.postMultipart(
@@ -435,8 +435,8 @@ class CommonApi {
       fields: {
         'profesional_id': '$profesionalId',
         'tipo': tipo,
-        if (comentarios != null && comentarios.isNotEmpty)
-          'comentarios': comentarios,
+        if (comentarios != null && comentarios.trim().isNotEmpty)
+          'comentarios': comentarios.trim(),
       },
       file: file,
     );
@@ -479,8 +479,8 @@ class CommonApi {
     final res = await client.post(
       '/psicologos/pacientes',
       {
-        'psicologo_id': psicologoId,
-        'cliente_id': clienteId,
+        'psicologo_id': '$psicologoId',
+        'cliente_id': '$clienteId',
         'origen': origen,
         'estado': estado,
         if (notas != null && notas.trim().isNotEmpty) 'notas': notas.trim(),
@@ -593,10 +593,10 @@ class CommonApi {
     final res = await client.post(
       '/psicologos/expedientes',
       {
-        'psicologo_id': psicologoId,
-        'cliente_id': clienteId,
+        'psicologo_id': '$psicologoId',
+        'cliente_id': '$clienteId',
         if (profesionalClienteId != null)
-          'profesional_cliente_id': profesionalClienteId,
+          'profesional_cliente_id': '$profesionalClienteId',
         if (motivoConsulta != null) 'motivo_consulta': motivoConsulta,
         if (antecedentes != null) 'antecedentes': antecedentes,
         if (diagnosticoInicial != null)
@@ -746,12 +746,12 @@ class CommonApi {
     final res = await client.post(
       '/psicologos/sesiones',
       {
-        'psicologo_id': psicologoId,
-        'cliente_id': clienteId,
-        'expediente_id': expedienteId,
+        'psicologo_id': '$psicologoId',
+        'cliente_id': '$clienteId',
+        'expediente_id': '$expedienteId',
         'fecha_sesion': fechaSesion,
         if (profesionalClienteId != null)
-          'profesional_cliente_id': profesionalClienteId,
+          'profesional_cliente_id': '$profesionalClienteId',
         'tipo_sesion': tipoSesion,
         'modalidad': modalidad,
         if (estadoEmocional != null) 'estado_emocional': estadoEmocional,
@@ -950,11 +950,11 @@ class CommonApi {
     final res = await client.post(
       '/psicologos/reportes',
       {
-        'psicologo_id': psicologoId,
-        'cliente_id': clienteId,
-        'expediente_id': expedienteId,
+        'psicologo_id': '$psicologoId',
+        'cliente_id': '$clienteId',
+        'expediente_id': '$expedienteId',
         if (profesionalClienteId != null)
-          'profesional_cliente_id': profesionalClienteId,
+          'profesional_cliente_id': '$profesionalClienteId',
         'tipo_reporte': tipoReporte,
         if (fechaReporte != null) 'fecha_reporte': fechaReporte,
         'estado': estado,

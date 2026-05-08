@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -34,7 +32,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   List<dynamic> casos = [];
   List<dynamic> reportes = [];
 
-  File? archivoSeleccionado;
+  PlatformFile? archivoSeleccionado;
   String? nombreArchivo;
 
   @override
@@ -56,12 +54,14 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     try {
       final data = await api.getAvaluos(widget.valuadorId);
 
+      if (!mounted) return;
+
       setState(() {
         casos = data;
       });
 
       if (casos.isNotEmpty) {
-        final primerCaso = Map<String, dynamic>.from(casos.first);
+        final primerCaso = Map<String, dynamic>.from(casos.first as Map);
         final id = primerCaso['caso_id'] ?? primerCaso['id'];
 
         casoSeleccionado = primerCaso;
@@ -74,19 +74,21 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     } catch (e) {
       mostrarMensaje('Error al cargar casos: $e', esError: true);
     } finally {
-      setState(() => cargando = false);
+      if (mounted) {
+        setState(() => cargando = false);
+      }
     }
   }
 
   Future<void> cargarReportes() async {
-    if (casoSeleccionadoId == null) {
-      return;
-    }
+    if (casoSeleccionadoId == null) return;
 
     setState(() => cargando = true);
 
     try {
       final data = await api.getReportes(casoSeleccionadoId!);
+
+      if (!mounted) return;
 
       setState(() {
         reportes = data;
@@ -94,7 +96,9 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     } catch (e) {
       mostrarMensaje('Error al cargar reportes: $e', esError: true);
     } finally {
-      setState(() => cargando = false);
+      if (mounted) {
+        setState(() => cargando = false);
+      }
     }
   }
 
@@ -139,7 +143,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
                   shrinkWrap: true,
                   itemCount: casos.length,
                   itemBuilder: (context, index) {
-                    final caso = Map<String, dynamic>.from(casos[index]);
+                    final caso = Map<String, dynamic>.from(casos[index] as Map);
                     final id = caso['caso_id'] ?? caso['id'];
                     final cliente = obtenerNombreCliente(caso);
                     final servicio = obtenerServicioCaso(caso);
@@ -187,15 +191,25 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   Future<void> seleccionarArchivo() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'],
+      allowMultiple: false,
+      withData: true,
     );
 
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        archivoSeleccionado = File(result.files.single.path!);
-        nombreArchivo = result.files.single.name;
-      });
+    if (result == null || result.files.isEmpty) return;
+
+    final archivo = result.files.single;
+
+    if (archivo.bytes == null &&
+        (archivo.path == null || archivo.path!.isEmpty)) {
+      mostrarMensaje('No se pudo leer el archivo seleccionado', esError: true);
+      return;
     }
+
+    setState(() {
+      archivoSeleccionado = archivo;
+      nombreArchivo = archivo.name;
+    });
   }
 
   Future<void> subirReporte() async {
@@ -221,6 +235,8 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
 
       descripcionController.clear();
 
+      if (!mounted) return;
+
       setState(() {
         archivoSeleccionado = null;
         nombreArchivo = null;
@@ -231,12 +247,19 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
     } catch (e) {
       mostrarMensaje('Error al subir reporte: $e', esError: true);
     } finally {
-      setState(() => subiendo = false);
+      if (mounted) {
+        setState(() => subiendo = false);
+      }
     }
   }
 
   Future<void> abrirReporte(String url) async {
-    final uri = Uri.parse(url);
+    final uri = Uri.tryParse(url);
+
+    if (uri == null) {
+      mostrarMensaje('URL inválida', esError: true);
+      return;
+    }
 
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       mostrarMensaje('No se pudo abrir el reporte', esError: true);
@@ -255,22 +278,22 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   }
 
   String obtenerNombreCliente(Map<String, dynamic> caso) {
-  final cliente = caso['cliente'];
+    final cliente = caso['cliente'];
 
-  if (cliente is Map) {
-    return (cliente['nombre'] ??
-            cliente['nombre_completo'] ??
+    if (cliente is Map) {
+      return (cliente['nombre'] ??
+              cliente['nombre_completo'] ??
+              'Cliente sin nombre')
+          .toString();
+    }
+
+    return (caso['cliente_nombre'] ??
+            caso['nombre_cliente'] ??
+            caso['nombre'] ??
+            cliente ??
             'Cliente sin nombre')
         .toString();
   }
-
-  return (caso['cliente_nombre'] ??
-          caso['nombre_cliente'] ??
-          caso['nombre'] ??
-          cliente ??
-          'Cliente sin nombre')
-      .toString();
-}
 
   String obtenerServicioCaso(Map<String, dynamic> caso) {
     return (caso['servicio'] ??
@@ -282,7 +305,11 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
 
   String obtenerNombreArchivo(String url) {
     try {
-      return Uri.parse(url).pathSegments.last;
+      final uri = Uri.parse(url);
+      if (uri.pathSegments.isNotEmpty) {
+        return uri.pathSegments.last;
+      }
+      return 'Reporte';
     } catch (_) {
       return 'Reporte';
     }
@@ -295,7 +322,8 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
 
     if (lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg') ||
-        lower.endsWith('.png')) {
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp')) {
       return Icons.image_rounded;
     }
 
@@ -365,7 +393,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -376,7 +404,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Icon(
@@ -404,7 +432,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
                       ? 'Selecciona un caso para continuar'
                       : '$clienteActual · Caso #$casoSeleccionadoId',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.78),
+                    color: Colors.white.withValues(alpha: 0.78),
                     fontSize: 14,
                   ),
                 ),
@@ -419,7 +447,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   Widget _selectorCasoCard() {
     final texto = casoSeleccionado == null
         ? 'Seleccionar caso'
-        :  obtenerNombreCliente(casoSeleccionado!);
+        : obtenerNombreCliente(casoSeleccionado!);
 
     return GestureDetector(
       onTap: mostrarSelectorCaso,
@@ -463,7 +491,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 14,
               offset: const Offset(0, 7),
             ),
@@ -646,9 +674,23 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   }
 
   Widget _reporteCard(dynamic reporte) {
-    final archivo = reporte['archivo']?.toString() ?? '';
-    final descripcion = reporte['descripcion']?.toString() ?? '';
-    final fecha = reporte['fecha']?.toString() ?? '';
+    final map = Map<String, dynamic>.from(reporte as Map);
+
+    final archivo = (map['archivo_url'] ??
+            map['archivo'] ??
+            map['url'] ??
+            map['ruta'] ??
+            '')
+        .toString();
+
+    final descripcion = (map['descripcion'] ?? '').toString();
+
+    final fecha = (map['creado_en'] ??
+            map['created_at'] ??
+            map['fecha'] ??
+            '')
+        .toString();
+
     final nombre = obtenerNombreArchivo(archivo);
 
     return Container(
@@ -659,7 +701,7 @@ class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withValues(alpha: 0.045),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
