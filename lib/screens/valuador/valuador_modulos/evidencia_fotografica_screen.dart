@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+
 import '../../../services/api_services/api_client.dart';
 import '../../../services/api_services/valuador_api.dart';
-import 'dart:io';
 
 class EvidenciaFotograficaScreen extends StatefulWidget {
   final int valuadorId;
@@ -48,7 +48,7 @@ class _EvidenciaFotograficaScreenState
     setState(() {
       if (casoSeleccionado != null) {
         futureFotos = api.getFotos(casoSeleccionado!);
-      } else if (widget.casoId == null) {
+      } else {
         futureCasos = api.getAvaluos(widget.valuadorId);
       }
     });
@@ -63,38 +63,63 @@ class _EvidenciaFotograficaScreenState
     }
 
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+      allowMultiple: false,
+      withData: true,
     );
 
     if (result == null || result.files.isEmpty) return;
 
-    final path = result.files.single.path;
-    if (path == null) return;
+    final PlatformFile archivoSeleccionado = result.files.single;
+
+    if (archivoSeleccionado.bytes == null &&
+        (archivoSeleccionado.path == null ||
+            archivoSeleccionado.path!.isEmpty)) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo leer el archivo seleccionado'),
+        ),
+      );
+      return;
+    }
 
     final descCtrl = TextEditingController();
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Subir foto'),
-        content: TextField(
-          controller: descCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Descripción',
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Subir foto'),
+          content: TextField(
+            controller: descCtrl,
+            maxLength: 200,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Descripción',
+              hintText: 'Ej. Fachada, interiores, daños, ubicación...',
+              border: OutlineInputBorder(),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Subir'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Subir'),
+            ),
+          ],
+        );
+      },
     );
+
+    final descripcion = descCtrl.text.trim();
+    descCtrl.dispose();
 
     if (ok != true) return;
 
@@ -106,8 +131,8 @@ class _EvidenciaFotograficaScreenState
       await api.subirFoto(
         casoId: casoSeleccionado!,
         valuadorId: widget.valuadorId,
-        file: File(path),
-        descripcion: descCtrl.text.trim(),
+        file: archivoSeleccionado,
+        descripcion: descripcion,
       );
 
       if (!mounted) return;
@@ -123,11 +148,13 @@ class _EvidenciaFotograficaScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          uploading = false;
+        });
+      }
     }
-
-    setState(() {
-      uploading = false;
-    });
   }
 
   Widget _buildSelector() {
@@ -158,12 +185,25 @@ class _EvidenciaFotograficaScreenState
         }
 
         final items = casos.map<DropdownMenuItem<int>>((c) {
-          final id = int.tryParse(c['caso_id'].toString()) ?? 0;
-          final titulo = (c['titulo'] ?? 'Sin titulo').toString();
+          final map = Map<String, dynamic>.from(c as Map);
 
-          return DropdownMenuItem(
+          final rawId = map['caso_id'] ?? map['id'];
+          final id = int.tryParse(rawId.toString()) ?? 0;
+
+          final titulo = (map['titulo'] ??
+                  map['servicio'] ??
+                  map['tipo_servicio'] ??
+                  'Sin título')
+              .toString();
+
+          final cliente = _obtenerNombreCliente(map);
+
+          return DropdownMenuItem<int>(
             value: id,
-            child: Text('Caso #$id · $titulo'),
+            child: Text(
+              'Caso #$id - $cliente - $titulo',
+              overflow: TextOverflow.ellipsis,
+            ),
           );
         }).toList();
 
@@ -172,6 +212,7 @@ class _EvidenciaFotograficaScreenState
           child: DropdownButtonFormField<int>(
             initialValue: casoSeleccionado,
             items: items,
+            isExpanded: true,
             onChanged: (v) {
               if (v == null) return;
 
@@ -205,51 +246,108 @@ class _EvidenciaFotograficaScreenState
         }
 
         if (snap.hasError) {
-          return Center(child: Text('Error: ${snap.error}'));
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Error: ${snap.error}',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
         }
 
         final items = snap.data ?? [];
 
         if (items.isEmpty) {
-          return const Center(
-            child: Text('No hay fotos todavía.'),
+          return RefreshIndicator(
+            onRefresh: _reload,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 120),
+                Center(child: Text('No hay fotos todavía.')),
+              ],
+            ),
           );
         }
 
         return RefreshIndicator(
           onRefresh: _reload,
           child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(12),
             itemCount: items.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (_, i) {
-              final f = items[i] as Map<String, dynamic>;
+              final f = Map<String, dynamic>.from(items[i] as Map);
 
-              final url = (f['archivo_url'] ?? '').toString();
+              final url = (f['archivo_url'] ??
+                      f['archivo'] ??
+                      f['url'] ??
+                      f['ruta'] ??
+                      '')
+                  .toString();
+
               final desc = (f['descripcion'] ?? 'Foto').toString();
+
+              final fecha = (f['creado_en'] ??
+                      f['created_at'] ??
+                      f['fecha'] ??
+                      '')
+                  .toString();
 
               return Card(
                 elevation: 3,
+                clipBehavior: Clip.antiAlias,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (url.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                        child: Image.network(
-                          url,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                      Image.network(
+                        url,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) {
+                          return Container(
+                            height: 200,
+                            width: double.infinity,
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: Icon(
+                                Icons.broken_image,
+                                size: 46,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    else
+                      Container(
+                        height: 160,
+                        width: double.infinity,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 46,
+                          ),
                         ),
                       ),
                     ListTile(
-                      title: Text(desc),
-                      subtitle: Text(url),
-                      trailing: const Icon(Icons.image),
-                    )
+                      leading: const Icon(Icons.image),
+                      title: Text(
+                        desc.isEmpty ? 'Foto' : desc,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        fecha.isEmpty ? url : fecha,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -258,6 +356,24 @@ class _EvidenciaFotograficaScreenState
         );
       },
     );
+  }
+
+  String _obtenerNombreCliente(Map<String, dynamic> caso) {
+    final cliente = caso['cliente'];
+
+    if (cliente is Map) {
+      return (cliente['nombre'] ??
+              cliente['nombre_completo'] ??
+              'Cliente sin nombre')
+          .toString();
+    }
+
+    return (caso['cliente_nombre'] ??
+            caso['nombre_cliente'] ??
+            caso['nombre'] ??
+            cliente ??
+            'Cliente sin nombre')
+        .toString();
   }
 
   @override
@@ -275,7 +391,14 @@ class _EvidenciaFotograficaScreenState
       floatingActionButton: FloatingActionButton(
         onPressed: uploading ? null : _subirFoto,
         child: uploading
-            ? const CircularProgressIndicator(color: Colors.white)
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
             : const Icon(Icons.add_a_photo),
       ),
       body: Column(

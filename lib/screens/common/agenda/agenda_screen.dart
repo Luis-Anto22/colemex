@@ -64,6 +64,31 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
   }
 
+  Future<void> _cambiarEstadoCita(int citaId, String estado) async {
+    try {
+      await api.actualizarEstadoCita(
+        citaId: citaId,
+        estado: estado,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cita marcada como ${_labelEstado(estado)}'),
+        ),
+      );
+
+      await _cargar();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
   String _two(int n) => n.toString().padLeft(2, '0');
 
   String _fmt(DateTime dt) {
@@ -100,10 +125,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
       case 'pendiente':
         return Colors.orange;
       case 'confirmada':
+      case 'en proceso':
         return Colors.blue;
       case 'cancelada':
+      case 'cancelado':
         return Colors.red;
       case 'completada':
+      case 'finalizado':
         return Colors.green;
       case 'no_asistio':
         return Colors.grey;
@@ -118,10 +146,15 @@ class _AgendaScreenState extends State<AgendaScreen> {
         return 'Pendiente';
       case 'confirmada':
         return 'Confirmada';
+      case 'en proceso':
+        return 'En proceso';
       case 'cancelada':
+      case 'cancelado':
         return 'Cancelada';
       case 'completada':
         return 'Completada';
+      case 'finalizado':
+        return 'Finalizado';
       case 'no_asistio':
         return 'No asistió';
       default:
@@ -545,21 +578,57 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           if (tipo.isNotEmpty) Text(_labelTipo(tipo)),
                         ],
                       ),
-                      trailing: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _colorEstado(estado).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          _labelEstado(estado),
-                          style: TextStyle(
-                            color: _colorEstado(estado),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (estadoNuevo) {
+                          final citaId =
+                              int.tryParse(a['id']?.toString() ?? '') ?? 0;
+
+                          if (citaId <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('ID de cita no válido'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          _cambiarEstadoCita(citaId, estadoNuevo);
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'pendiente',
+                            child: Text('Pendiente'),
+                          ),
+                          PopupMenuItem(
+                            value: 'en proceso',
+                            child: Text('En proceso'),
+                          ),
+                          PopupMenuItem(
+                            value: 'finalizado',
+                            child: Text('Finalizado'),
+                          ),
+                          PopupMenuItem(
+                            value: 'cancelado',
+                            child: Text('Cancelado'),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _colorEstado(estado)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            _labelEstado(estado),
+                            style: TextStyle(
+                              color: _colorEstado(estado),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),

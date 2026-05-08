@@ -35,7 +35,7 @@ class SoporteScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _abrir('mailto:soporte@colemex.com?subject=Soporte%20COLEMEX'),
+                onPressed: () => _abrir('mailto:corporativolegaldigital@gmail.com?subject=Soporte%20COLEMEX'),
                 icon: const Icon(Icons.email),
                 label: const Text('Enviar correo'),
               ),
@@ -56,6 +56,15 @@ class SoporteScreen extends StatelessWidget {
                 onPressed: () => _abrir('https://wa.me/520000000000?text=Hola%20necesito%20soporte%20COLEMEX'),
                 icon: const Icon(Icons.chat),
                 label: const Text('WhatsApp'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _abrir('https://corporativolegaldigital.com'),
+                icon: const Icon(Icons.language),
+                label: const Text('Visitar sitio web'),
               ),
             ),
           ],

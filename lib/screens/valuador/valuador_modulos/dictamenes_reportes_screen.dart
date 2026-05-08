@@ -1,19 +1,16 @@
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../../../services/api_services/api_client.dart';
-import '../../../services/api_services/valuador_api.dart';
+import 'package:advocatus/services/api_services/api_client.dart';
+import 'package:advocatus/services/api_services/valuador_api.dart';
 
 class DictamenesReportesScreen extends StatefulWidget {
   final int valuadorId;
-  final int? casoId;
 
   const DictamenesReportesScreen({
     super.key,
     required this.valuadorId,
-    this.casoId,
   });
 
   @override
@@ -24,245 +21,763 @@ class DictamenesReportesScreen extends StatefulWidget {
 class _DictamenesReportesScreenState extends State<DictamenesReportesScreen> {
   late final ValuadorApi api;
 
-  Future<List<dynamic>>? futureReportes;
-  Future<List<dynamic>>? futureCasos;
+  final TextEditingController descripcionController = TextEditingController();
 
-  int? casoSeleccionado;
+  bool cargando = false;
+  bool subiendo = false;
+
+  int? casoSeleccionadoId;
+  Map<String, dynamic>? casoSeleccionado;
+
+  List<dynamic> casos = [];
+  List<dynamic> reportes = [];
+
+  PlatformFile? archivoSeleccionado;
+  String? nombreArchivo;
 
   @override
   void initState() {
     super.initState();
-
     api = ValuadorApi(ApiClient());
-
-    if (widget.casoId != null) {
-      casoSeleccionado = widget.casoId;
-      futureReportes = api.getReportes(casoSeleccionado!);
-    } else {
-      futureCasos = api.getAvaluos(widget.valuadorId);
-    }
+    cargarCasos();
   }
 
-  Future<void> _reload() async {
-    setState(() {
-      if (casoSeleccionado != null) {
-        futureReportes = api.getReportes(casoSeleccionado!);
-      } else {
-        futureCasos = api.getAvaluos(widget.valuadorId);
-      }
-    });
+  @override
+  void dispose() {
+    descripcionController.dispose();
+    super.dispose();
   }
 
-  Future<void> _subirReporte() async {
-    if (casoSeleccionado == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un caso primero')),
-      );
-      return;
-    }
-
-    final result = await FilePicker.platform.pickFiles();
-    if (result == null || result.files.isEmpty) return;
-
-    final path = result.files.single.path;
-    if (path == null) return;
-
-    final descCtrl = TextEditingController();
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Subir dictamen / reporte'),
-        content: TextField(
-          controller: descCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Descripción',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Subir'),
-          ),
-        ],
-      ),
-    );
-
-    if (ok != true) {
-      descCtrl.dispose();
-      return;
-    }
+  Future<void> cargarCasos() async {
+    setState(() => cargando = true);
 
     try {
-      await api.subirReporte(
-        casoId: casoSeleccionado!,
-        valuadorId: widget.valuadorId,
-        file: File(path),
-        descripcion: descCtrl.text.trim(),
-      );
-
-      descCtrl.dispose();
+      final data = await api.getAvaluos(widget.valuadorId);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reporte subido correctamente')),
-      );
+      setState(() {
+        casos = data;
+      });
 
-      await _reload();
+      if (casos.isNotEmpty) {
+        final primerCaso = Map<String, dynamic>.from(casos.first as Map);
+        final id = primerCaso['caso_id'] ?? primerCaso['id'];
+
+        casoSeleccionado = primerCaso;
+        casoSeleccionadoId = int.tryParse(id.toString());
+
+        if (casoSeleccionadoId != null) {
+          await cargarReportes();
+        }
+      }
     } catch (e) {
-      descCtrl.dispose();
+      mostrarMensaje('Error al cargar casos: $e', esError: true);
+    } finally {
+      if (mounted) {
+        setState(() => cargando = false);
+      }
+    }
+  }
+
+  Future<void> cargarReportes() async {
+    if (casoSeleccionadoId == null) return;
+
+    setState(() => cargando = true);
+
+    try {
+      final data = await api.getReportes(casoSeleccionadoId!);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al subir: $e')),
-      );
+      setState(() {
+        reportes = data;
+      });
+    } catch (e) {
+      mostrarMensaje('Error al cargar reportes: $e', esError: true);
+    } finally {
+      if (mounted) {
+        setState(() => cargando = false);
+      }
     }
   }
 
-  Widget _buildSelector() {
-    return FutureBuilder<List<dynamic>>(
-      future: futureCasos,
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(12),
-            child: LinearProgressIndicator(),
-          );
-        }
+  Future<void> mostrarSelectorCaso() async {
+    if (casos.isEmpty) {
+      mostrarMensaje('No hay casos disponibles', esError: true);
+      return;
+    }
 
-        if (snap.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text('Error: ${snap.error}'),
-          );
-        }
-
-        final casos = snap.data ?? [];
-
-        if (casos.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(12),
-            child: Text('No hay casos disponibles.'),
-          );
-        }
-
-        final items = casos.map<DropdownMenuItem<int>>((c) {
-          final id = int.tryParse((c['caso_id'] ?? '').toString()) ?? 0;
-          final titulo = (c['titulo'] ?? 'Sin título').toString();
-
-          return DropdownMenuItem<int>(
-            value: id,
-            child: Text('Caso #$id · $titulo'),
-          );
-        }).toList();
-
-        return Padding(
-          padding: const EdgeInsets.all(12),
-          child: DropdownButtonFormField<int>(
-            initialValue: casoSeleccionado,
-            items: items,
-            onChanged: (v) {
-              if (v == null) return;
-
-              setState(() {
-                casoSeleccionado = v;
-                futureReportes = api.getReportes(v);
-              });
-            },
-            decoration: const InputDecoration(
-              labelText: 'Selecciona un caso',
-              border: OutlineInputBorder(),
-            ),
+    final seleccionado = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
           ),
-        );
-      },
-    );
-  }
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 45,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Selecciona un caso',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: casos.length,
+                  itemBuilder: (context, index) {
+                    final caso = Map<String, dynamic>.from(casos[index] as Map);
+                    final id = caso['caso_id'] ?? caso['id'];
+                    final cliente = obtenerNombreCliente(caso);
+                    final servicio = obtenerServicioCaso(caso);
 
-  Widget _buildReportes() {
-    if (casoSeleccionado == null) {
-      return const Center(
-        child: Text('Selecciona un caso para ver los reportes.'),
-      );
-    }
-
-    return FutureBuilder<List<dynamic>>(
-      future: futureReportes,
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snap.hasError) {
-          return Center(child: Text('Error: ${snap.error}'));
-        }
-
-        final items = snap.data ?? [];
-
-        if (items.isEmpty) {
-          return const Center(child: Text('No hay reportes todavía.'));
-        }
-
-        return RefreshIndicator(
-          onRefresh: _reload,
-          child: ListView.separated(
-            padding: const EdgeInsets.all(12),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) {
-              final r = items[i] as Map<String, dynamic>;
-              final descripcion = (r['descripcion'] ?? 'Reporte').toString();
-              final archivo = (r['archivo_url'] ?? '').toString();
-
-              return Card(
-                child: ListTile(
-                  title: Text(descripcion),
-                  subtitle: Text(
-                    archivo,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  trailing: const Icon(Icons.insert_drive_file),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(archivo)),
+                    return ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFEFF6FF),
+                        child: Icon(
+                          Icons.assignment_rounded,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                      title: Text(
+                        cliente,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text('Caso #$id · $servicio'),
+                      onTap: () => Navigator.pop(context, caso),
                     );
                   },
                 ),
-              );
-            },
+              ),
+            ],
           ),
         );
       },
     );
+
+    if (seleccionado != null) {
+      final id = seleccionado['caso_id'] ?? seleccionado['id'];
+
+      setState(() {
+        casoSeleccionado = seleccionado;
+        casoSeleccionadoId = int.tryParse(id.toString());
+        reportes = [];
+        archivoSeleccionado = null;
+        nombreArchivo = null;
+        descripcionController.clear();
+      });
+
+      await cargarReportes();
+    }
+  }
+
+  Future<void> seleccionarArchivo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx'],
+      allowMultiple: false,
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final archivo = result.files.single;
+
+    if (archivo.bytes == null &&
+        (archivo.path == null || archivo.path!.isEmpty)) {
+      mostrarMensaje('No se pudo leer el archivo seleccionado', esError: true);
+      return;
+    }
+
+    setState(() {
+      archivoSeleccionado = archivo;
+      nombreArchivo = archivo.name;
+    });
+  }
+
+  Future<void> subirReporte() async {
+    if (casoSeleccionadoId == null) {
+      mostrarMensaje('Selecciona un caso primero', esError: true);
+      return;
+    }
+
+    if (archivoSeleccionado == null) {
+      mostrarMensaje('Selecciona un archivo primero', esError: true);
+      return;
+    }
+
+    setState(() => subiendo = true);
+
+    try {
+      await api.subirReporte(
+        casoId: casoSeleccionadoId!,
+        valuadorId: widget.valuadorId,
+        file: archivoSeleccionado!,
+        descripcion: descripcionController.text.trim(),
+      );
+
+      descripcionController.clear();
+
+      if (!mounted) return;
+
+      setState(() {
+        archivoSeleccionado = null;
+        nombreArchivo = null;
+      });
+
+      mostrarMensaje('Reporte subido correctamente');
+      await cargarReportes();
+    } catch (e) {
+      mostrarMensaje('Error al subir reporte: $e', esError: true);
+    } finally {
+      if (mounted) {
+        setState(() => subiendo = false);
+      }
+    }
+  }
+
+  Future<void> abrirReporte(String url) async {
+    final uri = Uri.tryParse(url);
+
+    if (uri == null) {
+      mostrarMensaje('URL inválida', esError: true);
+      return;
+    }
+
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      mostrarMensaje('No se pudo abrir el reporte', esError: true);
+    }
+  }
+
+  void mostrarMensaje(String mensaje, {bool esError = false}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: esError ? Colors.red.shade700 : Colors.green.shade700,
+      ),
+    );
+  }
+
+  String obtenerNombreCliente(Map<String, dynamic> caso) {
+    final cliente = caso['cliente'];
+
+    if (cliente is Map) {
+      return (cliente['nombre'] ??
+              cliente['nombre_completo'] ??
+              'Cliente sin nombre')
+          .toString();
+    }
+
+    return (caso['cliente_nombre'] ??
+            caso['nombre_cliente'] ??
+            caso['nombre'] ??
+            cliente ??
+            'Cliente sin nombre')
+        .toString();
+  }
+
+  String obtenerServicioCaso(Map<String, dynamic> caso) {
+    return (caso['servicio'] ??
+            caso['titulo'] ??
+            caso['tipo_servicio'] ??
+            'Solicitud de valuación')
+        .toString();
+  }
+
+  String obtenerNombreArchivo(String url) {
+    try {
+      final uri = Uri.parse(url);
+      if (uri.pathSegments.isNotEmpty) {
+        return uri.pathSegments.last;
+      }
+      return 'Reporte';
+    } catch (_) {
+      return 'Reporte';
+    }
+  }
+
+  IconData iconoPorArchivo(String archivo) {
+    final lower = archivo.toLowerCase();
+
+    if (lower.endsWith('.pdf')) return Icons.picture_as_pdf_rounded;
+
+    if (lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp')) {
+      return Icons.image_rounded;
+    }
+
+    if (lower.endsWith('.doc') || lower.endsWith('.docx')) {
+      return Icons.description_rounded;
+    }
+
+    return Icons.insert_drive_file_rounded;
   }
 
   @override
   Widget build(BuildContext context) {
+    final clienteActual =
+        casoSeleccionado == null ? null : obtenerNombreCliente(casoSeleccionado!);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA),
       appBar: AppBar(
-        title: const Text('Dictámenes / reportes'),
+        title: const Text(
+          'Dictámenes / Reportes',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF111827),
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
-            onPressed: _reload,
-            icon: const Icon(Icons.refresh),
+            onPressed: cargarReportes,
+            icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _subirReporte,
-        child: const Icon(Icons.upload_file),
+      body: RefreshIndicator(
+        onRefresh: cargarReportes,
+        child: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            _headerCard(clienteActual),
+            const SizedBox(height: 18),
+            _selectorCasoCard(),
+            const SizedBox(height: 18),
+            _uploadCard(),
+            const SizedBox(height: 22),
+            _tituloSeccion(),
+            const SizedBox(height: 12),
+            if (cargando)
+              const Padding(
+                padding: EdgeInsets.only(top: 40),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (reportes.isEmpty)
+              _emptyState()
+            else
+              ...reportes.map((reporte) => _reporteCard(reporte)),
+          ],
+        ),
       ),
-      body: Column(
+    );
+  }
+
+  Widget _headerCard(String? clienteActual) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          if (widget.casoId == null) _buildSelector(),
-          Expanded(child: _buildReportes()),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.assignment_rounded,
+              color: Colors.white,
+              size: 34,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Gestión documental',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  casoSeleccionadoId == null
+                      ? 'Selecciona un caso para continuar'
+                      : '$clienteActual · Caso #$casoSeleccionadoId',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.78),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _selectorCasoCard() {
+    final texto = casoSeleccionado == null
+        ? 'Seleccionar caso'
+        : obtenerNombreCliente(casoSeleccionado!);
+
+    return GestureDetector(
+      onTap: mostrarSelectorCaso,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.folder_copy_rounded, color: Color(0xFF2563EB)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                texto,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_down_rounded),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _uploadCard() {
+    final bloqueado = casoSeleccionadoId == null;
+
+    return Opacity(
+      opacity: bloqueado ? 0.55 : 1,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 7),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Subir nuevo reporte',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(height: 14),
+            GestureDetector(
+              onTap: bloqueado || subiendo ? null : seleccionarArchivo,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: archivoSeleccionado == null
+                        ? Colors.grey.shade300
+                        : const Color(0xFF2563EB),
+                    width: 1.3,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      archivoSeleccionado == null
+                          ? Icons.upload_file_rounded
+                          : Icons.check_circle_rounded,
+                      color: archivoSeleccionado == null
+                          ? Colors.grey.shade700
+                          : const Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        nombreArchivo ?? 'Seleccionar PDF, imagen o documento',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: archivoSeleccionado == null
+                              ? Colors.grey.shade700
+                              : const Color(0xFF111827),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: descripcionController,
+              enabled: !bloqueado && !subiendo,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Descripción del reporte...',
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: bloqueado || subiendo ? null : subirReporte,
+                icon: subiendo
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.cloud_upload_rounded),
+                label: Text(
+                  subiendo ? 'Subiendo...' : 'Subir reporte',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.grey.shade400,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tituloSeccion() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Reportes cargados',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Text(
+            '${reportes.length} archivo(s)',
+            style: const TextStyle(
+              color: Color(0xFF2563EB),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _emptyState() {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            casoSeleccionadoId == null
+                ? Icons.touch_app_rounded
+                : Icons.folder_open_rounded,
+            size: 58,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            casoSeleccionadoId == null
+                ? 'Selecciona un caso'
+                : 'Aún no hay reportes',
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            casoSeleccionadoId == null
+                ? 'Elige un cliente/caso para cargar sus dictámenes.'
+                : 'Cuando subas un dictamen o reporte aparecerá aquí.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _reporteCard(dynamic reporte) {
+    final map = Map<String, dynamic>.from(reporte as Map);
+
+    final archivo = (map['archivo_url'] ??
+            map['archivo'] ??
+            map['url'] ??
+            map['ruta'] ??
+            '')
+        .toString();
+
+    final descripcion = (map['descripcion'] ?? '').toString();
+
+    final fecha = (map['creado_en'] ??
+            map['created_at'] ??
+            map['fecha'] ??
+            '')
+        .toString();
+
+    final nombre = obtenerNombreArchivo(archivo);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              iconoPorArchivo(nombre),
+              color: const Color(0xFF2563EB),
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nombre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15.5,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (descripcion.isNotEmpty)
+                  Text(
+                    descripcion,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                if (descripcion.isNotEmpty) const SizedBox(height: 7),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        fecha.isEmpty ? 'Sin fecha' : fecha,
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: archivo.isEmpty ? null : () => abrirReporte(archivo),
+            icon: const Icon(Icons.open_in_new_rounded),
+            color: const Color(0xFF2563EB),
+            tooltip: 'Abrir reporte',
+          ),
         ],
       ),
     );
