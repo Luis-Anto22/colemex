@@ -224,45 +224,88 @@ class CitaController extends Controller
     }
 
     public function updateEstado(Request $request, int $id): JsonResponse
-    {
-        $cita = Cita::find($id);
+{
+    $cita = Cita::find($id);
 
-        if (! $cita) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cita no encontrada',
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'estado' => [
-                'required',
-                Rule::in([
-                    Cita::ESTADO_PENDIENTE,
-                    Cita::ESTADO_CONFIRMADA,
-                    Cita::ESTADO_CANCELADA,
-                    Cita::ESTADO_COMPLETADA,
-                    Cita::ESTADO_NO_ASISTIO,
-                ]),
-            ],
-            'cancelada_por' => ['nullable', Rule::in(['cliente', 'profesional', 'admin'])],
-            'motivo_cancelacion' => ['nullable', 'string'],
-            'fecha_cancelacion' => ['nullable', 'date_format:Y-m-d H:i:s'],
-        ]);
-
-        $cita->estado = $validated['estado'];
-
-        if ($validated['estado'] === Cita::ESTADO_CANCELADA) {
-            $cita->cancelada_por = $validated['cancelada_por'] ?? null;
-            $cita->motivo_cancelacion = $validated['motivo_cancelacion'] ?? null;
-            $cita->fecha_cancelacion = $validated['fecha_cancelacion'] ?? now();
-        }
-
-        $cita->save();
-
+    if (! $cita) {
         return response()->json([
-            'success' => true,
-            'message' => 'Estado actualizado',
-        ], 200);
+            'success' => false,
+            'message' => 'Cita no encontrada',
+        ], 404);
+    }
+
+    $estadoRecibido = strtolower(trim((string) $request->input('estado', '')));
+
+    $mapEstados = [
+        'pendiente' => Cita::ESTADO_PENDIENTE,
+
+        'en proceso' => Cita::ESTADO_CONFIRMADA,
+        'en_proceso' => Cita::ESTADO_CONFIRMADA,
+        'proceso' => Cita::ESTADO_CONFIRMADA,
+        'confirmada' => Cita::ESTADO_CONFIRMADA,
+        'confirmado' => Cita::ESTADO_CONFIRMADA,
+
+        'finalizado' => Cita::ESTADO_COMPLETADA,
+        'finalizada' => Cita::ESTADO_COMPLETADA,
+        'completada' => Cita::ESTADO_COMPLETADA,
+        'completado' => Cita::ESTADO_COMPLETADA,
+
+        'cancelado' => Cita::ESTADO_CANCELADA,
+        'cancelada' => Cita::ESTADO_CANCELADA,
+
+        'no_asistio' => Cita::ESTADO_NO_ASISTIO,
+        'no asistio' => Cita::ESTADO_NO_ASISTIO,
+        'no asistió' => Cita::ESTADO_NO_ASISTIO,
+    ];
+
+    if (! array_key_exists($estadoRecibido, $mapEstados)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Estado no válido',
+            'errors' => [
+                'estado' => ['El estado enviado no es válido.'],
+            ],
+        ], 422);
+    }
+
+    $request->merge([
+        'estado' => $mapEstados[$estadoRecibido],
+    ]);
+
+    $validated = $request->validate([
+        'estado' => [
+            'required',
+            Rule::in([
+                Cita::ESTADO_PENDIENTE,
+                Cita::ESTADO_CONFIRMADA,
+                Cita::ESTADO_CANCELADA,
+                Cita::ESTADO_COMPLETADA,
+                Cita::ESTADO_NO_ASISTIO,
+            ]),
+        ],
+        'cancelada_por' => ['nullable', Rule::in(['cliente', 'profesional', 'admin'])],
+        'motivo_cancelacion' => ['nullable', 'string'],
+        'fecha_cancelacion' => ['nullable', 'date_format:Y-m-d H:i:s'],
+    ]);
+
+    $cita->estado = $validated['estado'];
+
+    if ($validated['estado'] === Cita::ESTADO_CANCELADA) {
+        $cita->cancelada_por = $validated['cancelada_por'] ?? null;
+        $cita->motivo_cancelacion = $validated['motivo_cancelacion'] ?? null;
+        $cita->fecha_cancelacion = $validated['fecha_cancelacion'] ?? now();
+    }
+
+    $cita->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Estado actualizado',
+        'data' => [
+            'id' => $cita->id,
+            'estado' => $cita->estado,
+        ],
+    ], 200);
     }
 }
+
