@@ -34,9 +34,13 @@ class CommonApi {
   // AGENDA / CITAS - LARAVEL
   // ==============================
 
+   // ==============================
+  // AGENDA / CITAS - LARAVEL
+  // ==============================
+
   Future<List<dynamic>> getAgenda(int profesionalId) async {
     final res = await client.get(
-      '/citas',
+      '/common/agenda',
       params: {'profesional_id': profesionalId},
     );
 
@@ -68,8 +72,8 @@ class CommonApi {
     String? estado,
   }) async {
     final payload = <String, dynamic>{
-      'profesional_id': '$profesionalId',
-      'cliente_id': '$clienteId',
+      'profesional_id': profesionalId,
+      'cliente_id': clienteId,
       'inicio': inicio,
       if (titulo != null && titulo.trim().isNotEmpty) 'titulo': titulo.trim(),
       if (motivo != null && motivo.trim().isNotEmpty) 'motivo': motivo.trim(),
@@ -85,7 +89,7 @@ class CommonApi {
       if (estado != null && estado.trim().isNotEmpty) 'estado': estado.trim(),
     };
 
-    final res = await client.post('/citas', payload);
+    final res = await client.post('/common/agenda', payload);
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al crear cita');
@@ -93,7 +97,7 @@ class CommonApi {
   }
 
   Future<Map<String, dynamic>> getCita(int citaId) async {
-    final res = await client.get('/citas/$citaId');
+    final res = await client.get('/common/agenda/$citaId');
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al obtener cita');
@@ -138,7 +142,7 @@ class CommonApi {
       if (fechaCancelacion != null) 'fecha_cancelacion': fechaCancelacion,
     };
 
-    final res = await client.put('/citas/$citaId', payload);
+    final res = await client.put('/common/agenda/$citaId', payload);
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al actualizar cita');
@@ -163,7 +167,7 @@ class CommonApi {
     };
 
     final res = await client.post(
-      '/citas/$citaId/estado',
+      '/common/agenda/$citaId/estado',
       payload,
     );
 
@@ -173,49 +177,68 @@ class CommonApi {
   }
 
   Future<void> eliminarCita(int citaId) async {
-    final res = await client.delete('/citas/$citaId');
+    final res = await client.delete('/common/agenda/$citaId');
 
     if (res['success'] != true) {
       throw Exception(res['message'] ?? 'Error al eliminar cita');
     }
   }
-
   // ==============================
   // HISTORIAL - LARAVEL
   // ==============================
 
   Future<List<dynamic>> getHistorial({
-    required int profesionalId,
-    required String perfil,
-  }) async {
-    Map<String, dynamic> res;
+  required int profesionalId,
+  required String perfil,
+}) async {
+  final perfilNormalizado = perfil
+      .toLowerCase()
+      .trim()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u');
 
-    try {
-      // Ruta nueva Laravel
-      res = await client.get('/casos/mis-casos/$profesionalId');
-    } catch (_) {
-      // Compatibilidad con ruta anterior
-      res = await client.get(
-        '/common/historial',
-        params: {
-          'profesional_id': profesionalId,
-          'perfil': perfil,
-        },
-      );
-    }
+  if (perfilNormalizado.contains('asistencia')) {
+    final serviciosRes = await client.get(
+      '/asistencia-vial/historial',
+      params: {'profesional_id': profesionalId},
+    );
 
-    if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al obtener historial');
-    }
+    final agendaRes = await client.get(
+      '/common/agenda',
+      params: {'profesional_id': profesionalId},
+    );
 
-    final data = res['data'] ?? res['casos'];
+    final servicios = serviciosRes['data'] is List
+        ? serviciosRes['data'] as List
+        : [];
 
-    if (data is List) {
-      return data;
-    }
+    final agendaRaw = agendaRes['data'] ?? agendaRes['citas'];
+    final agenda = agendaRaw is List ? agendaRaw : [];
 
-    return [];
+    return [
+      ...servicios,
+      ...agenda,
+    ];
   }
+
+  final res = await client.get('/casos/mis-casos/$profesionalId');
+
+  if (res['success'] != true) {
+    throw Exception(res['message'] ?? 'Error al obtener historial');
+  }
+
+  final data = res['data'] ?? res['casos'];
+
+  if (data is List) {
+    return data;
+  }
+
+  return [];
+}
+
 
   // ==============================
   // CONFIGURACION

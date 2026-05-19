@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_services/cliente_profesionales_api.dart';
 import 'profesionales_mapa_fullscreen.dart';
 import 'servicio_selector.dart';
+import 'package:advocatus/screens/cliente_panels/solicitar_asistencia_vial_screen.dart';
 
 class PanelServicios extends StatefulWidget {
   final String nombreUsuario;
@@ -569,6 +570,10 @@ class _PanelServiciosState extends State<PanelServicios> {
       });
     }
   }
+  bool _esAsistenciaVial(String servicio) {
+  final s = _normalizarServicio(servicio);
+  return s == 'asistencia vial' || s == 'asistencia_vial';
+}
 
   void _ordenarPorDistancia() {
     _profesionales.sort((a, b) {
@@ -1038,6 +1043,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     final especialidadSelGlobal = widget.especialidadBusqueda?.trim() ?? '';
     final especialidadSelActiva = _especialidadFiltroActual(servicioSel);
     final esAbogados = _esServicioAbogados(servicioSel);
+    final esAsistenciaVial = _esAsistenciaVial(servicioSel);
     final tieneFiltro =
         servicioSel.isNotEmpty || especialidadSelActiva.isNotEmpty;
     final isSmallPhone = screen.width < 380 || screen.height < 700;
@@ -1330,10 +1336,23 @@ class _PanelServiciosState extends State<PanelServicios> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _abrirMapaPantallaCompleta,
-                      icon: const Icon(Icons.map_outlined),
+                      onPressed: esAsistenciaVial
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SolicitarAsistenciaVialScreen(),
+                                ),
+                              );
+                            }
+                          : _abrirMapaPantallaCompleta,
+                      icon: Icon(
+                        esAsistenciaVial ? Icons.car_repair_rounded : Icons.map_outlined,
+                      ),
                       label: Text(
-                        'Abrir mapa completo (${_profesionales.length})',
+                        esAsistenciaVial
+                            ? 'Solicitar asistencia vial'
+                            : 'Abrir mapa completo (${_profesionales.length})',
                       ),
                     ),
                   ),
