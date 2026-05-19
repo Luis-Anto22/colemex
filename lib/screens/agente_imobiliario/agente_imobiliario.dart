@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 
-import '../localizacion.dart';
-import '../universal_menu.dart';
-import 'pantalla_agenda_inmuebles.dart';
-import 'pantalla_calificaciones_inmuebles.dart';
-import 'pantalla_configuracion_inmuebles.dart';
-import 'pantalla_contacto_soporte_inmuebles.dart';
-import 'pantalla_historial_inmuebles.dart';
-import 'pantalla_ingresos_inmuebles.dart';
-import 'pantalla_notificaciones_inmuebles.dart';
+// COMMON
+import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
+import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';
+import 'package:advocatus/screens/common/configuracion/configuracion_screen.dart';
+import 'package:advocatus/screens/common/historial/historial_screen.dart';
+import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
+import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
+import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
+import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
+import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
+
+// WIDGET COMÚN
+import 'package:advocatus/screens/common/estado_profesional/estado_profesional_widget.dart';
+
+// WIDGETS
+import 'package:advocatus/widgets/notification_badge_icon.dart';
+
+// MENÚ UNIVERSAL
+import 'package:advocatus/screens/universal_menu.dart';
+
+// AGENTE INMOBILIARIO
 import 'pantalla_propiedades.dart';
-import '../../widgets/notification_badge_icon.dart';
+import 'clientes_interesados_screen.dart';
 
 class PanelAgentesInmobiliarios extends StatefulWidget {
   final int agenteId;
@@ -28,23 +40,8 @@ class PanelAgentesInmobiliarios extends StatefulWidget {
 class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
   String estado = 'Disponible';
 
-  bool get _idValido => widget.agenteId > 0;
-
   void _go(Widget page) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    );
-  }
-
-  void _moduloPendiente(String modulo) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$modulo estará disponible cuando creemos su pantalla y API.',
-        ),
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
   String _saludoPorHora() {
@@ -68,10 +65,10 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
           Text(
             title,
             style: const TextStyle(
-              color: Colors.white,
               fontSize: 15.5,
               fontWeight: FontWeight.w900,
               letterSpacing: .2,
+              color: Colors.white,
             ),
           ),
           if (subtitle != null) ...[
@@ -80,7 +77,7 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
               subtitle,
               style: TextStyle(
                 fontSize: 12.5,
-                color: Colors.white.withValues(alpha: 0.70),
+                color: Colors.white.withOpacity(.70),
               ),
             ),
           ],
@@ -91,16 +88,14 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
 
   Widget _card({required Widget child}) {
     final theme = Theme.of(context);
-    final accent = theme.primaryColor;
+    final gold = theme.primaryColor;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Colors.white.withValues(alpha: 0.06),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.18),
-        ),
+        color: Colors.white.withOpacity(.06),
+        border: Border.all(color: gold.withOpacity(.18)),
       ),
       child: child,
     );
@@ -113,7 +108,7 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    final accent = theme.primaryColor;
+    final gold = theme.primaryColor;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
@@ -122,10 +117,8 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Colors.white.withValues(alpha: 0.05),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.14),
-          ),
+          color: Colors.white.withOpacity(.05),
+          border: Border.all(color: gold.withOpacity(.14)),
         ),
         child: Row(
           children: [
@@ -134,12 +127,10 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
               height: 42,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: accent.withValues(alpha: 0.10),
-                border: Border.all(
-                  color: accent.withValues(alpha: 0.18),
-                ),
+                color: gold.withOpacity(.10),
+                border: Border.all(color: gold.withOpacity(.18)),
               ),
-              child: Icon(icon, color: accent),
+              child: Icon(icon, color: gold),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -160,7 +151,7 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                     style: TextStyle(
                       fontSize: 12.5,
                       height: 1.2,
-                      color: Colors.white.withValues(alpha: 0.72),
+                      color: Colors.white.withOpacity(.72),
                     ),
                   ),
                 ],
@@ -168,7 +159,7 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
             ),
             Icon(
               Icons.chevron_right,
-              color: Colors.white.withValues(alpha: 0.60),
+              color: Colors.white.withOpacity(.60),
             ),
           ],
         ),
@@ -182,34 +173,29 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    final accent = theme.primaryColor;
+    final gold = theme.primaryColor;
 
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 10,
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withValues(alpha: 0.05),
-            border: Border.all(
-              color: accent.withValues(alpha: 0.14),
-            ),
+            color: Colors.white.withOpacity(.05),
+            border: Border.all(color: gold.withOpacity(.14)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: accent),
+              Icon(icon, color: gold),
               const SizedBox(height: 8),
               Text(
                 label,
+                textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -223,91 +209,34 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
     );
   }
 
-  Widget _estadoChip(String label) {
-    final theme = Theme.of(context);
-    final accent = theme.primaryColor;
-    final active = estado == label;
-
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: active ? Colors.black : Colors.white,
-        ),
-      ),
-      selected: active,
-      onSelected: (_) => setState(() => estado = label),
-      selectedColor: accent,
-      backgroundColor: Colors.white.withValues(alpha: 0.06),
-      shape: StadiumBorder(
-        side: BorderSide(
-          color: accent.withValues(alpha: 0.22),
-        ),
-      ),
-    );
-  }
-
-  Widget _estadoActualBadge() {
-    final theme = Theme.of(context);
-    final accent = theme.primaryColor;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 8,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: accent.withValues(alpha: 0.22),
-        ),
-        color: Colors.white.withValues(alpha: 0.04),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.circle,
-            size: 10,
-            color: accent,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            estado,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _abrirHistorial() {
-    if (!_idValido) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ID de agente no válido')),
-      );
-      return;
-    }
-
-    _go(PantallaHistorialInmuebles(agenteId: widget.agenteId));
-  }
-
   Widget _gap() => const SizedBox(height: 10);
+
+  void _abrirPropiedades() {
+    _go(
+      PantallaPropiedades(
+        agenteId: widget.agenteId,
+      ),
+    );
+  }
+
+  void _abrirClientesInteresados() {
+    _go(
+      ClientesInteresadosScreen(
+        agenteId: widget.agenteId,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = theme.primaryColor;
-    final headerBg = theme.appBarTheme.backgroundColor ?? Colors.black;
+    final gold = theme.primaryColor;
+    final headerBg = theme.appBarTheme.backgroundColor ?? theme.primaryColor;
     final saludo = _saludoPorHora();
 
     final shadow = <BoxShadow>[
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.25),
+        color: Colors.black.withOpacity(.25),
         blurRadius: 22,
         offset: const Offset(0, 10),
       ),
@@ -321,15 +250,11 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
         actions: [
           NotificationBadgeIcon(
             profesionalId: widget.agenteId,
-            onPressed: () => _go(
-              PantallaNotificacionesInmuebles(
-                agenteId: widget.agenteId,
-              ),
-            ),
+            onPressed: () => _go(const NotificacionesScreen()),
           ),
           IconButton(
             tooltip: 'Configuración',
-            onPressed: () => _go(const PantallaConfiguracionInmuebles()),
+            onPressed: () => _go(const ConfiguracionScreen()),
             icon: const Icon(Icons.settings_outlined),
           ),
           UniversalMenu(
@@ -350,9 +275,7 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
             ),
           ),
           Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.62),
-            ),
+            child: Container(color: Colors.black.withOpacity(.62)),
           ),
           SafeArea(
             child: SingleChildScrollView(
@@ -364,10 +287,8 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: accent.withValues(alpha: 0.18),
-                      ),
-                      color: const Color(0xFF12161C).withValues(alpha: 0.82),
+                      border: Border.all(color: gold.withOpacity(.18)),
+                      color: const Color(0xFF12161C).withOpacity(.82),
                       boxShadow: shadow,
                     ),
                     child: Column(
@@ -381,14 +302,14 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                                 height: 46,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
-                                  color: accent.withValues(alpha: 0.12),
+                                  color: gold.withOpacity(.12),
                                   border: Border.all(
-                                    color: accent.withValues(alpha: 0.20),
+                                    color: gold.withOpacity(.20),
                                   ),
                                 ),
                                 child: Icon(
                                   Icons.apartment_rounded,
-                                  color: accent,
+                                  color: gold,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -406,18 +327,41 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Propiedades • Clientes • Visitas • Seguimiento',
+                                      'Propiedades • Clientes interesados',
                                       style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.72,
-                                        ),
+                                        color: Colors.white.withOpacity(.72),
                                         fontSize: 12.5,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              _estadoActualBadge(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: gold.withOpacity(.22),
+                                  ),
+                                  color: Colors.white.withOpacity(.04),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.circle, size: 10, color: gold),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      estado,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -425,18 +369,14 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                         _sectionHeader(
                           'Estado profesional',
                           subtitle:
-                              'Define tu disponibilidad para recibir nuevos clientes y recorridos.',
+                              'Define tu disponibilidad para recibir clientes, recorridos y solicitudes.',
                         ),
                         _card(
-                          child: Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              _estadoChip('Disponible'),
-                              _estadoChip('Ocupado'),
-                              _estadoChip('En visita'),
-                              _estadoChip('Fuera de servicio'),
-                            ],
+                          child: EstadoProfesionalWidget(
+                            estadoActual: estado,
+                            color: gold,
+                            onChanged: (nuevoEstado) =>
+                                setState(() => estado = nuevoEstado),
                           ),
                         ),
 
@@ -446,37 +386,25 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                             _quickAction(
                               icon: Icons.home_work_outlined,
                               label: 'Propiedades',
-                              onTap: () => _go(
-                                PantallaPropiedades(
-                                  agenteId: widget.agenteId,
-                                ),
-                              ),
+                              onTap: _abrirPropiedades,
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
                               icon: Icons.person_search_outlined,
                               label: 'Clientes',
-                              onTap: () =>
-                                  _moduloPendiente('Clientes interesados'),
+                              onTap: _abrirClientesInteresados,
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
-                              icon: Icons.tour_outlined,
-                              label: 'Visitas',
-                              onTap: () => _moduloPendiente(
-                                'Agenda de visitas',
-                              ),
+                              icon: Icons.event_available_outlined,
+                              label: 'Agenda',
+                              onTap: () => _go(const AgendaScreen()),
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
-                              icon: Icons.location_on_outlined,
-                              label: 'Ubicación',
-                              onTap: () => _go(
-                                LocalizacionPanel(
-                                  idProfesional: widget.agenteId,
-                                  perfil: 'Agentes inmobiliarios',
-                                ),
-                              ),
+                              icon: Icons.support_agent_outlined,
+                              label: 'Soporte',
+                              onTap: () => _go(const SoporteScreen()),
                             ),
                           ],
                         ),
@@ -484,113 +412,82 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                         _sectionHeader(
                           'Base común',
                           subtitle:
-                              'Módulos generales disponibles para todos los portales.',
+                              'Módulos obligatorios para todos los socios.',
                         ),
                         _tile(
-                          icon: Icons.location_on_outlined,
-                          title: 'Ubicación',
-                          subtitle:
-                              'Comparte tu ubicación cuando estés disponible para atención.',
-                          onTap: () => _go(
-                            LocalizacionPanel(
-                              idProfesional: widget.agenteId,
-                              perfil: 'Agentes inmobiliarios',
-                            ),
-                          ),
+                          icon: Icons.verified_user_outlined,
+                          title: 'Perfil profesional verificado',
+                          subtitle: 'Datos, foto, documentos y verificación.',
+                          onTap: () => _go(const PerfilVerificadoScreen()),
                         ),
                         _gap(),
                         _tile(
-                          icon: Icons.calendar_today,
-                          title: 'Agenda',
-                          subtitle: 'Organiza citas, llamadas y recorridos.',
-                          onTap: () => _go(const PantallaAgendaInmuebles()),
+                          icon: Icons.location_on_outlined,
+                          title: 'Ubicación en tiempo real',
+                          subtitle: 'Comparte ubicación cuando estés activo.',
+                          onTap: () => _go(const UbicacionTiempoRealScreen()),
+                        ),
+                        _gap(),
+                        _tile(
+                          icon: Icons.event_available_outlined,
+                          title: 'Agenda / citas',
+                          subtitle: 'Disponibilidad, horarios y visitas.',
+                          onTap: () => _go(const AgendaScreen()),
                         ),
                         _gap(),
                         _tile(
                           icon: Icons.history,
-                          title: 'Historial',
-                          subtitle:
-                              'Consulta operaciones, servicios y actividades realizadas.',
-                          onTap: _abrirHistorial,
+                          title: 'Historial de servicios',
+                          subtitle: 'Registros, cambios y operaciones.',
+                          onTap: () => _go(const HistorialScreen()),
                         ),
                         _gap(),
                         _tile(
                           icon: Icons.attach_money,
-                          title: 'Ingresos',
-                          subtitle: 'Consulta comisiones, pagos y ganancias.',
-                          onTap: () => _go(
-                            PantallaIngresosInmuebles(
-                              profesionalId: widget.agenteId,
-                            ),
-                          ),
+                          title: 'Ingresos / comisiones',
+                          subtitle: 'Resumen, pagos y facturación.',
+                          onTap: () => _go(const IngresosScreen()),
                         ),
                         _gap(),
                         _tile(
                           icon: Icons.star_outline,
                           title: 'Calificaciones',
-                          subtitle:
-                              'Opiniones, reseñas y evaluación de clientes.',
-                          onTap: () => _go(
-                            PantallaCalificacionesInmuebles(
-                              agenteId: widget.agenteId,
-                            ),
-                          ),
+                          subtitle: 'Promedio y comentarios.',
+                          onTap: () => _go(const CalificacionesScreen()),
                         ),
                         _gap(),
                         _tile(
                           icon: Icons.notifications_none,
                           title: 'Notificaciones',
-                          subtitle: 'Avisos de clientes, citas y sistema.',
-                          onTap: () => _go(
-                            PantallaNotificacionesInmuebles(
-                              agenteId: widget.agenteId,
-                            ),
-                          ),
+                          subtitle: 'Nuevas asignaciones y alertas.',
+                          onTap: () => _go(const NotificacionesScreen()),
                         ),
                         _gap(),
                         _tile(
                           icon: Icons.settings_outlined,
                           title: 'Configuración',
                           subtitle: 'Cuenta, privacidad y preferencias.',
-                          onTap: () =>
-                              _go(const PantallaConfiguracionInmuebles()),
+                          onTap: () => _go(const ConfiguracionScreen()),
                         ),
                         _gap(),
                         _tile(
                           icon: Icons.support_agent_outlined,
-                          title: 'Soporte',
-                          subtitle: 'Ayuda técnica y asistencia.',
-                          onTap: () =>
-                              _go(const PantallaContactoSoporteInmuebles()),
+                          title: 'Soporte técnico',
+                          subtitle: 'Ayuda técnica y soporte.',
+                          onTap: () => _go(const SoporteScreen()),
                         ),
 
                         _sectionHeader(
                           'Módulos del agente inmobiliario',
                           subtitle:
-                              'Herramientas para propiedades, prospectos, visitas y documentación.',
+                              'Herramientas específicas para propiedades y clientes interesados.',
                         ),
                         _tile(
                           icon: Icons.home_work_outlined,
                           title: 'Propiedades asignadas',
                           subtitle:
                               'Consulta inmuebles asignados, estado, precio y operación.',
-                          onTap: () => _go(
-                            PantallaPropiedades(
-                              agenteId: widget.agenteId,
-                            ),
-                          ),
-                        ),
-                        _gap(),
-                        _tile(
-                          icon: Icons.add_home_work_outlined,
-                          title: 'Registro de inmueble',
-                          subtitle:
-                              'Captura casas, departamentos, terrenos o locales.',
-                          onTap: () => _go(
-                            PantallaPropiedades(
-                              agenteId: widget.agenteId,
-                            ),
-                          ),
+                          onTap: _abrirPropiedades,
                         ),
                         _gap(),
                         _tile(
@@ -598,42 +495,15 @@ class _PanelAgentesInmobiliariosState extends State<PanelAgentesInmobiliarios> {
                           title: 'Clientes interesados',
                           subtitle:
                               'Prospectos, mensajes, nivel de interés y contacto.',
-                          onTap: () =>
-                              _moduloPendiente('Clientes interesados'),
-                        ),
-                        _gap(),
-                        _tile(
-                          icon: Icons.tour_outlined,
-                          title: 'Agenda de visitas',
-                          subtitle:
-                              'Programa recorridos presenciales o virtuales.',
-                          onTap: () => _moduloPendiente('Agenda de visitas'),
-                        ),
-                        _gap(),
-                        _tile(
-                          icon: Icons.timeline_outlined,
-                          title: 'Seguimiento de prospectos',
-                          subtitle:
-                              'Etapas, próximo paso, comentarios y cierre.',
-                          onTap: () =>
-                              _moduloPendiente('Seguimiento de prospectos'),
-                        ),
-                        _gap(),
-                        _tile(
-                          icon: Icons.folder_copy_outlined,
-                          title: 'Documentación del inmueble',
-                          subtitle:
-                              'Predial, escritura, contrato, comprobantes y validación.',
-                          onTap: () =>
-                              _moduloPendiente('Documentación del inmueble'),
+                          onTap: _abrirClientesInteresados,
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Text(
-                          'Tip: Mantén actualizadas tus propiedades, prospectos y visitas para generar más oportunidades.',
+                          'Tip: Mantén tu estado, ubicación y propiedades actualizadas para generar más oportunidades.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.65),
+                            color: Colors.white.withOpacity(.65),
                           ),
                           textAlign: TextAlign.center,
                         ),

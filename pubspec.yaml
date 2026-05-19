@@ -11,6 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+  firebase_core: ^3.15.2
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^17.2.4
+  
+  share_plus: ^10.1.2
+  path_provider: ^2.1.5
+
   # 🎨 Iconos y diseño
   cupertino_icons: ^1.0.8
 
@@ -43,7 +50,7 @@ dependencies:
   flutter_map_dragmarker: ^6.0.0
 
   # 🔑 Permisos
-  permission_handler: ^11.0.1
+  permission_handler: ^11.3.1
 
   # 🌍 Internacionalización
   intl: ^0.19.0

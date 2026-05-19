@@ -1,5 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'services/notification_service.dart';
 
 // Screens principales
 import 'screens/login_screen.dart';
@@ -14,7 +18,6 @@ import 'screens/admin/panel_admin_home.dart';
 import 'screens/admin/lista_profesionales_screen.dart';
 import 'screens/admin/registrar_profesional_screen.dart';
 import 'screens/admin/editar_profesional_screen.dart';
-import 'screens/agente_crediticio/agente_panel.dart';
 
 // Modelos
 import 'screens/admin/profesional.dart';
@@ -24,6 +27,9 @@ import 'screens/psicologos/psicologos.dart';
 
 // Agentes inmobiliarios
 import 'screens/agente_imobiliario/agente_imobiliario.dart';
+
+// Agente crediticio
+import 'screens/agente_crediticio/agente_panel.dart';
 
 // Profesionales
 import 'screens/contador/contador_panel.dart';
@@ -36,6 +42,12 @@ import 'screens/asistencia_vial/asistencia_vial_panel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  await NotificationService.init();
 
   final prefs = await SharedPreferences.getInstance();
   final bool introVisto = prefs.getBool('introVisto') ?? false;
@@ -71,18 +83,35 @@ class MyApp extends StatelessWidget {
     required this.id,
   });
 
+  String _normalizarPerfil(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('ñ', 'n')
+        .replaceAll(' ', '_');
+  }
+
   String _rutaInicial() {
     if (!introVisto) {
       return '/home';
     }
 
     if (sesionActiva && token.isNotEmpty && perfil.isNotEmpty && id > 0) {
-      switch (perfil) {
+      final perfilNormalizado = _normalizarPerfil(perfil);
+
+      switch (perfilNormalizado) {
         case 'admin':
         case 'administrador':
           return '/panel-admin-home';
 
         case 'cliente':
+        case 'clientes':
           return '/panel-cliente';
 
         case 'abogado':
@@ -150,9 +179,38 @@ class MyApp extends StatelessWidget {
           args['profesional_id'] ??
           args['usuario_id'] ??
           args['ajustadorId'] ??
-          args['abogadoId'];
+          args['abogadoId'] ??
+          args['agenteId'] ??
+          args['agente_id'];
 
       final parsed = int.tryParse(rawId?.toString() ?? '');
+
+      if (parsed != null && parsed > 0) {
+        return parsed;
+      }
+    }
+
+    return id;
+  }
+
+  int _obtenerIdDesdeSettings(RouteSettings settings) {
+    final args = settings.arguments;
+
+    if (args is int && args > 0) {
+      return args;
+    }
+
+    if (args is Map) {
+      final rawId = args['id'] ??
+          args['profesional_id'] ??
+          args['usuario_id'] ??
+          args['ajustadorId'] ??
+          args['abogadoId'] ??
+          args['agenteId'] ??
+          args['agente_id'];
+
+      final parsed = int.tryParse(rawId?.toString() ?? '');
+
       if (parsed != null && parsed > 0) {
         return parsed;
       }
@@ -163,10 +221,20 @@ class MyApp extends StatelessWidget {
 
   Widget _errorSinId(String panel) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Error de sesión'),
+      ),
       body: Center(
-        child: Text(
-          '❌ No se pudo identificar el ID para $panel. Vuelve a iniciar sesión.',
-          textAlign: TextAlign.center,
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Text(
+            '❌ No se pudo identificar el ID para $panel. Vuelve a iniciar sesión.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ),
     );
@@ -200,9 +268,11 @@ class MyApp extends StatelessWidget {
 
         '/editar-abogado': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
+
           if (args is Profesional) {
             return EditarProfesionalScreen(profesional: args);
           }
+
           return const Scaffold(
             body: Center(
               child: Text('❌ Argumentos inválidos para editar abogado'),
@@ -216,9 +286,11 @@ class MyApp extends StatelessWidget {
 
         '/editar-profesional': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
+
           if (args is Profesional) {
             return EditarProfesionalScreen(profesional: args);
           }
+
           return const Scaffold(
             body: Center(
               child: Text('❌ Argumentos inválidos para editar profesional'),
@@ -228,75 +300,93 @@ class MyApp extends StatelessWidget {
 
         '/panel-psicologos': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelPsicologos(psicologoId: profesionalId);
           }
+
           return _errorSinId('panel psicólogos');
         },
 
         '/panel-investigador': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelInvestigadorScreen(investigadorId: profesionalId);
           }
+
           return _errorSinId('panel investigador');
         },
 
         '/panel-valuador': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelValuadorScreen(valuadorId: profesionalId);
           }
+
           return _errorSinId('panel valuador');
         },
 
         '/panel-inmuebles': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelAgentesInmobiliarios(agenteId: profesionalId);
           }
+
           return _errorSinId('panel inmobiliarios');
         },
 
         '/panel-contador': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return ContadorPanel(idContador: profesionalId);
           }
-          return const ContadorPanel();
+
+          return _errorSinId('panel contador');
         },
 
         '/panel-auditor': (context) => const AuditorPanel(),
 
         '/panel-agente': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
-            return AgentePanel(idAgente: profesionalId);
+            return PanelAgenteCrediticio(agenteId: profesionalId);
           }
-          return const AgentePanel();
+
+          return _errorSinId('panel agente crediticio');
         },
 
         '/panel-perito': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelPeritoScreen(peritoId: profesionalId);
           }
+
           return _errorSinId('panel perito');
         },
 
         '/panel-ajustador': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelAjustadorScreen(ajustadorId: profesionalId);
           }
+
           return _errorSinId('panel ajustador');
         },
 
         '/panel-asistencia-vial': (context) {
           final profesionalId = _obtenerIdDesdeArgs(context);
+
           if (profesionalId > 0) {
             return PanelAsistenciaVial(asistenciaId: profesionalId);
           }
+
           return _errorSinId('panel asistencia vial');
         },
       },
@@ -309,26 +399,16 @@ class MyApp extends StatelessWidget {
             );
 
           case '/panel-abogado':
-            final args = settings.arguments;
-            int? abogadoId;
-
-            if (args is int && args > 0) {
-              abogadoId = args;
-            } else if (args is Map) {
-              abogadoId = int.tryParse(
-                (args['id'] ??
-                        args['profesional_id'] ??
-                        args['usuario_id'] ??
-                        args['abogadoId'])
-                    ?.toString() ??
-                    '',
-              );
-            }
+            final profesionalId = _obtenerIdDesdeSettings(settings);
 
             return MaterialPageRoute(
-              builder: (_) => PanelAbogadoScreen(
-                abogadoId: abogadoId != null && abogadoId > 0 ? abogadoId : id,
-              ),
+              builder: (_) {
+                if (profesionalId > 0) {
+                  return PanelAbogadoScreen(abogadoId: profesionalId);
+                }
+
+                return _errorSinId('panel abogado');
+              },
               settings: settings,
             );
 

@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
 
-// COMMON SCREENS
+// COMMON
 import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
 import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';
 import 'package:advocatus/screens/common/configuracion/configuracion_screen.dart';
 import 'package:advocatus/screens/common/historial/historial_screen.dart';
 import 'package:advocatus/screens/common/ingresos/ingresos_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
-import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
 import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
-import 'package:advocatus/widgets/notification_badge_icon.dart';
+import 'package:advocatus/screens/common/soporte/soporte_screen.dart';
+import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
+
+// WIDGET COMÚN
+import 'package:advocatus/screens/common/estado_profesional/estado_profesional_widget.dart';
+
+// MÓDULOS PERITO EN CRIMINALÍSTICA
+import 'perito_modulos/agenda_inspecciones_screen.dart';
+import 'perito_modulos/cadena_custodia_screen.dart';
+import 'perito_modulos/casos_asignados_perito_screen.dart';
+import 'perito_modulos/dictamenes_periciales_screen.dart';
+import 'perito_modulos/evidencias_criminalisticas_screen.dart';
+import 'perito_modulos/historial_pericial_screen.dart';
+import 'perito_modulos/reporte_fotografico_screen.dart';
 
 class PanelPeritoScreen extends StatefulWidget {
   final int peritoId;
@@ -131,7 +143,10 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.white.withOpacity(.60)),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withOpacity(.60),
+            ),
           ],
         ),
       ),
@@ -198,11 +213,10 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
         foregroundColor: Colors.white,
         title: const Text('Panel • Perito en Criminalística'),
         actions: [
-          NotificationBadgeIcon(
-            profesionalId: widget.peritoId,
-            onPressed: () => _go(
-              NotificacionesScreen(profesionalId: widget.peritoId),
-            ),
+          IconButton(
+            tooltip: 'Notificaciones',
+            onPressed: () => _go(const NotificacionesScreen()),
+            icon: const Icon(Icons.notifications_none),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -248,29 +262,60 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   color: gold.withOpacity(.12),
-                                  border: Border.all(color: gold.withOpacity(.20)),
+                                  border: Border.all(
+                                    color: gold.withOpacity(.20),
+                                  ),
                                 ),
-                                child: Icon(Icons.science_outlined, color: gold),
+                                child: Icon(
+                                  Icons.science_outlined,
+                                  color: gold,
+                                ),
                               ),
                               const SizedBox(width: 12),
-                              const Expanded(
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'Portal del perito',
+                                    const Text(
+                                      'Portal profesional',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w900,
                                         fontSize: 16,
                                       ),
                                     ),
-                                    SizedBox(height: 4),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      'Análisis técnico y dictámenes periciales',
+                                      'Criminalística • Evidencias • Dictámenes',
                                       style: TextStyle(
-                                        color: Colors.white70,
+                                        color: Colors.white.withOpacity(.72),
                                         fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: gold.withOpacity(.22),
+                                  ),
+                                  color: Colors.white.withOpacity(.04),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.circle, size: 10, color: gold),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      estado,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
                                       ),
                                     ),
                                   ],
@@ -280,96 +325,49 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           ),
                         ),
 
-                        const SizedBox(height: 20),
-
                         _sectionHeader(
                           'Estado profesional',
                           subtitle:
-                              'Define tu disponibilidad para recibir solicitudes.',
+                              'Define tu disponibilidad para recibir asignaciones.',
                         ),
                         _card(
-                          child: Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            children: [
-                              ChoiceChip(
-                                label: const Text('Disponible'),
-                                selected: estado == 'Disponible',
-                                onSelected: (_) =>
-                                    setState(() => estado = 'Disponible'),
-                                selectedColor: gold,
-                                backgroundColor: Colors.white.withOpacity(.06),
-                              ),
-                              ChoiceChip(
-                                label: const Text('Ocupado'),
-                                selected: estado == 'Ocupado',
-                                onSelected: (_) =>
-                                    setState(() => estado = 'Ocupado'),
-                                selectedColor: gold,
-                                backgroundColor: Colors.white.withOpacity(.06),
-                              ),
-                              ChoiceChip(
-                                label: const Text('Fuera de servicio'),
-                                selected: estado == 'Fuera de servicio',
-                                onSelected: (_) =>
-                                    setState(() => estado = 'Fuera de servicio'),
-                                selectedColor: gold,
-                                backgroundColor: Colors.white.withOpacity(.06),
-                              ),
-                            ],
+                          child: EstadoProfesionalWidget(
+                            estadoActual: estado,
+                            color: gold,
+                            onChanged: (nuevoEstado) =>
+                                setState(() => estado = nuevoEstado),
                           ),
                         ),
-
-                        const SizedBox(height: 20),
-
-                        _sectionHeader('Ubicación del despacho'),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/localizacion-perito',
-                                    arguments: {'id_perito': widget.peritoId},
-                                  );
-                                },
-                                icon: const Icon(Icons.location_on),
-                                label: const Text('Registrar ubicación'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: gold,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
 
                         _sectionHeader('Acciones rápidas'),
                         Row(
                           children: [
                             _quickAction(
+                              icon: Icons.assignment_outlined,
+                              label: 'Casos',
+                              onTap: () => _go(
+                                CasosAsignadosPeritoScreen(
+                                  peritoId: widget.peritoId,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            _quickAction(
+                              icon: Icons.camera_alt_outlined,
+                              label: 'Evidencias',
+                              onTap: () => _go(
+                                EvidenciasCriminalisticasScreen(
+                                  peritoId: widget.peritoId,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            _quickAction(
                               icon: Icons.event_available_outlined,
                               label: 'Agenda',
-                              onTap: () => _go(const AgendaScreen()),
-                            ),
-                            const SizedBox(width: 10),
-                            _quickAction(
-                              icon: Icons.attach_money,
-                              label: 'Ingresos',
-                              onTap: () => _go(const IngresosScreen()),
-                            ),
-                            const SizedBox(width: 10),
-                            _quickAction(
-                              icon: Icons.notifications_none,
-                              label: 'Alertas',
                               onTap: () => _go(
-                                NotificacionesScreen(
-                                  profesionalId: widget.peritoId,
+                                AgendaInspeccionesScreen(
+                                  peritoId: widget.peritoId,
                                 ),
                               ),
                             ),
@@ -382,56 +380,58 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                           ],
                         ),
 
-                        const SizedBox(height: 20),
-
                         _sectionHeader(
-                          'Gestión pericial',
-                          subtitle: 'Herramientas y módulos principales.',
+                          'Base común',
+                          subtitle:
+                              'Módulos obligatorios para todos los socios.',
                         ),
                         _tile(
+                          icon: Icons.verified_user_outlined,
+                          title: 'Perfil profesional verificado',
+                          subtitle: 'Datos, foto, documentos y verificación.',
+                          onTap: () => _go(const PerfilVerificadoScreen()),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.location_on_outlined,
+                          title: 'Ubicación en tiempo real',
+                          subtitle: 'Comparte ubicación cuando estés activo.',
+                          onTap: () => _go(const UbicacionTiempoRealScreen()),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
                           icon: Icons.event_available_outlined,
-                          title: 'Agenda',
-                          subtitle: 'Citas, inspecciones y peritajes.',
+                          title: 'Agenda / citas',
+                          subtitle: 'Disponibilidad, horarios y visitas.',
                           onTap: () => _go(const AgendaScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
                           icon: Icons.history,
-                          title: 'Historial',
-                          subtitle: 'Servicios realizados y dictámenes.',
+                          title: 'Historial de servicios',
+                          subtitle: 'Registros y cierres de peritajes.',
                           onTap: () => _go(const HistorialScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
                           icon: Icons.attach_money,
-                          title: 'Ingresos',
-                          subtitle: 'Pagos, honorarios y facturación.',
+                          title: 'Ingresos / comisiones',
+                          subtitle: 'Resumen, pagos y facturación.',
                           onTap: () => _go(const IngresosScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
                           icon: Icons.star_outline,
                           title: 'Calificaciones',
-                          subtitle: 'Evaluaciones y comentarios.',
+                          subtitle: 'Promedio y comentarios.',
                           onTap: () => _go(const CalificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
                           icon: Icons.notifications_none,
                           title: 'Notificaciones',
-                          subtitle: 'Avisos y alertas del sistema.',
-                          onTap: () => _go(
-                            NotificacionesScreen(
-                              profesionalId: widget.peritoId,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _tile(
-                          icon: Icons.verified_user_outlined,
-                          title: 'Perfil profesional',
-                          subtitle: 'Datos, certificaciones y verificación.',
-                          onTap: () => _go(const PerfilVerificadoScreen()),
+                          subtitle: 'Nuevas asignaciones y alertas.',
+                          onTap: () => _go(const NotificacionesScreen()),
                         ),
                         const SizedBox(height: 10),
                         _tile(
@@ -443,9 +443,117 @@ class _PanelPeritoScreenState extends State<PanelPeritoScreen> {
                         const SizedBox(height: 10),
                         _tile(
                           icon: Icons.support_agent_outlined,
-                          title: 'Soporte',
-                          subtitle: 'Ayuda técnica y asistencia.',
+                          title: 'Soporte técnico',
+                          subtitle: 'Ayuda técnica y soporte.',
                           onTap: () => _go(const SoporteScreen()),
+                        ),
+
+                        _sectionHeader(
+                          'Módulos del perito en criminalística',
+                          subtitle:
+                              'Herramientas específicas para tu profesión.',
+                        ),
+                        _tile(
+                          icon: Icons.assignment_outlined,
+                          title: 'Casos asignados',
+                          subtitle: 'Ver, aceptar y gestionar casos periciales.',
+                          onTap: () => _go(
+                            CasosAsignadosPeritoScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.search_outlined,
+                          title: 'Detalle del caso',
+                          subtitle:
+                              'Abre primero un caso asignado para consultar su detalle.',
+                          onTap: () => _go(
+                            CasosAsignadosPeritoScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.camera_alt_outlined,
+                          title: 'Evidencias criminalísticas',
+                          subtitle: 'Subir y organizar indicios, fotos y archivos.',
+                          onTap: () => _go(
+                            EvidenciasCriminalisticasScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.account_tree_outlined,
+                          title: 'Cadena de custodia',
+                          subtitle:
+                              'Control de entrega, recepción y movimientos.',
+                          onTap: () => _go(
+                            CadenaCustodiaScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.description_outlined,
+                          title: 'Dictámenes periciales',
+                          subtitle: 'Crear, subir y consultar dictámenes.',
+                          onTap: () => _go(
+                            DictamenesPericialesScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.photo_library_outlined,
+                          title: 'Reporte fotográfico',
+                          subtitle:
+                              'Organizar fotografías del lugar e indicios.',
+                          onTap: () => _go(
+                            ReporteFotograficoScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.event_note_outlined,
+                          title: 'Agenda de inspecciones',
+                          subtitle:
+                              'Programar visitas, inspecciones y peritajes.',
+                          onTap: () => _go(
+                            AgendaInspeccionesScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _tile(
+                          icon: Icons.manage_history_outlined,
+                          title: 'Historial pericial',
+                          subtitle:
+                              'Actividad, cambios y trazabilidad del perito.',
+                          onTap: () => _go(
+                            HistorialPericialScreen(
+                              peritoId: widget.peritoId,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+                        Text(
+                          'Tip: Mantén tu estado, ubicación, evidencias y dictámenes actualizados para recibir más asignaciones.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(.65),
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),

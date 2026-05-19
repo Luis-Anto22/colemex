@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "424142992030",
+    "project_id": "advocatus-colemex",
+    "storage_bucket": "advocatus-colemex.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:424142992030:android:cdb2bf5d53ff61a0c8818f",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMbuDbKbY88jKAcydnj9eGyO6rt4BMlhA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

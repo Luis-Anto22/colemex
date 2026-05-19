@@ -182,13 +182,23 @@ class ValuadorApi {
   // ===============================
   // FOTOS / EVIDENCIA FOTOGRÁFICA
   // ===============================
-  Future<List<dynamic>> getFotos(int casoId) async {
+  Future<List<dynamic>> getFotos(
+    int casoId, {
+    int? valuadorId,
+  }) async {
     try {
+      final params = <String, dynamic>{
+        'caso_id': casoId,
+      };
+
+      if (valuadorId != null) {
+        params['valuador_id'] = valuadorId;
+        params['profesional_id'] = valuadorId;
+      }
+
       final res = await client.get(
         '/valuador/fotos',
-        params: {
-          'caso_id': casoId,
-        },
+        params: params,
       );
 
       if (res['success'] != true) {
