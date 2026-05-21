@@ -163,19 +163,21 @@ class ValuadorApi {
     }
   }
 
-  Future<void> eliminarReporte({
-    required int reporteId,
+    Future<void> eliminarSolicitud({
+    required int solicitudId,
   }) async {
     try {
       final res = await client.delete(
-        '/valuador/reportes/$reporteId',
+        '/valuador/solicitudes/$solicitudId',
       );
 
       if (res['success'] != true) {
-        throw Exception(res['message'] ?? 'Error al eliminar reporte');
+        throw Exception(
+          res['message'] ?? 'Error al eliminar solicitud',
+        );
       }
     } catch (e) {
-      throw Exception('Error al eliminar reporte: $e');
+      throw Exception('Error al eliminar solicitud: $e');
     }
   }
 

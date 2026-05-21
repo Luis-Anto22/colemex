@@ -3,11 +3,13 @@ import 'package:advocatus/services/api_services/api_client.dart';
 import 'package:advocatus/services/api_services/notificaciones_api.dart';
 
 class NotificacionesWidget extends StatefulWidget {
-  final int profesionalId;
+  final int? profesionalId;
+  final int? clienteId;
 
   const NotificacionesWidget({
     super.key,
-    required this.profesionalId,
+    this.profesionalId,
+    this.clienteId,
   });
 
   @override
@@ -34,6 +36,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
     try {
       final items = await _api.listar(
         profesionalId: widget.profesionalId,
+        clienteId: widget.clienteId,
         limit: 80,
       );
 
@@ -144,6 +147,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
       await _api.marcarLeida(
         notificacionId: id,
         profesionalId: widget.profesionalId,
+        clienteId: widget.clienteId,
       );
 
       if (!mounted) return;
@@ -166,7 +170,10 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
     setState(() => _marcandoTodas = true);
 
     try {
-      await _api.marcarTodasLeidas(profesionalId: widget.profesionalId);
+      await _api.marcarTodasLeidas(
+        profesionalId: widget.profesionalId,
+        clienteId: widget.clienteId,
+      );
 
       if (!mounted) return;
 
@@ -191,6 +198,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
 
     if (!mounted) return;
 
+    final titulo = _texto(n['titulo'], 'Detalle de notificación');
     final mensaje = _texto(n['mensaje'], 'Notificación');
     final fecha = _fecha(n['fecha']);
     final leido = _isLeida(n);
@@ -216,10 +224,10 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
                       child: Icon(icono, color: color),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Detalle de notificación',
-                        style: TextStyle(
+                        titulo,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                         ),
@@ -304,9 +312,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    noLeidas > 0
-                        ? '$noLeidas sin leer'
-                        : 'Todo al día',
+                    noLeidas > 0 ? '$noLeidas sin leer' : 'Todo al día',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 13,
@@ -329,6 +335,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
 
   Widget _notificacionCard(Map<String, dynamic> n) {
     final leido = _isLeida(n);
+    final titulo = _texto(n['titulo']);
     final mensaje = _texto(n['mensaje'], 'Notificación');
     final fecha = _fecha(n['fecha']);
     final color = _colorNotificacion(n);
@@ -361,11 +368,22 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (titulo.isNotEmpty) ...[
+                      Text(
+                        titulo,
+                        style: TextStyle(
+                          fontWeight:
+                              leido ? FontWeight.w700 : FontWeight.w900,
+                          fontSize: 14.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
                       mensaje,
                       style: TextStyle(
-                        fontWeight: leido ? FontWeight.w600 : FontWeight.w900,
-                        fontSize: 14.5,
+                        fontWeight: leido ? FontWeight.w500 : FontWeight.w700,
+                        fontSize: 13.5,
                       ),
                     ),
                     const SizedBox(height: 6),

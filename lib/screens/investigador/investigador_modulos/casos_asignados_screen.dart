@@ -73,9 +73,12 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
                 final id = int.tryParse(m['id'].toString()) ?? 0;
                 final nombre = (m['nombre'] ?? '').toString();
                 final correo = (m['correo'] ?? '').toString();
+
                 return DropdownMenuItem(
                   value: id,
-                  child: Text('$nombre (${correo.isEmpty ? 'sin correo' : correo})'),
+                  child: Text(
+                    '$nombre (${correo.isEmpty ? 'sin correo' : correo})',
+                  ),
                 );
               }).toList(),
               onChanged: (v) => clienteIdSeleccionado = v,
@@ -105,6 +108,9 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
       ),
     );
 
+    tituloCtrl.dispose();
+    descCtrl.dispose();
+
     if (ok != true) return;
 
     try {
@@ -114,33 +120,181 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
         titulo: tituloCtrl.text.trim(),
         descripcion: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
       );
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Caso creado')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso creado')),
+      );
+
       await _reload();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> _editarCaso(Map<String, dynamic> caso) async {
+    final id = int.tryParse(caso['id'].toString()) ?? 0;
+    if (id <= 0) return;
+
+    final tituloCtrl = TextEditingController(
+      text: (caso['titulo'] ?? '').toString(),
+    );
+    final descCtrl = TextEditingController(
+      text: (caso['descripcion'] ?? '').toString(),
+    );
+
+    final clienteId = int.tryParse(caso['cliente_id']?.toString() ?? '') ?? 0;
+    final estado = (caso['estado'] ?? 'pendiente').toString();
+
+    final guardar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Editar caso'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: tituloCtrl,
+              decoration: const InputDecoration(labelText: 'Título'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descCtrl,
+              decoration: const InputDecoration(labelText: 'Descripción'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    final nuevoTitulo = tituloCtrl.text.trim();
+    final nuevaDescripcion = descCtrl.text.trim();
+
+    tituloCtrl.dispose();
+    descCtrl.dispose();
+
+    if (guardar != true) return;
+
+    try {
+      await api.editarCaso(
+        id: id,
+        clienteId: clienteId > 0 ? clienteId : null,
+        titulo: nuevoTitulo,
+        descripcion: nuevaDescripcion,
+        estado: estado,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso actualizado correctamente')),
+      );
+
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> _eliminarCaso(Map<String, dynamic> caso) async {
+    final id = int.tryParse(caso['id'].toString()) ?? 0;
+    if (id <= 0) return;
+
+    final titulo = (caso['titulo'] ?? 'este caso').toString();
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminar caso'),
+        content: Text('¿Seguro que quieres eliminar "$titulo"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await api.eliminarCaso(id: id);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso eliminado correctamente')),
+      );
+
+      await _reload();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
   Future<void> _cambiarEstado(int id, String nuevo) async {
     try {
       await api.actualizarEstadoCaso(id: id, estado: nuevo);
+
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Estado actualizado correctamente')));
+        SnackBar(
+          content: Text(
+            nuevo == 'en proceso'
+                ? 'Caso aceptado correctamente'
+                : nuevo == 'cancelado'
+                    ? 'Caso rechazado correctamente'
+                    : 'Estado actualizado correctamente',
+          ),
+        ),
+      );
+
       await _reload();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
   Color _colorEstado(String estado) {
-    switch (estado) {
+    switch (estado.toLowerCase().trim()) {
       case 'pendiente':
         return Colors.orange;
       case 'en proceso':
@@ -169,7 +323,10 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
             children: [
               Text(
                 (caso['titulo'] ?? 'Caso').toString(),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 8),
               Text((caso['descripcion'] ?? '').toString()),
@@ -188,7 +345,7 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
                   );
                 },
                 icon: const Icon(Icons.notes_outlined),
-                label: const Text('Bitacora del caso'),
+                label: const Text('Bitácora del caso'),
               ),
               const SizedBox(height: 8),
               ElevatedButton.icon(
@@ -232,13 +389,118 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
     );
   }
 
+  Widget _botonesDecision({
+    required int id,
+    required String estado,
+  }) {
+    if (estado.toLowerCase().trim() != 'pendiente') {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _cambiarEstado(id, 'en proceso'),
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Aceptar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _cambiarEstado(id, 'cancelado'),
+              icon: const Icon(Icons.close_rounded),
+              label: const Text('Rechazar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _casoCard(Map<String, dynamic> c) {
+    final id = int.tryParse(c['id'].toString()) ?? 0;
+    final estado = (c['estado'] ?? '').toString();
+    final clienteId = int.tryParse(c['cliente_id']?.toString() ?? '') ?? 0;
+    final cliente = clienteId > 0 ? _findCliente(clienteId) : null;
+
+    final clienteLabel = cliente == null
+        ? (clienteId > 0 ? 'Cliente #$clienteId' : 'Cliente')
+        : (cliente['nombre'] ?? 'Cliente').toString();
+
+    return Card(
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.all(12),
+            title: Text(
+              (c['titulo'] ?? 'Sin título').toString(),
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                '${(c['descripcion'] ?? '').toString()}\n$clienteLabel',
+              ),
+            ),
+            onTap: () => _abrirCaso(c),
+            trailing: PopupMenuButton<String>(
+              onSelected: (v) {
+                if (v == 'editar') {
+                  _editarCaso(c);
+                } else if (v == 'eliminar') {
+                  _eliminarCaso(c);
+                } else {
+                  _cambiarEstado(id, v);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'editar', child: Text('Editar')),
+                PopupMenuItem(value: 'eliminar', child: Text('Eliminar')),
+                PopupMenuDivider(),
+                PopupMenuItem(value: 'pendiente', child: Text('Pendiente')),
+                PopupMenuItem(value: 'en proceso', child: Text('En proceso')),
+                PopupMenuItem(value: 'finalizado', child: Text('Finalizado')),
+                PopupMenuItem(value: 'cancelado', child: Text('Cancelado')),
+              ],
+              child: Chip(
+                label: Text(estado.isEmpty ? '—' : estado),
+                backgroundColor: _colorEstado(estado).withOpacity(.15),
+              ),
+            ),
+          ),
+          _botonesDecision(
+            id: id,
+            estado: estado,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Casos asignados'),
         actions: [
-          IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _reload,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -251,11 +513,13 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snap.hasError) {
             return Center(child: Text('Error: ${snap.error}'));
           }
 
           final casos = snap.data ?? [];
+
           if (casos.isEmpty) {
             return const Center(child: Text('No hay casos todavía.'));
           }
@@ -268,40 +532,7 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final c = casos[i] as Map<String, dynamic>;
-                final id = int.parse(c['id'].toString());
-                final estado = (c['estado'] ?? '').toString();
-                final clienteId = int.tryParse(c['cliente_id']?.toString() ?? '') ?? 0;
-                final cliente = clienteId > 0 ? _findCliente(clienteId) : null;
-                final clienteLabel = cliente == null
-                    ? (clienteId > 0 ? 'Cliente #$clienteId' : 'Cliente')
-                    : (cliente['nombre'] ?? 'Cliente').toString();
-
-                return Card(
-                  child: ListTile(
-                    title: Text((c['titulo'] ?? 'Sin título').toString()),
-                    subtitle: Text(
-                      '${(c['descripcion'] ?? '').toString()}\n$clienteLabel',
-                    ),
-                    onTap: () => _abrirCaso(c),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (v) => _cambiarEstado(id, v),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(
-                            value: 'pendiente', child: Text('Pendiente')),
-                        PopupMenuItem(
-                            value: 'en proceso', child: Text('En proceso')),
-                        PopupMenuItem(
-                            value: 'finalizado', child: Text('Finalizado')),
-                        PopupMenuItem(
-                            value: 'cancelado', child: Text('Cancelado')),
-                      ],
-                      child: Chip(
-                        label: Text(estado.isEmpty ? '—' : estado),
-                        backgroundColor: _colorEstado(estado).withOpacity(.15),
-                      ),
-                    ),
-                  ),
-                );
+                return _casoCard(c);
               },
             ),
           );

@@ -110,8 +110,13 @@ class ProfesionalesMapaFullscreen extends StatelessWidget {
                       ),
                     ),
                     ...profesionales.map((p) {
-                      final lat = double.tryParse(p['latitude']?.toString() ?? '');
-                      final lng =
+                      final lat = double.tryParse(
+                        (p['lat'] ?? p['latitude'] ?? p['latitud'] ?? '').toString(),
+                      );
+
+                      final lng = double.tryParse(
+                        (p['lng'] ?? p['longitude'] ?? p['longitud'] ?? '').toString(),
+                      );
                           double.tryParse(p['longitude']?.toString() ?? '');
                       if (lat == null || lng == null) {
                         return null;
