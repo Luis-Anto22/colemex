@@ -60,6 +60,39 @@ class InvestigadorApi {
       throw Exception(res['message'] ?? 'Error al actualizar estado');
     }
   }
+  Future<void> editarCaso({
+  required int id,
+  int? clienteId,
+  required String titulo,
+  String? descripcion,
+  String? estado,
+}) async {
+  final res = await client.post(
+    '/investigador/casos/$id',
+    {
+      if (clienteId != null) 'cliente_id': '$clienteId',
+      'titulo': titulo,
+      'descripcion': descripcion ?? '',
+      if (estado != null) 'estado': estado,
+    },
+  );
+
+  if (res['success'] != true) {
+    throw Exception(res['message'] ?? 'Error al editar caso');
+  }
+}
+
+Future<void> eliminarCaso({
+  required int id,
+}) async {
+  final res = await client.delete(
+    '/investigador/casos/$id',
+  );
+
+  if (res['success'] != true) {
+    throw Exception(res['message'] ?? 'Error al eliminar caso');
+  }
+}
 
   // BITÁCORA
   Future<List<dynamic>> getBitacora(int casoId) async {

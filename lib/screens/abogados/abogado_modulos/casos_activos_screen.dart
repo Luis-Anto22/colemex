@@ -68,9 +68,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
   Map<String, dynamic> _decodeBody(String body) {
     try {
       final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) {
-        return decoded;
-      }
+      if (decoded is Map<String, dynamic>) return decoded;
       return {};
     } catch (_) {
       return {};
@@ -78,9 +76,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
   }
 
   Future<void> _cargarClientes() async {
-    setState(() {
-      _cargandoClientes = true;
-    });
+    setState(() => _cargandoClientes = true);
 
     try {
       final response = await http.get(
@@ -91,9 +87,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
       final body = _decodeBody(response.body);
 
       if (response.statusCode != 200 || body['success'] != true) {
-        throw Exception(
-          body['mensaje']?.toString() ?? 'Error al cargar clientes',
-        );
+        throw Exception(body['mensaje']?.toString() ?? 'Error al cargar clientes');
       }
 
       final clientesJson = (body['clientes'] as List?) ?? [];
@@ -109,7 +103,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
           ..addAll(clientes);
         _cargandoClientes = false;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _clientes.clear();
         _cargandoClientes = false;
@@ -121,9 +115,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
   Future<void> _cargarCasos() async {
     if (_profesionalId == null) return;
 
-    setState(() {
-      _cargandoCasos = true;
-    });
+    setState(() => _cargandoCasos = true);
 
     try {
       final response = await http.get(
@@ -134,9 +126,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
       final body = _decodeBody(response.body);
 
       if (response.statusCode != 200 || body['success'] != true) {
-        throw Exception(
-          body['mensaje']?.toString() ?? 'Error al cargar casos',
-        );
+        throw Exception(body['mensaje']?.toString() ?? 'Error al cargar casos');
       }
 
       final casosJson = (body['casos'] as List?) ?? [];
@@ -152,10 +142,8 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
           ..addAll(casos);
         _cargandoCasos = false;
       });
-    } catch (e) {
-      setState(() {
-        _cargandoCasos = false;
-      });
+    } catch (_) {
+      setState(() => _cargandoCasos = false);
       _mostrarSnack('Error al cargar casos');
     }
   }
@@ -167,9 +155,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
     }
 
     if (_clientes.isEmpty) {
-      _mostrarSnack(
-        'No hay clientes disponibles. Revisa la API /api/clientes o crea clientes primero.',
-      );
+      _mostrarSnack('No hay clientes disponibles. Revisa la API /api/clientes.');
       return;
     }
 
@@ -212,14 +198,12 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
       final body = _decodeBody(response.body);
 
       if (response.statusCode != 201 || body['success'] != true) {
-        throw Exception(
-          body['mensaje']?.toString() ?? 'No se pudo crear el caso',
-        );
+        throw Exception(body['mensaje']?.toString() ?? 'No se pudo crear el caso');
       }
 
       _mostrarSnack('Caso creado correctamente');
       await _cargarCasos();
-    } catch (e) {
+    } catch (_) {
       _mostrarSnack('Error al crear caso');
     }
   }
@@ -241,16 +225,34 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
       final body = _decodeBody(response.body);
 
       if (response.statusCode != 200 || body['success'] != true) {
-        throw Exception(
-          body['mensaje']?.toString() ?? 'No se pudo actualizar el caso',
-        );
+        throw Exception(body['mensaje']?.toString() ?? 'No se pudo actualizar el caso');
       }
 
-      _mostrarSnack('Caso actualizado correctamente');
+      _mostrarSnack(
+        form.estado == 'en proceso'
+            ? 'Caso aceptado correctamente'
+            : form.estado == 'cancelado'
+                ? 'Caso rechazado correctamente'
+                : 'Caso actualizado correctamente',
+      );
+
       await _cargarCasos();
-    } catch (e) {
+    } catch (_) {
       _mostrarSnack('Error al actualizar caso');
     }
+  }
+
+  Future<void> _cambiarEstadoRapido(CasoItem item, String nuevoEstado) async {
+    await _actualizarCaso(
+      item.id,
+      CasoFormResult(
+        clienteId: item.clienteId,
+        servicio: item.servicio,
+        titulo: item.titulo,
+        descripcion: item.descripcion,
+        estado: nuevoEstado,
+      ),
+    );
   }
 
   Future<void> _eliminarCaso(CasoItem item) async {
@@ -283,14 +285,12 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
       final body = _decodeBody(response.body);
 
       if (response.statusCode != 200 || body['success'] != true) {
-        throw Exception(
-          body['mensaje']?.toString() ?? 'No se pudo eliminar el caso',
-        );
+        throw Exception(body['mensaje']?.toString() ?? 'No se pudo eliminar el caso');
       }
 
       _mostrarSnack('Caso eliminado correctamente');
       await _cargarCasos();
-    } catch (e) {
+    } catch (_) {
       _mostrarSnack('Error al eliminar caso');
     }
   }
@@ -303,7 +303,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
   }
 
   Color _colorEstado(String estado) {
-    switch (estado.toLowerCase()) {
+    switch (estado.toLowerCase().trim()) {
       case 'pendiente':
         return Colors.orange;
       case 'en proceso':
@@ -315,6 +315,78 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
       default:
         return Colors.blueGrey;
     }
+  }
+
+  String _estadoLabel(String estado) {
+    switch (estado.toLowerCase().trim()) {
+      case 'pendiente':
+        return 'Pendiente';
+      case 'en proceso':
+        return 'En proceso';
+      case 'finalizado':
+        return 'Finalizado';
+      case 'cancelado':
+        return 'Cancelado';
+      default:
+        return estado.isEmpty ? 'Sin estado' : estado;
+    }
+  }
+
+  Widget _chipEstado(String estado) {
+    final color = _colorEstado(estado);
+
+    return Chip(
+      label: Text(
+        _estadoLabel(estado),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w800,
+          fontSize: 12,
+        ),
+      ),
+      backgroundColor: color.withOpacity(.13),
+      side: BorderSide(color: color.withOpacity(.25)),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+
+  Widget _botonesAceptarRechazar(CasoItem item) {
+    if (item.estado.toLowerCase().trim() != 'pendiente') {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _cambiarEstadoRapido(item, 'en proceso'),
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Aceptar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => _cambiarEstadoRapido(item, 'cancelado'),
+              icon: const Icon(Icons.close_rounded),
+              label: const Text('Rechazar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _estadoVacio() {
@@ -369,13 +441,74 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Text(
-          'No se pudieron cargar clientes. Revisa la API /api/clientes o crea clientes primero.',
+          'No se pudieron cargar clientes. Revisa la API /api/clientes.',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       );
     }
 
     return const SizedBox.shrink();
+  }
+
+  Widget _casoCard(CasoItem item) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: _colorEstado(item.estado).withOpacity(.15),
+              child: Icon(
+                Icons.folder_open_outlined,
+                color: _colorEstado(item.estado),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.titulo,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Cliente: ${item.clienteNombre}'),
+                  Text('Servicio: ${item.servicio}'),
+                  const SizedBox(height: 8),
+                  _chipEstado(item.estado),
+                  if (item.descripcion.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(item.descripcion),
+                  ],
+                  _botonesAceptarRechazar(item),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'editar') {
+                  _abrirFormulario(item: item);
+                } else if (value == 'eliminar') {
+                  _eliminarCaso(item);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'editar',
+                  child: Text('Editar'),
+                ),
+                PopupMenuItem(
+                  value: 'eliminar',
+                  child: Text('Eliminar'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _listaCasos() {
@@ -400,57 +533,7 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
           final item = _casos[index];
-
-          return Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
-              leading: CircleAvatar(
-                backgroundColor: _colorEstado(item.estado).withOpacity(.15),
-                child: Icon(
-                  Icons.folder_open_outlined,
-                  color: _colorEstado(item.estado),
-                ),
-              ),
-              title: Text(
-                item.titulo,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Cliente: ${item.clienteNombre}'),
-                    Text('Servicio: ${item.servicio}'),
-                    Text('Estado: ${item.estado}'),
-                    if (item.descripcion.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(item.descripcion),
-                    ],
-                  ],
-                ),
-              ),
-              trailing: PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'editar') {
-                    _abrirFormulario(item: item);
-                  } else if (value == 'eliminar') {
-                    _eliminarCaso(item);
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(
-                    value: 'editar',
-                    child: Text('Editar'),
-                  ),
-                  PopupMenuItem(
-                    value: 'eliminar',
-                    child: Text('Eliminar'),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _casoCard(item);
         },
       ),
     );

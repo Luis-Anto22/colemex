@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'api_service_contador.dart'; // Importa tu servicio de contador
+import 'api_service_contador.dart';
 
 class ContadorDetalle extends StatefulWidget {
-  final int idCaso; // ID del caso para actualizar en la API
+  final int idCaso;
   final String titulo;
   final String descripcion;
   final String cliente;
-  final String documento; // ticket o archivo
+  final String documento;
   final String estado;
 
   const ContadorDetalle({
@@ -24,9 +24,15 @@ class ContadorDetalle extends StatefulWidget {
 }
 
 class _ContadorDetalleState extends State<ContadorDetalle> {
-  late String _estado; // Estado dinámico del caso
+  late String _estado;
   bool _isUpdating = false;
-  final TextEditingController _comentariosController = TextEditingController();
+
+  final List<String> _estados = [
+    'pendiente',
+    'en proceso',
+    'finalizado',
+    'cancelado',
+  ];
 
   @override
   void initState() {
@@ -34,240 +40,229 @@ class _ContadorDetalleState extends State<ContadorDetalle> {
     _estado = widget.estado;
   }
 
+  Color _estadoColor(String estado) {
+    switch (estado) {
+      case 'pendiente':
+        return Colors.orange;
+      case 'en proceso':
+        return Colors.blue;
+      case 'finalizado':
+        return Colors.green;
+      case 'cancelado':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _estadoIcon(String estado) {
+    switch (estado) {
+      case 'pendiente':
+        return Icons.schedule;
+      case 'en proceso':
+        return Icons.timelapse;
+      case 'finalizado':
+        return Icons.check_circle;
+      case 'cancelado':
+        return Icons.cancel;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
   Future<void> _actualizarEstado(String nuevoEstado) async {
+    if (nuevoEstado == _estado) return;
+
     setState(() => _isUpdating = true);
+
     try {
-      final mensaje =
-          await ApiServiceContador.actualizarCaso(widget.idCaso, nuevoEstado);
+      final mensaje = await ApiServiceContador.actualizarCaso(
+        widget.idCaso,
+        nuevoEstado,
+      );
+
+      if (!mounted) return;
+
       setState(() {
         _estado = nuevoEstado;
       });
-      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensaje)),
       );
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("❌ Error al actualizar estado: $e")),
       );
     } finally {
-      if (mounted) setState(() => _isUpdating = false);
-    }
-  }
-
-  Future<void> _validarDocumento(String estatus) async {
-    setState(() => _isUpdating = true);
-    try {
-      final mensaje = await ApiServiceContador.validarDocumento(
-        widget.documento, // ticket o identificador del documento
-        estatus,
-        _comentariosController.text,
-        1, // aquí pondrías el id del contador real
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mensaje)),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Error al validar documento: $e")),
-      );
-    } finally {
-      if (mounted) setState(() => _isUpdating = false);
+      if (mounted) {
+        setState(() => _isUpdating = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final gold = const Color(0xFFD4AF37);
+    final gold = Theme.of(context).primaryColor;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Detalle del Caso/Documento"),
+        title: const Text("Detalle del caso"),
         backgroundColor: gold,
+        foregroundColor: Colors.white,
       ),
       body: Container(
-        color: Colors.grey[100], // 🔹 Fondo más claro
+        color: Colors.grey[100],
         padding: const EdgeInsets.all(16),
         child: Card(
           elevation: 4,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Título
                 Text(
-                  widget.titulo,
+                  widget.titulo.isEmpty ? 'Caso contable' : widget.titulo,
                   style: const TextStyle(
                     fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 10),
 
-                // Cliente
+                const SizedBox(height: 14),
+
                 Row(
                   children: [
-                    const Icon(Icons.person, color: Colors.grey),
+                    const Icon(Icons.person_outline, color: Colors.grey),
                     const SizedBox(width: 8),
-                    Text(
-                      "Cliente: ${widget.cliente}",
-                      style: const TextStyle(color: Colors.black),
+                    Expanded(
+                      child: Text(
+                        "Cliente: ${widget.cliente.isEmpty ? 'N/A' : widget.cliente}",
+                        style: const TextStyle(color: Colors.black),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
 
-                // Estado del caso
+                const SizedBox(height: 12),
+
                 Row(
                   children: [
                     Icon(
-                      _estado == "abierto"
-                          ? Icons.circle
-                          : _estado == "cerrado"
-                              ? Icons.check_circle
-                              : Icons.timelapse,
-                      color: _estado == "abierto"
-                          ? Colors.green
-                          : _estado == "cerrado"
-                              ? Colors.red
-                              : Colors.orange,
-                      size: 18,
+                      _estadoIcon(_estado),
+                      color: _estadoColor(_estado),
+                      size: 22,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      "Estado: $_estado",
-                      style: const TextStyle(color: Colors.black),
+                      "Estado actual: $_estado",
+                      style: TextStyle(
+                        color: _estadoColor(_estado),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 20),
 
-                // Descripción
                 const Text(
-                  "Descripción:",
+                  "Cambiar estado",
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.descripcion,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
-                ),
-                const SizedBox(height: 20),
 
-                // Documento
-                if (widget.documento.isNotEmpty)
+                const SizedBox(height: 8),
+
+                DropdownButtonFormField<String>(
+                  value: _estados.contains(_estado) ? _estado : 'pendiente',
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Estado del caso',
+                  ),
+                  items: _estados.map((estado) {
+                    return DropdownMenuItem<String>(
+                      value: estado,
+                      child: Text(estado),
+                    );
+                  }).toList(),
+                  onChanged: _isUpdating
+                      ? null
+                      : (value) {
+                          if (value != null) {
+                            _actualizarEstado(value);
+                          }
+                        },
+                ),
+
+                const SizedBox(height: 24),
+
+                const Text(
+                  "Descripción",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  widget.descripcion.isEmpty
+                      ? 'Sin descripción.'
+                      : widget.descripcion,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.black87,
+                    height: 1.35,
+                  ),
+                ),
+
+                if (widget.documento.isNotEmpty) ...[
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       const Icon(Icons.attach_file, color: Colors.grey),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          "Documento/Ticket: ${widget.documento}",
-                          style: const TextStyle(
-                              fontSize: 16, color: Colors.black),
+                          "Documento: ${widget.documento}",
+                          style: const TextStyle(color: Colors.black),
                           overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text("Abrir documento: ${widget.documento}"),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          "Ver",
-                          style: TextStyle(color: gold),
                         ),
                       ),
                     ],
                   ),
-
-                const SizedBox(height: 20),
-
-                // Comentarios
-                TextField(
-                  controller: _comentariosController,
-                  decoration: const InputDecoration(
-                    labelText: "Comentarios",
-                    labelStyle: TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(),
-                  ),
-                  style: const TextStyle(color: Colors.black),
-                  maxLines: 2,
-                ),
+                ],
 
                 const Spacer(),
 
-                // Botones de acción
-                Center(
-                  child: _isUpdating
-                      ? const CircularProgressIndicator()
-                      : Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20, vertical: 12),
-                                  ),
-                                  onPressed: () async {
-                                    await _validarDocumento("validado");
-                                  },
-                                  icon: const Icon(Icons.check),
-                                  label: const Text("Validar"),
-                                ),
-                                const SizedBox(width: 16),
-                                ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20, vertical: 12),
-                                  ),
-                                  onPressed: () async {
-                                    await _validarDocumento("rechazado");
-                                  },
-                                  icon: const Icon(Icons.cancel),
-                                  label: const Text("Rechazar"),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueGrey,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
-                              ),
-                              onPressed: () async {
-                                await _actualizarEstado("cerrado"); // 👈 Se usa aquí
-                              },
-                              icon: const Icon(Icons.lock),
-                              label: const Text("Cerrar caso"),
-                            ),
-                          ],
-                        ),
-                ),
+                if (_isUpdating)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: gold,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () => Navigator.pop(context, true),
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text("Volver a casos"),
+                    ),
+                  ),
               ],
             ),
           ),

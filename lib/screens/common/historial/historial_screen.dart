@@ -105,8 +105,16 @@ class _HistorialScreenState extends State<HistorialScreen> {
   }
 
   String _servicio(Map<String, dynamic> item) {
-    return _texto(item['servicio'], 'Servicio no especificado');
-  }
+  final servicio = _texto(item['servicio']);
+  if (servicio.isNotEmpty) return servicio;
+
+  final tipoAuxilio = _asMap(item['tipo_auxilio']);
+  final nombreTipo = _texto(tipoAuxilio['nombre']);
+
+  if (nombreTipo.isNotEmpty) return nombreTipo;
+
+  return 'Servicio no especificado';
+}
 
   String _estado(Map<String, dynamic> item) {
     return _texto(item['estado'], 'sin estado');
@@ -133,22 +141,25 @@ class _HistorialScreenState extends State<HistorialScreen> {
   }
 
   String _fecha(Map<String, dynamic> item) {
-    final posibles = [
-      item['fecha_creacion'],
-      item['created_at'],
-      item['creado_en'],
-      item['fecha'],
-    ];
+  final posibles = [
+    item['fecha_finalizacion'],
+    item['fecha_solicitud'],
+    item['inicio'],
+    item['fecha_creacion'],
+    item['created_at'],
+    item['creado_en'],
+    item['fecha'],
+  ];
 
-    for (final value in posibles) {
-      final text = _texto(value);
-      if (text.isNotEmpty) {
-        return _fmtFecha(text);
-      }
+  for (final value in posibles) {
+    final text = _texto(value);
+    if (text.isNotEmpty) {
+      return _fmtFecha(text);
     }
-
-    return 'Fecha no disponible';
   }
+
+  return 'Fecha no disponible';
+}
 
   String _fmtFecha(String value) {
     final raw = value.trim().replaceFirst('T', ' ');

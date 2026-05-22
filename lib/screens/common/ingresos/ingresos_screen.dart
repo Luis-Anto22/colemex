@@ -94,7 +94,6 @@ class _IngresosScreenState extends State<IngresosScreen> {
     final concepto = _texto(item['concepto'], 'Ingreso');
     final monto = _money(item['monto']);
     final fecha = _fecha(item['fecha']);
-    final profesional = _texto(item['profesional_id'], 'No disponible');
 
     showModalBottomSheet(
       context: context,
@@ -127,7 +126,11 @@ class _IngresosScreenState extends State<IngresosScreen> {
                 const SizedBox(height: 18),
                 _detalleLinea(Icons.attach_money, 'Monto', monto),
                 _detalleLinea(Icons.calendar_today_outlined, 'Fecha', fecha),
-                _detalleLinea(Icons.badge_outlined, 'Profesional ID', profesional),
+                _detalleLinea(
+                  Icons.verified_user_outlined,
+                  'Profesional',
+                  'Asistencia vial',
+                ),
               ],
             ),
           ),

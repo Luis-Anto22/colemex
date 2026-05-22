@@ -600,12 +600,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             child: Text('Pendiente'),
                           ),
                           PopupMenuItem(
-                            value: 'en proceso',
-                            child: Text('En proceso'),
+                            value: 'confirmada',
+                            child: Text('Confirmada'),
                           ),
                           PopupMenuItem(
-                            value: 'finalizado',
-                            child: Text('Finalizado'),
+                            value: 'completada',
+                            child: Text('Completada'),
                           ),
                           PopupMenuItem(
                             value: 'cancelado',

@@ -26,30 +26,57 @@ class ClienteProfesionalesApi {
       params['especialidad'] = especialidad.trim();
     }
 
-    // Laravel: GET /api/common/profesionales-cercanos
     final res = await _client.get(
       '/common/profesionales-cercanos',
       params: params,
     );
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al obtener profesionales');
+      throw Exception(
+        res['message'] ??
+            res['mensaje'] ??
+            'Error al obtener profesionales cercanos',
+      );
     }
 
-    final data = res['data'] ?? res['profesionales'];
+    final data = res['data'] ?? res['profesionales'] ?? res['items'];
 
-    if (data is List) {
-      return List<Map<String, dynamic>>.from(data);
-    }
+    if (data is! List) return [];
 
-    return [];
+    return data
+        .whereType<Map>()
+        .map((item) {
+          final map = Map<String, dynamic>.from(item);
+
+          final latValue = map['lat'] ??
+              map['latitude'] ??
+              map['latitud'] ??
+              map['ubicacion_lat'];
+
+          final lngValue = map['lng'] ??
+              map['longitude'] ??
+              map['longitud'] ??
+              map['ubicacion_lng'];
+
+          map['lat'] = latValue;
+          map['lng'] = lngValue;
+          map['latitude'] = latValue;
+          map['longitude'] = lngValue;
+
+          return map;
+        })
+        .where((p) {
+          final pLat = double.tryParse(p['lat']?.toString() ?? '');
+          final pLng = double.tryParse(p['lng']?.toString() ?? '');
+          return pLat != null && pLng != null;
+        })
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> getMisCasos({
     required int clienteId,
     int limit = 10,
   }) async {
-    // Laravel: GET /api/common/mis-casos-cliente
     final res = await _client.get(
       '/common/mis-casos-cliente',
       params: {
@@ -59,7 +86,7 @@ class ClienteProfesionalesApi {
     );
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al obtener mis casos');
+      throw Exception(res['message'] ?? res['mensaje'] ?? 'Error al obtener mis casos');
     }
 
     final data = res['data'] ?? res['casos'];
@@ -78,7 +105,6 @@ class ClienteProfesionalesApi {
     required String titulo,
     String descripcion = '',
   }) async {
-    // Laravel: POST /api/common/solicitar-caso-cliente
     final res = await _client.post(
       '/common/solicitar-caso-cliente',
       {
@@ -91,7 +117,7 @@ class ClienteProfesionalesApi {
     );
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al enviar solicitud');
+      throw Exception(res['message'] ?? res['mensaje'] ?? 'Error al enviar solicitud');
     }
 
     final data = res['data'];
@@ -99,12 +125,16 @@ class ClienteProfesionalesApi {
     if (data is Map<String, dynamic>) {
       return {
         ...data,
-        'message': res['message']?.toString() ?? 'Solicitud enviada',
+        'message': res['message']?.toString() ??
+            res['mensaje']?.toString() ??
+            'Solicitud enviada',
       };
     }
 
     return {
-      'message': res['message']?.toString() ?? 'Solicitud enviada',
+      'message': res['message']?.toString() ??
+          res['mensaje']?.toString() ??
+          'Solicitud enviada',
     };
   }
 
@@ -120,14 +150,13 @@ class ClienteProfesionalesApi {
       params['q'] = query.trim();
     }
 
-    // Laravel: GET /api/common/especialidades
     final res = await _client.get(
       '/common/especialidades',
       params: params,
     );
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'Error al obtener especialidades');
+      throw Exception(res['message'] ?? res['mensaje'] ?? 'Error al obtener especialidades');
     }
 
     final data = res['data'] ?? res['especialidades'];
@@ -139,14 +168,10 @@ class ClienteProfesionalesApi {
     for (final item in data) {
       if (item is Map<String, dynamic>) {
         final nombre = (item['nombre'] ?? '').toString().trim();
-        if (nombre.isNotEmpty) {
-          nombres.add(nombre);
-        }
+        if (nombre.isNotEmpty) nombres.add(nombre);
       } else {
         final nombre = item.toString().trim();
-        if (nombre.isNotEmpty) {
-          nombres.add(nombre);
-        }
+        if (nombre.isNotEmpty) nombres.add(nombre);
       }
     }
 
