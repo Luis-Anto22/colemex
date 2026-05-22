@@ -1,8 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'firebase_options.dart';
 import 'services/notification_service.dart';
 
 // Screens principales
@@ -43,11 +45,17 @@ import 'screens/asistencia_vial/asistencia_vial_panel.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  await NotificationService.init();
+  // IMPORTANTE:
+  // En Chrome/Web no podemos ejecutar NotificationService.init()
+  // si adentro usa Platform.isAndroid, porque eso rompe la app en blanco.
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await NotificationService.init();
+  }
 
   final prefs = await SharedPreferences.getInstance();
   final bool introVisto = prefs.getBool('introVisto') ?? false;
