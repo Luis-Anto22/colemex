@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'api_service_contador.dart';
+
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/common_api.dart';
 
 class ContadorDetalle extends StatefulWidget {
   final int idCaso;
@@ -26,6 +28,7 @@ class ContadorDetalle extends StatefulWidget {
 class _ContadorDetalleState extends State<ContadorDetalle> {
   late String _estado;
   bool _isUpdating = false;
+  late final CommonApi commonApi;
 
   final List<String> _estados = [
     'pendiente',
@@ -38,6 +41,7 @@ class _ContadorDetalleState extends State<ContadorDetalle> {
   void initState() {
     super.initState();
     _estado = widget.estado;
+    commonApi = CommonApi(ApiClient());
   }
 
   Color _estadoColor(String estado) {
@@ -76,10 +80,12 @@ class _ContadorDetalleState extends State<ContadorDetalle> {
     setState(() => _isUpdating = true);
 
     try {
-      final mensaje = await ApiServiceContador.actualizarCaso(
-        widget.idCaso,
-        nuevoEstado,
+      await commonApi.actualizarEstadoCasoUniversal(
+        casoId: widget.idCaso,
+        estado: nuevoEstado,
       );
+
+     const mensaje = 'Estado actualizado correctamente';
 
       if (!mounted) return;
 

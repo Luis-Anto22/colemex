@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:advocatus/services/api_services/api_client.dart';
 import 'package:advocatus/services/api_services/notificaciones_api.dart';
+import 'dart:convert';
+
+import '../screens/cliente_panels/calificar_profesional_screen.dart';
 
 class NotificacionesWidget extends StatefulWidget {
   final int? profesionalId;
@@ -411,6 +414,7 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
             onPressed: _marcandoTodas || noLeidas == 0 ? null : _marcarTodas,
             child: Text(
               _marcandoTodas ? 'Marcando...' : 'Marcar todas',
+              style: const TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -788,6 +792,16 @@ class _DetalleNotificacionScreenState extends State<DetalleNotificacionScreen> {
     if (raw is Map<String, dynamic>) return raw;
     if (raw is Map) return Map<String, dynamic>.from(raw);
 
+    if (raw is String && raw.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {
+        return {};
+      }
+    }
+
     return {};
   }
 
@@ -1031,6 +1045,52 @@ class _DetalleNotificacionScreenState extends State<DetalleNotificacionScreen> {
     );
   }
 
+  Future<void> _calificarProfesional() async {
+    final profesionalId = int.tryParse(
+          _valor([
+            'profesional_id',
+            'abogado_id',
+            'investigador_id',
+          ]),
+        ) ??
+        0;
+
+    final casoId = int.tryParse(
+          _valor([
+            'caso_id',
+            'casoId',
+            'id_caso',
+          ]),
+        ) ??
+        0;
+
+    if (profesionalId <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo identificar al profesional para calificar.'),
+        ),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CalificarProfesionalScreen(
+          profesionalId: profesionalId,
+          casoId: casoId,
+        ),
+      ),
+    );
+
+    if (mounted) {
+      Navigator.pop(context, {
+        'recargar': true,
+        'mensaje': 'Gracias, tu calificación fue procesada.',
+      });
+    }
+  }
+
   List<MapEntry<String, dynamic>> _extras() {
     const ocultar = {
       'id',
@@ -1166,8 +1226,9 @@ class _DetalleNotificacionScreenState extends State<DetalleNotificacionScreen> {
     required bool puedeAceptar,
     required bool puedeRechazar,
     required bool puedeModificar,
+    required bool puedeCalificar,
   }) {
-    if (!puedeAceptar && !puedeRechazar && !puedeModificar) {
+    if (!puedeAceptar && !puedeRechazar && !puedeModificar && !puedeCalificar) {
       return const SizedBox.shrink();
     }
 
@@ -1197,6 +1258,20 @@ class _DetalleNotificacionScreenState extends State<DetalleNotificacionScreen> {
               padding: EdgeInsets.only(bottom: 12),
               child: LinearProgressIndicator(),
             ),
+          if (puedeCalificar)
+            ElevatedButton.icon(
+              onPressed: _procesando ? null : _calificarProfesional,
+              icon: const Icon(Icons.star_rounded),
+              label: const Text('Calificar profesional'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          if (puedeCalificar && (puedeAceptar || puedeRechazar || puedeModificar))
+            const SizedBox(height: 10),
           if (puedeAceptar)
             ElevatedButton.icon(
               onPressed: _procesando ? null : _aceptarCaso,
@@ -1334,6 +1409,11 @@ class _DetalleNotificacionScreenState extends State<DetalleNotificacionScreen> {
     final puedeAceptar = _boolValor(['puede_aceptar']);
     final puedeRechazar = _boolValor(['puede_rechazar']);
     final puedeModificar = _boolValor(['puede_modificar']);
+    final tipoNormalizado = tipoOriginal.toLowerCase().trim();
+    final puedeCalificar =
+        tipoNormalizado == 'caso_finalizado_calificacion' ||
+        tipoNormalizado == 'caso_finalizado_calificación' ||
+        _boolValor(['puede_calificar']);
 
     final extras = _extras();
 
@@ -1560,6 +1640,7 @@ class _DetalleNotificacionScreenState extends State<DetalleNotificacionScreen> {
                         puedeAceptar: puedeAceptar,
                         puedeRechazar: puedeRechazar,
                         puedeModificar: puedeModificar,
+                        puedeCalificar: puedeCalificar,
                       ),
 
                       if (extras.isNotEmpty) ...[

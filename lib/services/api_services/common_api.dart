@@ -1042,4 +1042,19 @@ class CommonApi {
       throw Exception(res['message'] ?? 'Error al eliminar reporte');
     }
   }
+  Future<void> actualizarEstadoCasoUniversal({
+  required int casoId,
+  required String estado,
+}) async {
+  final res = await client.post(
+    '/common/casos/$casoId/estado',
+    {
+      'estado': estado,
+    },
+  );
+
+  if (res['success'] != true) {
+    throw Exception(res['message'] ?? 'Error al actualizar estado');
+  }
+ }
 }

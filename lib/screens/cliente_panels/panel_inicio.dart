@@ -2,6 +2,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/api_services/cliente_profesionales_api.dart';
+import '../../services/api_services/api_client.dart';
 
 class PanelInicio extends StatefulWidget {
   static const Color _primary = Color(0xFF0B2545);
@@ -32,6 +33,11 @@ class PanelInicio extends StatefulWidget {
 
 class _PanelInicioState extends State<PanelInicio> {
   final ClienteProfesionalesApi _api = ClienteProfesionalesApi();
+  final ApiClient _apiClient = ApiClient();
+
+  final Set<int> _casosSeleccionados = {};
+  bool _modoSeleccionCasos = false;
+
   late final TextEditingController _busquedaController;
 
   bool _cargandoEspecialidades = false;
@@ -68,6 +74,11 @@ class _PanelInicioState extends State<PanelInicio> {
     super.dispose();
   }
 
+  Future<int> _obtenerClienteId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id') ?? 0;
+  }
+
   void _onBusquedaChanged() {
     final q = _busquedaController.text.trim().toLowerCase();
 
@@ -98,8 +109,9 @@ class _PanelInicioState extends State<PanelInicio> {
       });
     }
 
-    final serviciosMatch =
-        widget.serviciosDisponibles.where((s) => s.toLowerCase().contains(q)).take(5);
+    final serviciosMatch = widget.serviciosDisponibles
+        .where((s) => s.toLowerCase().contains(q))
+        .take(5);
 
     for (final servicio in serviciosMatch) {
       addSugerencia(
@@ -147,6 +159,46 @@ class _PanelInicioState extends State<PanelInicio> {
       if (!mounted) return;
       setState(() {
         _cargandoEspecialidades = false;
+      });
+    }
+  }
+
+  Future<void> _cargarMisCasos() async {
+    if (mounted) {
+      setState(() {
+        _cargandoCasos = true;
+        _errorCasos = '';
+        _casosSeleccionados.clear();
+        _modoSeleccionCasos = false;
+      });
+    }
+
+    try {
+      final clienteId = await _obtenerClienteId();
+
+      if (clienteId <= 0) {
+        if (!mounted) return;
+        setState(() {
+          _cargandoCasos = false;
+          _errorCasos = 'No se pudo identificar al cliente.';
+          _casos = [];
+        });
+        return;
+      }
+
+      final casos = await _api.getMisCasos(clienteId: clienteId, limit: 6);
+
+      if (!mounted) return;
+
+      setState(() {
+        _casos = casos;
+        _cargandoCasos = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cargandoCasos = false;
+        _errorCasos = 'No se pudo cargar el historial de casos.';
       });
     }
   }
@@ -216,6 +268,27 @@ class _PanelInicioState extends State<PanelInicio> {
       default:
         return Icons.miscellaneous_services_rounded;
     }
+  }
+
+  Color _colorEstado(String estado) {
+    switch (estado.toLowerCase()) {
+      case 'pendiente':
+        return const Color(0xFFEA580C);
+      case 'en proceso':
+        return const Color(0xFF2563EB);
+      case 'finalizado':
+        return const Color(0xFF15803D);
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  String _fechaCorta(String fechaRaw) {
+    if (fechaRaw.isEmpty) return '';
+    final value = fechaRaw.replaceFirst('T', ' ');
+    if (value.length >= 16) return value.substring(0, 16);
+    if (value.length >= 10) return value.substring(0, 10);
+    return value;
   }
 
   Widget _buildBuscador() {
@@ -309,10 +382,7 @@ class _PanelInicioState extends State<PanelInicio> {
                       color: PanelInicio._primary,
                       size: 18,
                     ),
-                    title: Text(
-                      valor,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    title: Text(valor, style: const TextStyle(fontSize: 14)),
                     subtitle: Text(
                       tipo == 'servicio' ? 'Servicio' : 'Especialidad',
                       style: const TextStyle(fontSize: 12),
@@ -327,64 +397,152 @@ class _PanelInicioState extends State<PanelInicio> {
     );
   }
 
-  Future<void> _cargarMisCasos() async {
-    if (mounted) {
+  Future<void> _archivarCaso(int index) async {
+    final caso = _casos[index];
+    final casoId = int.tryParse('${caso['id']}');
+    final clienteId = await _obtenerClienteId();
+
+    if (casoId == null || clienteId <= 0) return;
+
+    final res = await _apiClient.archivarCasoCliente(
+      casoId: casoId,
+      clienteId: clienteId,
+    );
+
+    if (!mounted) return;
+
+    if (res['success'] == true) {
       setState(() {
-        _cargandoCasos = true;
-        _errorCasos = '';
+        _casos.removeAt(index);
+        _casosSeleccionados.clear();
+        _modoSeleccionCasos = false;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso archivado')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'] ?? 'No se pudo archivar')),
+      );
+    }
+  }
+
+  Future<void> _eliminarCaso(int index) async {
+    final caso = _casos[index];
+    final casoId = int.tryParse('${caso['id']}');
+    final clienteId = await _obtenerClienteId();
+
+    if (casoId == null || clienteId <= 0) return;
+
+    final res = await _apiClient.eliminarCasoCliente(
+      casoId: casoId,
+      clienteId: clienteId,
+    );
+
+    if (!mounted) return;
+
+    if (res['success'] == true) {
+      setState(() {
+        _casos.removeAt(index);
+        _casosSeleccionados.clear();
+        _modoSeleccionCasos = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso eliminado')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'] ?? 'No se pudo eliminar')),
+      );
+    }
+  }
+
+  Future<void> _archivarSeleccionados() async {
+    final clienteId = await _obtenerClienteId();
+    if (clienteId <= 0) return;
+
+    final indices = _casosSeleccionados.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    for (final index in indices) {
+      if (index < 0 || index >= _casos.length) continue;
+
+      final casoId = int.tryParse('${_casos[index]['id']}');
+      if (casoId == null) continue;
+
+      await _apiClient.archivarCasoCliente(
+        casoId: casoId,
+        clienteId: clienteId,
+      );
     }
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final clienteId = prefs.getInt('id') ?? 0;
+    if (!mounted) return;
 
-      if (clienteId <= 0) {
-        if (!mounted) return;
-        setState(() {
-          _cargandoCasos = false;
-          _errorCasos = 'No se pudo identificar al cliente.';
-          _casos = [];
-        });
-        return;
+    setState(() {
+      for (final index in indices) {
+        if (index >= 0 && index < _casos.length) {
+          _casos.removeAt(index);
+        }
+      }
+      _casosSeleccionados.clear();
+      _modoSeleccionCasos = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Casos archivados')),
+    );
+  }
+
+  Future<void> _eliminarSeleccionados() async {
+    final clienteId = await _obtenerClienteId();
+    if (clienteId <= 0) return;
+
+    final indices = _casosSeleccionados.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    for (final index in indices) {
+      if (index < 0 || index >= _casos.length) continue;
+
+      final casoId = int.tryParse('${_casos[index]['id']}');
+      if (casoId == null) continue;
+
+      await _apiClient.eliminarCasoCliente(
+        casoId: casoId,
+        clienteId: clienteId,
+      );
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      for (final index in indices) {
+        if (index >= 0 && index < _casos.length) {
+          _casos.removeAt(index);
+        }
+      }
+      _casosSeleccionados.clear();
+      _modoSeleccionCasos = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Casos eliminados')),
+    );
+  }
+
+  void _toggleSeleccionCaso(int index) {
+    setState(() {
+      if (_casosSeleccionados.contains(index)) {
+        _casosSeleccionados.remove(index);
+      } else {
+        _casosSeleccionados.add(index);
       }
 
-      final casos = await _api.getMisCasos(clienteId: clienteId, limit: 6);
-
-      if (!mounted) return;
-
-      setState(() {
-        _casos = casos;
-        _cargandoCasos = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _cargandoCasos = false;
-        _errorCasos = 'No se pudo cargar el historial de casos.';
-      });
-    }
-  }
-
-  Color _colorEstado(String estado) {
-    switch (estado.toLowerCase()) {
-      case 'pendiente':
-        return const Color(0xFFEA580C);
-      case 'en proceso':
-        return const Color(0xFF2563EB);
-      case 'finalizado':
-        return const Color(0xFF15803D);
-      default:
-        return const Color(0xFF64748B);
-    }
-  }
-
-  String _fechaCorta(String fechaRaw) {
-    if (fechaRaw.isEmpty) return '';
-    final value = fechaRaw.replaceFirst('T', ' ');
-    if (value.length >= 16) return value.substring(0, 16);
-    if (value.length >= 10) return value.substring(0, 10);
-    return value;
+      if (_casosSeleccionados.isEmpty) {
+        _modoSeleccionCasos = false;
+      }
+    });
   }
 
   Widget _buildMisCasos() {
@@ -409,10 +567,7 @@ class _PanelInicioState extends State<PanelInicio> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.folder_copy_rounded,
-                color: PanelInicio._primary,
-              ),
+              const Icon(Icons.folder_copy_rounded, color: PanelInicio._primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -437,37 +592,60 @@ class _PanelInicioState extends State<PanelInicio> {
             style: TextStyle(color: Color(0xFF475569)),
           ),
           const SizedBox(height: 12),
+          if (_casos.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _modoSeleccionCasos = !_modoSeleccionCasos;
+                      _casosSeleccionados.clear();
+                    });
+                  },
+                  icon: Icon(
+                    _modoSeleccionCasos
+                        ? Icons.close_rounded
+                        : Icons.check_box_outlined,
+                  ),
+                  label: Text(
+                    _modoSeleccionCasos ? 'Cancelar' : 'Seleccionar',
+                  ),
+                ),
+                if (_modoSeleccionCasos && _casosSeleccionados.isNotEmpty) ...[
+                  ElevatedButton.icon(
+                    onPressed: _archivarSeleccionados,
+                    icon: const Icon(Icons.archive_rounded),
+                    label: const Text('Archivar'),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _eliminarSeleccionados,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.delete_rounded),
+                    label: const Text('Eliminar'),
+                  ),
+                ],
+              ],
+            ),
+          if (_casos.isNotEmpty) const SizedBox(height: 12),
           if (_cargandoCasos)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Center(child: CircularProgressIndicator()),
             )
           else if (_errorCasos.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFECACA)),
-              ),
-              child: Text(
-                _errorCasos,
-                style: const TextStyle(color: Color(0xFFB91C1C)),
-              ),
+            Text(
+              _errorCasos,
+              style: const TextStyle(color: Color(0xFFB91C1C)),
             )
           else if (_casos.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'No tienes casos registrados.',
-                style: TextStyle(color: Color(0xFF475569)),
-              ),
+            const Text(
+              'No tienes casos registrados.',
+              style: TextStyle(color: Color(0xFF475569)),
             )
           else
             ListView.separated(
@@ -477,100 +655,159 @@ class _PanelInicioState extends State<PanelInicio> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final caso = _casos[index];
-                final estado = (caso['estado']?.toString() ?? 'pendiente');
+                final estado = caso['estado']?.toString() ?? 'pendiente';
                 final colorEstado = _colorEstado(estado);
-                final tituloRaw = (caso['titulo']?.toString() ?? '').trim();
+                final tituloRaw = caso['titulo']?.toString().trim() ?? '';
                 final titulo = tituloRaw.isEmpty
                     ? 'Caso #${caso['id'] ?? ''}'
                     : tituloRaw;
-                final servicio = (caso['servicio']?.toString() ?? '').trim();
+                final servicio = caso['servicio']?.toString().trim() ?? '';
                 final profesional =
-                    (caso['profesional_nombre']?.toString() ?? '').trim();
-                final fecha =
-                    _fechaCorta((caso['fecha']?.toString() ?? '').trim());
+                    caso['profesional_nombre']?.toString().trim() ?? '';
+                final fechaRaw =
+                    caso['fecha']?.toString() ??
+                    caso['fecha_creacion']?.toString() ??
+                    '';
+                final fecha = _fechaCorta(fechaRaw.trim());
+                final seleccionado = _casosSeleccionados.contains(index);
 
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FBFF),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFDCE6F4)),
+                return Dismissible(
+                  key: ValueKey(caso['id'] ?? index),
+                  background: Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 24),
+                    color: Colors.blue,
+                    child: const Icon(Icons.archive, color: Colors.white),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                  secondaryBackground: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 24),
+                    color: Colors.red,
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  confirmDismiss: (direction) async {
+                    if (direction == DismissDirection.startToEnd) {
+                      await _archivarCaso(index);
+                    } else if (direction == DismissDirection.endToStart) {
+                      await _eliminarCaso(index);
+                    }
+                    return false;
+                  },
+                  child: InkWell(
+                    onTap: () {
+                      if (_modoSeleccionCasos) {
+                        _toggleSeleccionCaso(index);
+                      }
+                    },
+                    onLongPress: () {
+                      setState(() {
+                        _modoSeleccionCasos = true;
+                        _casosSeleccionados.add(index);
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: seleccionado
+                            ? Colors.blue.withValues(alpha: 0.12)
+                            : const Color(0xFFF8FBFF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFDCE6F4)),
+                      ),
+                      child: Row(
                         children: [
+                          if (_modoSeleccionCasos)
+                            Checkbox(
+                              value: seleccionado,
+                              onChanged: (_) => _toggleSeleccionCaso(index),
+                            ),
                           Expanded(
-                            child: Text(
-                              titulo,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: PanelInicio._primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorEstado.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              estado,
-                              style: TextStyle(
-                                color: colorEstado,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        titulo,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: PanelInicio._primary,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            colorEstado.withValues(alpha: 0.12),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        estado,
+                                        style: TextStyle(
+                                          color: colorEstado,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (servicio.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Text(
+                                      'Servicio: $servicio',
+                                      style: const TextStyle(
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                if (profesional.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      'Profesional: $profesional',
+                                      style: const TextStyle(
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                if (fecha.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.schedule_rounded,
+                                          size: 16,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          fecha,
+                                          style: const TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      if (servicio.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            'Servicio: $servicio',
-                            style: const TextStyle(color: Color(0xFF334155)),
-                          ),
-                        ),
-                      if (profesional.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            'Profesional: $profesional',
-                            style: const TextStyle(color: Color(0xFF334155)),
-                          ),
-                        ),
-                      if (fecha.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.schedule_rounded,
-                                size: 16,
-                                color: Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                fecha,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 );
               },
