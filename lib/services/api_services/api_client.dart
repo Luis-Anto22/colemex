@@ -148,4 +148,27 @@ class ApiClient {
 
     return _decodeResponse(res);
   }
+  Future<Map<String, dynamic>> archivarCasoCliente({
+  required int casoId,
+  required int clienteId,
+}) async {
+  return post(
+    '/common/casos-cliente/$casoId/archivar',
+    {
+      'cliente_id': clienteId,
+    },
+  );
+}
+
+Future<Map<String, dynamic>> eliminarCasoCliente({
+  required int casoId,
+  required int clienteId,
+}) async {
+  return post(
+    '/common/casos-cliente/$casoId/eliminar',
+    {
+      'cliente_id': clienteId,
+    },
+  );
+}
 }

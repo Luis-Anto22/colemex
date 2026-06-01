@@ -72,6 +72,7 @@ class _DeclaracionCrearState
 
   Future<void> _cargarClientes() async {
     try {
+      
       final response = await http.get(
         Uri.parse(
           "$_clientesUrl?contador_id=${widget.idContador}",

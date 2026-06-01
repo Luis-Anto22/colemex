@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:advocatus/services/api_services/api_client.dart';
+import 'package:advocatus/services/api_services/common_api.dart';
 
 class CasosActivosScreen extends StatefulWidget {
   const CasosActivosScreen({super.key});
@@ -22,10 +24,12 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
 
   int? _profesionalId;
   String _token = '';
+  late final CommonApi commonApi;
 
   @override
   void initState() {
     super.initState();
+    commonApi = CommonApi(ApiClient());
     _inicializar();
   }
 
@@ -243,17 +247,27 @@ class _CasosActivosScreenState extends State<CasosActivosScreen> {
   }
 
   Future<void> _cambiarEstadoRapido(CasoItem item, String nuevoEstado) async {
-    await _actualizarCaso(
-      item.id,
-      CasoFormResult(
-        clienteId: item.clienteId,
-        servicio: item.servicio,
-        titulo: item.titulo,
-        descripcion: item.descripcion,
-        estado: nuevoEstado,
-      ),
+  try {
+    await commonApi.actualizarEstadoCasoUniversal(
+      casoId: item.id,
+      estado: nuevoEstado,
     );
+
+    _mostrarSnack(
+      nuevoEstado == 'en proceso'
+          ? 'Caso aceptado correctamente'
+          : nuevoEstado == 'cancelado'
+              ? 'Caso rechazado correctamente'
+              : nuevoEstado == 'finalizado'
+                  ? 'Caso finalizado correctamente'
+                  : 'Estado actualizado correctamente',
+    );
+
+    await _cargarCasos();
+  } catch (e) {
+    _mostrarSnack('Error al actualizar estado: $e');
   }
+}
 
   Future<void> _eliminarCaso(CasoItem item) async {
     final confirmar = await showDialog<bool>(

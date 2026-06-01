@@ -267,7 +267,10 @@ class _CasosAsignadosScreenState extends State<CasosAsignadosScreen> {
 
   Future<void> _cambiarEstado(int id, String nuevo) async {
     try {
-      await api.actualizarEstadoCaso(id: id, estado: nuevo);
+      await commonApi.actualizarEstadoCasoUniversal(
+        casoId: id,
+        estado: nuevo,
+      );
 
       if (!mounted) return;
 

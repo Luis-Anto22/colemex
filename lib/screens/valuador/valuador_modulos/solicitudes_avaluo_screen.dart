@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../services/api_services/api_client.dart';
 import '../../../services/api_services/valuador_api.dart';
+import '../../../services/api_services/common_api.dart';
 
 class SolicitudesAvaluoScreen extends StatefulWidget {
   final int valuadorId;
@@ -16,6 +17,7 @@ class SolicitudesAvaluoScreen extends StatefulWidget {
 
 class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
   late final ValuadorApi api;
+  late final CommonApi commonApi;
   late Future<List<dynamic>> future;
 
   bool loadingEstado = false;
@@ -24,6 +26,7 @@ class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
   void initState() {
     super.initState();
     api = ValuadorApi(ApiClient());
+    commonApi = CommonApi(ApiClient());
     future = api.getSolicitudes(widget.valuadorId);
   }
 
@@ -39,7 +42,10 @@ class _SolicitudesAvaluoScreenState extends State<SolicitudesAvaluoScreen> {
     setState(() => loadingEstado = true);
 
     try {
-      await api.actualizarEstadoSolicitud(id: id, estado: estado);
+      await commonApi.actualizarEstadoCasoUniversal(
+        casoId: id,
+        estado: estado,
+      );
 
       if (!mounted) return;
 

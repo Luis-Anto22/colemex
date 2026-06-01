@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:advocatus/services/api_services/api_client.dart';
 import 'package:advocatus/services/api_services/notificaciones_api.dart';
+import 'dart:convert';
+
+import '../screens/cliente_panels/calificar_profesional_screen.dart';
 
 class NotificacionesWidget extends StatefulWidget {
   final int? profesionalId;
@@ -194,63 +197,129 @@ class _NotificacionesWidgetState extends State<NotificacionesWidget> {
   }
 
   void _verDetalle(Map<String, dynamic> n) async {
-    await _marcarLeida(n);
+  await _marcarLeida(n);
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    final titulo = _texto(n['titulo'], 'Detalle de notificación');
-    final mensaje = _texto(n['mensaje'], 'Notificación');
-    final fecha = _fecha(n['fecha']);
-    final leido = _isLeida(n);
-    final tipo = _texto(n['tipo'], 'General');
-    final color = _colorNotificacion(n);
-    final icono = _iconoNotificacion(n);
+  final titulo = _texto(n['titulo'], 'Detalle de notificación');
+  final mensaje = _texto(n['mensaje'], 'Notificación');
+  final fecha = _fecha(n['fecha']);
+  final leido = _isLeida(n);
+  final tipo = _texto(n['tipo'], 'General');
+  final color = _colorNotificacion(n);
+  final icono = _iconoNotificacion(n);
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: color.withValues(alpha: 0.12),
-                      child: Icon(icono, color: color),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        titulo,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
+  Map<String, dynamic> data = {};
+
+  try {
+    final raw = n['data'];
+
+    if (raw is String && raw.isNotEmpty) {
+      data = Map<String, dynamic>.from(jsonDecode(raw));
+    } else if (raw is Map) {
+      data = Map<String, dynamic>.from(raw);
+    }
+  } catch (_) {}
+
+  final profesionalId =
+      int.tryParse('${data['profesional_id'] ?? ''}') ?? 0;
+
+  final casoId =
+      int.tryParse('${data['caso_id'] ?? ''}') ?? 0;
+
+  final esCalificacion =
+      tipo == 'caso_finalizado_calificacion';
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: color.withValues(alpha: 0.12),
+                    child: Icon(icono, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      titulo,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                _detalleLinea(Icons.message_outlined, 'Mensaje', mensaje),
-                _detalleLinea(Icons.category_outlined, 'Tipo', tipo),
-                _detalleLinea(Icons.calendar_today_outlined, 'Fecha', fecha),
-                _detalleLinea(
-                  leido ? Icons.mark_email_read : Icons.mark_email_unread,
-                  'Estado',
-                  leido ? 'Leída' : 'Nueva',
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              _detalleLinea(Icons.message_outlined, 'Mensaje', mensaje),
+
+              _detalleLinea(
+                Icons.category_outlined,
+                'Tipo',
+                tipo,
+              ),
+
+              _detalleLinea(
+                Icons.calendar_today_outlined,
+                'Fecha',
+                fecha,
+              ),
+
+              _detalleLinea(
+                leido
+                    ? Icons.mark_email_read
+                    : Icons.mark_email_unread,
+                'Estado',
+                leido ? 'Leída' : 'Nueva',
+              ),
+
+              if (esCalificacion && profesionalId > 0) ...[
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.star_rounded),
+                    label: const Text('Calificar profesional'),
+                    onPressed: () async {
+                      Navigator.pop(context);
+
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              CalificarProfesionalScreen(
+                            profesionalId: profesionalId,
+                            casoId: casoId,
+                          ),
+                        ),
+                      );
+
+                      if (mounted) {
+                        _cargar();
+                      }
+                    },
+                  ),
                 ),
               ],
-            ),
+            ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _detalleLinea(IconData icon, String label, String value) {
     return Padding(

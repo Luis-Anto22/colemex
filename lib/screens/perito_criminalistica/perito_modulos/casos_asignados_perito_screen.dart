@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../api_service_perito.dart';
 import 'detalle_caso_perito_screen.dart';
+import '../../../services/api_services/api_client.dart';
+import '../../../services/api_services/common_api.dart';
 
 class CasosAsignadosPeritoScreen extends StatefulWidget {
   final int peritoId;
@@ -92,9 +94,11 @@ class _CasosAsignadosPeritoScreenState
     if (casoId <= 0) return;
 
     try {
-      await ApiServicePerito.cambiarEstadoCaso(
+      final commonApi = CommonApi(ApiClient());
+
+      await commonApi.actualizarEstadoCasoUniversal(
         casoId: casoId,
-        estado: estado,
+        estado: estado == 'cerrado' ? 'finalizado' : estado,
       );
 
       if (!mounted) return;
