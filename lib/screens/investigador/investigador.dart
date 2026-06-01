@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+// API NOTIFICACIONES
+import 'package:advocatus/services/api_services/api_client.dart';
+import 'package:advocatus/services/api_services/notificaciones_api.dart';
+
 // COMMON
 import 'package:advocatus/screens/common/agenda/agenda_screen.dart';
 import 'package:advocatus/screens/common/calificaciones/calificaciones_screen.dart';
@@ -33,10 +37,136 @@ class PanelInvestigadorScreen extends StatefulWidget {
 }
 
 class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
-  String estado = 'Disponible';
+  final NotificacionesApi _notificacionesApi = NotificacionesApi(ApiClient());
 
-  void _go(Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  String estado = 'Disponible';
+  int notificacionesPendientes = 0;
+  bool _cargandoNotificaciones = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarContadorNotificaciones();
+  }
+
+  bool _esLeida(Map<String, dynamic> n) {
+    final value = n['leido'] ?? n['leida'] ?? n['visto'] ?? n['vista'] ?? 0;
+    final text = value.toString().toLowerCase().trim();
+
+    return text == '1' || text == 'true' || text == 'si' || text == 'sí';
+  }
+
+  Future<void> _cargarContadorNotificaciones() async {
+    if (_cargandoNotificaciones) return;
+
+    setState(() {
+      _cargandoNotificaciones = true;
+    });
+
+    try {
+      final items = await _notificacionesApi.listar(
+        profesionalId: widget.investigadorId,
+        clienteId: null,
+        limit: 80,
+      );
+
+      int pendientes = 0;
+
+      for (final item in items) {
+        if (!_esLeida(item)) {
+          pendientes++;
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        notificacionesPendientes = pendientes;
+        _cargandoNotificaciones = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        notificacionesPendientes = 0;
+        _cargandoNotificaciones = false;
+      });
+    }
+  }
+
+  Future<void> _go(Widget page) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
+
+    if (!mounted) return;
+
+    await _cargarContadorNotificaciones();
+  }
+
+  Future<void> _abrirNotificaciones() async {
+    await _go(
+      NotificacionesScreen(
+        profesionalId: widget.investigadorId,
+      ),
+    );
+  }
+
+  Widget _campanitaNotificaciones() {
+    final hayPendientes = notificacionesPendientes > 0;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(
+          hayPendientes
+              ? Icons.notifications_active
+              : Icons.notifications_none,
+          // ✅ Siempre blanca para que no se pierda en la barra dorada
+          color: Colors.white,
+        ),
+        if (hayPendientes)
+          Positioned(
+            right: -8,
+            top: -8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.redAccent,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(.30),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Text(
+                notificacionesPendientes > 99
+                    ? '99+'
+                    : '$notificacionesPendientes',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _sectionHeader(String title, {String? subtitle}) {
@@ -89,9 +219,11 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    int badge = 0,
   }) {
     final theme = Theme.of(context);
     final gold = theme.primaryColor;
+    final tieneBadge = badge > 0;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
@@ -100,20 +232,58 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: Colors.white.withOpacity(.05),
-          border: Border.all(color: gold.withOpacity(.14)),
+          color:
+              tieneBadge ? gold.withOpacity(.08) : Colors.white.withOpacity(.05),
+          border: Border.all(
+            color: tieneBadge ? gold.withOpacity(.32) : gold.withOpacity(.14),
+          ),
         ),
         child: Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: gold.withOpacity(.10),
-                border: Border.all(color: gold.withOpacity(.18)),
-              ),
-              child: Icon(icon, color: gold),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: gold.withOpacity(.10),
+                    border: Border.all(color: gold.withOpacity(.18)),
+                  ),
+                  child: Icon(icon, color: gold),
+                ),
+                if (tieneBadge)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white, width: 1),
+                      ),
+                      child: Text(
+                        badge > 99 ? '99+' : '$badge',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -140,6 +310,29 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                 ],
               ),
             ),
+            if (tieneBadge)
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.redAccent.withOpacity(.28),
+                  ),
+                ),
+                child: Text(
+                  '$badge nueva${badge == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
             Icon(
               Icons.chevron_right,
               color: Colors.white.withOpacity(.60),
@@ -154,9 +347,11 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    int badge = 0,
   }) {
     final theme = Theme.of(context);
     final gold = theme.primaryColor;
+    final tieneBadge = badge > 0;
 
     return Expanded(
       child: InkWell(
@@ -166,13 +361,45 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: Colors.white.withOpacity(.05),
-            border: Border.all(color: gold.withOpacity(.14)),
+            color:
+                tieneBadge ? gold.withOpacity(.08) : Colors.white.withOpacity(.05),
+            border: Border.all(
+              color: tieneBadge ? gold.withOpacity(.30) : gold.withOpacity(.14),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: gold),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, color: gold),
+                  if (tieneBadge)
+                    Positioned(
+                      right: -10,
+                      top: -10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white, width: 1),
+                        ),
+                        child: Text(
+                          badge > 99 ? '99+' : '$badge',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 8),
               Text(
                 label,
@@ -185,6 +412,52 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _contadorMiniCard(Color gold) {
+    final hayPendientes = notificacionesPendientes > 0;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: _abrirNotificaciones,
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: hayPendientes
+              ? Colors.redAccent.withOpacity(.12)
+              : Colors.white.withOpacity(.04),
+          border: Border.all(
+            color: hayPendientes
+                ? Colors.redAccent.withOpacity(.32)
+                : gold.withOpacity(.18),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hayPendientes
+                  ? Icons.notifications_active
+                  : Icons.notifications_none,
+              color: hayPendientes ? Colors.redAccent : gold,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              hayPendientes
+                  ? '$notificacionesPendientes pendiente${notificacionesPendientes == 1 ? '' : 's'}'
+                  : 'Sin pendientes',
+              style: TextStyle(
+                color: hayPendientes ? Colors.redAccent : Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -211,9 +484,11 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
         title: const Text('Panel • Investigador'),
         actions: [
           IconButton(
-            tooltip: 'Notificaciones',
-            onPressed: () => _go(const NotificacionesScreen()),
-            icon: const Icon(Icons.notifications_none),
+            tooltip: notificacionesPendientes > 0
+                ? 'Tienes $notificacionesPendientes notificación(es) pendiente(s)'
+                : 'Notificaciones',
+            onPressed: _abrirNotificaciones,
+            icon: _campanitaNotificaciones(),
           ),
           IconButton(
             tooltip: 'Configuración',
@@ -292,32 +567,8 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                                   ],
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: gold.withOpacity(.22),
-                                  ),
-                                  color: Colors.white.withOpacity(.04),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.circle, size: 10, color: gold),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      estado,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              const SizedBox(width: 10),
+                              _contadorMiniCard(gold),
                             ],
                           ),
                         ),
@@ -350,6 +601,13 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
+                              icon: Icons.notifications_none,
+                              label: 'Avisos',
+                              badge: notificacionesPendientes,
+                              onTap: _abrirNotificaciones,
+                            ),
+                            const SizedBox(width: 10),
+                            _quickAction(
                               icon: Icons.camera_alt_outlined,
                               label: 'Evidencias',
                               onTap: () => _go(
@@ -357,12 +615,6 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                                   investigadorId: widget.investigadorId,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            _quickAction(
-                              icon: Icons.event_available_outlined,
-                              label: 'Agenda',
-                              onTap: () => _go(const AgendaScreen()),
                             ),
                             const SizedBox(width: 10),
                             _quickAction(
@@ -421,10 +673,17 @@ class _PanelInvestigadorScreenState extends State<PanelInvestigadorScreen> {
                         ),
                         const SizedBox(height: 10),
                         _tile(
-                          icon: Icons.notifications_none,
-                          title: 'Notificaciones',
-                          subtitle: 'Nuevas asignaciones y alertas.',
-                          onTap: () => _go(const NotificacionesScreen()),
+                          icon: notificacionesPendientes > 0
+                              ? Icons.notifications_active
+                              : Icons.notifications_none,
+                          title: notificacionesPendientes > 0
+                              ? 'Notificaciones ($notificacionesPendientes)'
+                              : 'Notificaciones',
+                          subtitle: notificacionesPendientes > 0
+                              ? 'Tienes $notificacionesPendientes alerta${notificacionesPendientes == 1 ? '' : 's'} o asignación${notificacionesPendientes == 1 ? '' : 'es'} pendiente${notificacionesPendientes == 1 ? '' : 's'}.'
+                              : 'Nuevas asignaciones y alertas.',
+                          badge: notificacionesPendientes,
+                          onTap: _abrirNotificaciones,
                         ),
                         const SizedBox(height: 10),
                         _tile(

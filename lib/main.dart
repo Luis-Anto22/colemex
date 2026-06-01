@@ -1,11 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
-import 'services/notification_service.dart';
+import 'services/push/push_notifications_service.dart';
 
 // Screens principales
 import 'screens/login_screen.dart';
@@ -49,20 +48,28 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // IMPORTANTE:
-  // En Chrome/Web no podemos ejecutar NotificationService.init()
-  // si adentro usa Platform.isAndroid, porque eso rompe la app en blanco.
-  if (!kIsWeb) {
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    await NotificationService.init();
-  }
-
   final prefs = await SharedPreferences.getInstance();
+
   final bool introVisto = prefs.getBool('introVisto') ?? false;
   final bool sesionActiva = prefs.getBool('sesion_activa') ?? false;
   final String token = prefs.getString('token') ?? '';
   final String perfil = prefs.getString('perfil') ?? '';
   final int id = prefs.getInt('id') ?? 0;
+
+  // ✅ Inicializar push solo en app móvil/escritorio, no en Chrome/Web.
+  // En web puede requerir configuración extra de VAPID y service worker.
+  if (!kIsWeb) {
+    try {
+      await PushNotificationsService.init();
+
+      // Si ya había sesión iniciada, intentamos guardar/actualizar token FCM.
+      if (sesionActiva && token.isNotEmpty && id > 0) {
+        await PushNotificationsService.guardarTokenActual();
+      }
+    } catch (e) {
+      debugPrint('Push init error: $e');
+    }
+  }
 
   runApp(
     MyApp(

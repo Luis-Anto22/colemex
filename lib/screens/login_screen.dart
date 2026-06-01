@@ -4,6 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// PUSH NOTIFICATIONS
+import 'package:advocatus/services/push/push_notifications_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -34,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
         .replaceAll('í', 'i')
         .replaceAll('ó', 'o')
         .replaceAll('ú', 'u')
+        .replaceAll('ü', 'u')
         .replaceAll('ñ', 'n')
         .replaceAll(' ', '_');
   }
@@ -76,6 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (decoded == null) {
+        if (!mounted) return;
+
         setState(() {
           cargando = false;
           mensajeError = 'Respuesta inválida del servidor';
@@ -84,11 +90,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (res.statusCode != 200 || decoded['success'] != true) {
-        final mensajeServidor = decoded['mensaje']?.toString();
+        final mensajeServidor =
+            decoded['mensaje']?.toString() ?? decoded['message']?.toString();
+
+        if (!mounted) return;
 
         setState(() {
           cargando = false;
-          mensajeError = mensajeServidor ?? 'Error del serviodr (${res.statusCode})';
+          mensajeError =
+              mensajeServidor ?? 'Error del servidor (${res.statusCode})';
         });
         return;
       }
@@ -96,6 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final usuario = decoded['usuario'];
 
       if (usuario == null || usuario is! Map<String, dynamic>) {
+        if (!mounted) return;
+
         setState(() {
           cargando = false;
           mensajeError = 'Datos de usuario inválidos';
@@ -103,13 +115,19 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final int id = int.tryParse(usuario['id'].toString()) ?? 0;
+      final int id = int.tryParse(usuario['id']?.toString() ?? '') ?? 0;
       final String nombre = (usuario['nombre'] ?? '').toString();
       final String correoBd = (usuario['correo'] ?? '').toString();
-      final String perfil = normalizarPerfil(usuario['perfil']?.toString());
+
+      final String perfil = tipoLogin == 'cliente'
+          ? 'cliente'
+          : normalizarPerfil(usuario['perfil']?.toString());
+
       final String token = (decoded['token'] ?? '').toString();
 
       if (id == 0 || perfil.isEmpty) {
+        if (!mounted) return;
+
         setState(() {
           cargando = false;
           mensajeError = 'Información incompleta del usuario';
@@ -118,6 +136,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (token.isEmpty) {
+        if (!mounted) return;
+
         setState(() {
           cargando = false;
           mensajeError = 'No se recibió token de autenticación';
@@ -126,6 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final prefs = await SharedPreferences.getInstance();
+
       await prefs.setInt('id', id);
       await prefs.setString('perfil', perfil);
       await prefs.setString('nombre', nombre);
@@ -134,11 +155,22 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setBool('sesion_activa', true);
       await prefs.setString('tipo_login', tipoLogin);
 
+      // Guardar FCM token para notificaciones push.
+      // Si falla, NO bloquea el login.
+      try {
+        await PushNotificationsService.guardarTokenActual();
+      } catch (e) {
+        debugPrint('No se pudo guardar token FCM después del login: $e');
+      }
+
       if (!mounted) return;
 
       setState(() => cargando = false);
+
       _redirigirSegunPerfil(perfil, id, correoBd);
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         cargando = false;
         mensajeError = 'Error de conexión con el servidor';
@@ -153,6 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/panel-admin-home');
         break;
 
+      case 'contador':
       case 'contadores':
         if (correoBd.trim().toLowerCase() == 'admin@colemex.com') {
           Navigator.pushReplacementNamed(context, '/panel-admin-home');
@@ -166,6 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
         break;
 
       case 'cliente':
+      case 'clientes':
         Navigator.pushReplacementNamed(
           context,
           '/panel-cliente',
@@ -278,13 +312,38 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      enabledBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.white54),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.amber),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.redAccent),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.redAccent),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      filled: true,
+      fillColor: Colors.white.withOpacity(.05),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/iconos/mazo-libro.png"),
+            image: AssetImage('assets/iconos/mazo-libro.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -297,7 +356,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    Image.asset("assets/iconos/logo.png", height: 120),
+                    Image.asset(
+                      'assets/iconos/logo.png',
+                      height: 120,
+                    ),
                     const SizedBox(height: 25),
                     const Text(
                       'INICIAR SESIÓN',
@@ -318,12 +380,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         tipoLogin == 'cliente',
                         tipoLogin == 'profesional',
                       ],
-                      onPressed: (i) {
-                        setState(() {
-                          tipoLogin = i == 0 ? 'cliente' : 'profesional';
-                          mensajeError = '';
-                        });
-                      },
+                      onPressed: cargando
+                          ? null
+                          : (i) {
+                              setState(() {
+                                tipoLogin =
+                                    i == 0 ? 'cliente' : 'profesional';
+                                mensajeError = '';
+                              });
+                            },
                       children: const [
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 20),
@@ -342,13 +407,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: _inputDecoration('Correo electrónico'),
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        final text = value?.trim() ?? '';
+
+                        if (text.isEmpty) {
                           return 'Ingresa tu correo';
                         }
-                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                            .hasMatch(value.trim())) {
+
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(text)) {
                           return 'Correo inválido';
                         }
+
                         return null;
                       },
                     ),
@@ -376,9 +444,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Ingresa tu contraseña';
                         }
+
                         if (value.length < 6) {
                           return 'Mínimo 6 caracteres';
                         }
+
                         return null;
                       },
                     ),
@@ -399,8 +469,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         onPressed: cargando ? null : iniciarSesion,
                         child: cargando
-                            ? const CircularProgressIndicator(
-                                color: Colors.black,
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                  strokeWidth: 2.4,
+                                ),
                               )
                             : const Text(
                                 'Iniciar sesión',
@@ -413,16 +488,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RegistroUsuarioScreen(),
-                          ),
-                        );
-                      },
+                      onPressed: cargando
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const RegistroUsuarioScreen(),
+                                ),
+                              );
+                            },
                       child: const Text(
-                        "¿No tienes cuenta? Regístrate",
+                        '¿No tienes cuenta? Regístrate',
                         style: TextStyle(color: Colors.blue),
                       ),
                     ),
@@ -433,31 +511,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: Colors.white70),
-      enabledBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.white54),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.amber),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.redAccent),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.redAccent),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      filled: true,
-      fillColor: Colors.white.withOpacity(.05),
     );
   }
 }

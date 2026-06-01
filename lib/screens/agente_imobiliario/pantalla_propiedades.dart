@@ -817,6 +817,280 @@ Estacionamientos: ${estacionamientos.isEmpty ? 'No especificado' : estacionamien
     );
   }
 
+
+  int _entero(dynamic valor) {
+    return int.tryParse('${valor ?? 0}') ?? 0;
+  }
+
+  double _decimal(dynamic valor) {
+    return double.tryParse('${valor ?? 0}') ?? 0.0;
+  }
+
+  Future<void> _abrirCalificaciones(Map<String, dynamic> inmueble) async {
+    final inmuebleId = int.tryParse('${inmueble['id']}');
+
+    if (inmuebleId == null) {
+      _mostrarSnack('No se encontró el ID del inmueble');
+      return;
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.76,
+          minChildSize: 0.45,
+          maxChildSize: 0.94,
+          builder: (_, controller) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
+              child: FutureBuilder<List<dynamic>>(
+                future: ApiServiceInmobiliario.getCalificacionesInmueble(
+                  inmuebleId: inmuebleId,
+                ),
+                builder: (context, snapshot) {
+                  final promedio = _decimal(inmueble['calificacion_promedio']);
+                  final total = _entero(inmueble['total_calificaciones']);
+
+                  return ListView(
+                    controller: controller,
+                    padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 48,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7C2D12).withOpacity(0.10),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.reviews_rounded,
+                              color: Color(0xFF7C2D12),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Opiniones de clientes',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        _texto(inmueble['titulo'], 'Propiedad'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: Colors.black.withOpacity(0.06),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Color(0xFFF59E0B),
+                              size: 32,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${promedio.toStringAsFixed(1)} / 5',
+                              style: const TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '$total opiniones',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (snapshot.connectionState == ConnectionState.waiting)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF7C2D12),
+                            ),
+                          ),
+                        )
+                      else if (snapshot.hasError)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: Text(
+                              'Error al cargar opiniones: ${snapshot.error}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Color(0xFFB91C1C),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        )
+                      else if ((snapshot.data ?? []).isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 40),
+                          child: Center(
+                            child: Text(
+                              'Esta propiedad aún no tiene opiniones.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ...(snapshot.data ?? []).whereType<Map>().map((item) {
+                          final cal = Map<String, dynamic>.from(item);
+
+                          final estrellas = _entero(cal['calificacion']);
+                          final comentario = _texto(cal['comentario'], '');
+                          final fecha = _texto(
+                            cal['created_at'] ?? cal['fecha'] ?? cal['fecha_registro'],
+                            '',
+                          );
+                          final cliente = _texto(
+                            cal['cliente'] is Map
+                                ? cal['cliente']['nombre']
+                                : cal['cliente_nombre'],
+                            'Cliente',
+                          );
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: Colors.black.withOpacity(0.06),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const CircleAvatar(
+                                      backgroundColor: Color(0xFFFFEDD5),
+                                      child: Icon(
+                                        Icons.person_rounded,
+                                        color: Color(0xFF7C2D12),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            cliente,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF111827),
+                                            ),
+                                          ),
+                                          if (fecha.isNotEmpty)
+                                            Text(
+                                              fecha,
+                                              style: const TextStyle(
+                                                color: Color(0xFF6B7280),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: List.generate(5, (index) {
+                                        return Icon(
+                                          index < estrellas
+                                              ? Icons.star_rounded
+                                              : Icons.star_border_rounded,
+                                          color: const Color(0xFFF59E0B),
+                                          size: 18,
+                                        );
+                                      }),
+                                    ),
+                                  ],
+                                ),
+                                if (comentario.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    comentario,
+                                    style: const TextStyle(
+                                      color: Color(0xFF475569),
+                                      height: 1.35,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _propiedadCard(Map<String, dynamic> inmueble) {
     final titulo = _texto(inmueble['titulo'], 'Propiedad sin título');
     final ubicacion = _texto(inmueble['ubicacion'], 'Sin ubicación');
@@ -828,6 +1102,9 @@ Estacionamientos: ${estacionamientos.isEmpty ? 'No especificado' : estacionamien
     final habitaciones = _texto(inmueble['habitaciones'], '-');
     final banos = _texto(inmueble['banos'] ?? inmueble['baños'], '-');
     final superficie = _texto(inmueble['superficie'], '-');
+
+    final calificacionPromedio = _decimal(inmueble['calificacion_promedio']);
+    final totalCalificaciones = _entero(inmueble['total_calificaciones']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1009,6 +1286,33 @@ Estacionamientos: ${estacionamientos.isEmpty ? 'No especificado' : estacionamien
                         icon: Icons.square_foot_rounded,
                         label: 'Sup.',
                         value: superficie,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFFF59E0B),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${calificacionPromedio.toStringAsFixed(1)} ($totalCalificaciones)',
+                        style: const TextStyle(
+                          color: Color(0xFF374151),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: () => _abrirCalificaciones(inmueble),
+                        icon: const Icon(Icons.reviews_rounded, size: 18),
+                        label: const Text('Opiniones'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF7C2D12),
+                        ),
                       ),
                     ],
                   ),

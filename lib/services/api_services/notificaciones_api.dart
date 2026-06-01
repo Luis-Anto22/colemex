@@ -30,7 +30,7 @@ class NotificacionesApi {
       throw Exception(res['message'] ?? 'Error al obtener notificaciones');
     }
 
-    final data = res['data'] ?? res['notificaciones'];
+    final data = res['data'] ?? res['notificaciones'] ?? res['items'];
 
     if (data is List) {
       return data
@@ -62,10 +62,15 @@ class NotificacionesApi {
       throw Exception(res['message'] ?? 'Error al obtener conteo');
     }
 
-    final raw = res['unread_count'];
+    final raw = res['unread_count'] ??
+        res['count'] ??
+        res['total'] ??
+        res['no_leidas'] ??
+        0;
+
     if (raw is num) return raw.toInt();
 
-    return int.tryParse(raw?.toString() ?? '') ?? 0;
+    return int.tryParse(raw.toString()) ?? 0;
   }
 
   Future<void> marcarLeida({
@@ -89,7 +94,7 @@ class NotificacionesApi {
     );
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'No se pudo marcar como leida');
+      throw Exception(res['message'] ?? 'No se pudo marcar como leída');
     }
   }
 
@@ -113,7 +118,65 @@ class NotificacionesApi {
     );
 
     if (res['success'] != true) {
-      throw Exception(res['message'] ?? 'No se pudo marcar todo como leido');
+      throw Exception(res['message'] ?? 'No se pudo marcar todo como leído');
     }
+  }
+
+  Future<Map<String, dynamic>> aceptarCaso({
+    required int notificacionId,
+    required int profesionalId,
+  }) async {
+    final body = <String, dynamic>{
+      'profesional_id': profesionalId,
+    };
+
+    final res = await client.post(
+      '/notificaciones/$notificacionId/aceptar-caso',
+      body,
+    );
+
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'No se pudo aceptar el caso');
+    }
+
+    final data = res['data'];
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    return Map<String, dynamic>.from(res);
+  }
+
+  Future<Map<String, dynamic>> rechazarCaso({
+    required int notificacionId,
+    required int profesionalId,
+    String? motivo,
+  }) async {
+    final body = <String, dynamic>{
+      'profesional_id': profesionalId,
+    };
+
+    final motivoLimpio = motivo?.trim() ?? '';
+    if (motivoLimpio.isNotEmpty) {
+      body['motivo'] = motivoLimpio;
+    }
+
+    final res = await client.post(
+      '/notificaciones/$notificacionId/rechazar-caso',
+      body,
+    );
+
+    if (res['success'] != true) {
+      throw Exception(res['message'] ?? 'No se pudo rechazar el caso');
+    }
+
+    final data = res['data'];
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    return Map<String, dynamic>.from(res);
   }
 }

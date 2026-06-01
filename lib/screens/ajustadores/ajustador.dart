@@ -12,7 +12,7 @@ import 'package:advocatus/screens/common/perfil/perfil_verificado_screen.dart';
 import 'package:advocatus/widgets/notification_badge_icon.dart';
 
 // UBICACIÓN
-import '../localizacion.dart';
+import 'package:advocatus/screens/common/ubicacion/ubicacion_tiempo_real_screen.dart';
 
 // AJUSTADOR MÓDULOS
 import 'package:advocatus/screens/ajustadores/ajustador_modulos/siniestros_asignados_screen.dart';
@@ -451,10 +451,7 @@ class _PanelAjustadorScreenState extends State<PanelAjustadorScreen> {
                           subtitle:
                               'Comparte tu ubicación en tiempo real cuando estés activo.',
                           onTap: () => _go(
-                            LocalizacionPanel(
-                              idProfesional: widget.ajustadorId,
-                              perfil: 'Ajustadores',
-                            ),
+                            const UbicacionTiempoRealScreen(),
                           ),
                         ),
                         _gap(),

@@ -72,9 +72,7 @@ class ApiServiceInmobiliario {
   }) async {
     final response = await http.get(
       _uri(path, params),
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     );
 
     final decoded = _decode(response);
@@ -92,9 +90,7 @@ class ApiServiceInmobiliario {
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: data.map(
-        (key, value) => MapEntry(key, '$value'),
-      ),
+      body: data.map((key, value) => MapEntry(key, '$value')),
     );
 
     final decoded = _decode(response);
@@ -112,9 +108,7 @@ class ApiServiceInmobiliario {
         'Accept': 'application/json',
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: data.map(
-        (key, value) => MapEntry(key, '$value'),
-      ),
+      body: data.map((key, value) => MapEntry(key, '$value')),
     );
 
     final decoded = _decode(response);
@@ -125,9 +119,7 @@ class ApiServiceInmobiliario {
   static Future<Map<String, dynamic>> _delete(String path) async {
     final response = await http.delete(
       _uri(path),
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     );
 
     final decoded = _decode(response);
@@ -136,7 +128,7 @@ class ApiServiceInmobiliario {
   }
 
   // ===============================
-  // INMUEBLES / PROPIEDADES
+  // INMUEBLES / PANEL AGENTE
   // ===============================
 
   static Future<List<dynamic>> getInmuebles({
@@ -155,12 +147,78 @@ class ApiServiceInmobiliario {
     }
 
     final data = res['data'];
+    return data is List ? data : [];
+  }
 
-    if (data is List) {
-      return data;
+  // ===============================
+  // CATÁLOGO CLIENTE / FILTROS
+  // ===============================
+
+  static Future<List<dynamic>> getCatalogoInmuebles({
+    String? tipoOperacion,
+    String? tipoInmueble,
+    double? precioMin,
+    double? precioMax,
+    int? recamaras,
+    int? banos,
+    int? estacionamientos,
+    bool? amueblado,
+    bool? mascotasPermitidas,
+    bool? aceptaCredito,
+    double? calificacionMin,
+    String? buscar,
+    double? latitud,
+    double? longitud,
+    double? radioKm,
+  }) async {
+    final params = <String, dynamic>{};
+
+    if (tipoOperacion != null && tipoOperacion.isNotEmpty) {
+      params['tipo_operacion'] = tipoOperacion;
     }
 
-    return [];
+    if (tipoInmueble != null && tipoInmueble.isNotEmpty) {
+      params['tipo_inmueble'] = tipoInmueble;
+    }
+
+    if (precioMin != null) params['precio_min'] = precioMin;
+    if (precioMax != null) params['precio_max'] = precioMax;
+    if (recamaras != null) params['recamaras'] = recamaras;
+    if (banos != null) params['banos'] = banos;
+    if (estacionamientos != null) {
+      params['estacionamientos'] = estacionamientos;
+    }
+    if (amueblado != null) params['amueblado'] = amueblado ? 1 : 0;
+    if (mascotasPermitidas != null) {
+      params['mascotas_permitidas'] = mascotasPermitidas ? 1 : 0;
+    }
+    if (aceptaCredito != null) {
+      params['acepta_credito'] = aceptaCredito ? 1 : 0;
+    }
+    if (calificacionMin != null) {
+      params['calificacion_min'] = calificacionMin;
+    }
+    if (buscar != null && buscar.trim().isNotEmpty) {
+      params['buscar'] = buscar.trim();
+    }
+
+    if (latitud != null && longitud != null) {
+      params['latitud'] = latitud;
+      params['longitud'] = longitud;
+
+      if (radioKm != null) {
+        params['radio_km'] = radioKm;
+      }
+    }
+
+    final res = await _get('/inmobiliario/inmuebles', params: params);
+
+    if (res['success'] != true) {
+      throw _apiException(res, 'Error al obtener catálogo de inmuebles');
+    }
+
+    final data = res['data'];
+    return data is List ? data : [];
   }
 
   static Future<Map<String, dynamic>> getInmuebleDetalle({
@@ -173,12 +231,7 @@ class ApiServiceInmobiliario {
     }
 
     final data = res['data'];
-
-    if (data is Map<String, dynamic>) {
-      return data;
-    }
-
-    return {};
+    return data is Map<String, dynamic> ? data : {};
   }
 
   static Future<void> registrarInmueble({
@@ -190,21 +243,57 @@ class ApiServiceInmobiliario {
     required double precio,
     required String descripcion,
     String estado = 'disponible',
+    int? recamaras,
+    int? banos,
+    int? estacionamientos,
+    double? metrosConstruccion,
+    double? metrosTerreno,
+    int? antiguedad,
+    bool? amueblado,
+    bool? mascotasPermitidas,
+    bool? aceptaCredito,
+    double? deposito,
+    String? serviciosIncluidos,
+    String? requisitos,
+    double? latitud,
+    double? longitud,
   }) async {
-    final res = await _post(
-      '/inmobiliario/inmuebles',
-      {
-        'agente_id': agenteId,
-        'profesional_id': agenteId,
-        'titulo': titulo,
-        'tipo_inmueble': tipoInmueble,
-        'tipo_operacion': tipoOperacion,
-        'ubicacion': ubicacion,
-        'precio': precio,
-        'descripcion': descripcion,
-        'estado': estado,
-      },
-    );
+    final body = <String, dynamic>{
+      'agente_id': agenteId,
+      'profesional_id': agenteId,
+      'titulo': titulo,
+      'tipo_inmueble': tipoInmueble,
+      'tipo_operacion': tipoOperacion,
+      'ubicacion': ubicacion,
+      'precio': precio,
+      'descripcion': descripcion,
+      'estado': estado,
+    };
+
+    if (recamaras != null) body['recamaras'] = recamaras;
+    if (banos != null) body['banos'] = banos;
+    if (estacionamientos != null) body['estacionamientos'] = estacionamientos;
+    if (metrosConstruccion != null) {
+      body['metros_construccion'] = metrosConstruccion;
+    }
+    if (metrosTerreno != null) body['metros_terreno'] = metrosTerreno;
+    if (antiguedad != null) body['antiguedad'] = antiguedad;
+    if (amueblado != null) body['amueblado'] = amueblado ? 1 : 0;
+    if (mascotasPermitidas != null) {
+      body['mascotas_permitidas'] = mascotasPermitidas ? 1 : 0;
+    }
+    if (aceptaCredito != null) {
+      body['acepta_credito'] = aceptaCredito ? 1 : 0;
+    }
+    if (deposito != null) body['deposito'] = deposito;
+    if (serviciosIncluidos != null) {
+      body['servicios_incluidos'] = serviciosIncluidos;
+    }
+    if (requisitos != null) body['requisitos'] = requisitos;
+    if (latitud != null) body['latitud'] = latitud;
+    if (longitud != null) body['longitud'] = longitud;
+
+    final res = await _post('/inmobiliario/inmuebles', body);
 
     if (res['success'] != true) {
       throw _apiException(res, 'Error al registrar inmueble');
@@ -221,21 +310,57 @@ class ApiServiceInmobiliario {
     required double precio,
     required String descripcion,
     required String estado,
+    int? recamaras,
+    int? banos,
+    int? estacionamientos,
+    double? metrosConstruccion,
+    double? metrosTerreno,
+    int? antiguedad,
+    bool? amueblado,
+    bool? mascotasPermitidas,
+    bool? aceptaCredito,
+    double? deposito,
+    String? serviciosIncluidos,
+    String? requisitos,
+    double? latitud,
+    double? longitud,
   }) async {
-    final res = await _put(
-      '/inmobiliario/inmuebles/$inmuebleId',
-      {
-        'agente_id': agenteId,
-        'profesional_id': agenteId,
-        'titulo': titulo,
-        'tipo_inmueble': tipoInmueble,
-        'tipo_operacion': tipoOperacion,
-        'ubicacion': ubicacion,
-        'precio': precio,
-        'descripcion': descripcion,
-        'estado': estado,
-      },
-    );
+    final body = <String, dynamic>{
+      'agente_id': agenteId,
+      'profesional_id': agenteId,
+      'titulo': titulo,
+      'tipo_inmueble': tipoInmueble,
+      'tipo_operacion': tipoOperacion,
+      'ubicacion': ubicacion,
+      'precio': precio,
+      'descripcion': descripcion,
+      'estado': estado,
+    };
+
+    if (recamaras != null) body['recamaras'] = recamaras;
+    if (banos != null) body['banos'] = banos;
+    if (estacionamientos != null) body['estacionamientos'] = estacionamientos;
+    if (metrosConstruccion != null) {
+      body['metros_construccion'] = metrosConstruccion;
+    }
+    if (metrosTerreno != null) body['metros_terreno'] = metrosTerreno;
+    if (antiguedad != null) body['antiguedad'] = antiguedad;
+    if (amueblado != null) body['amueblado'] = amueblado ? 1 : 0;
+    if (mascotasPermitidas != null) {
+      body['mascotas_permitidas'] = mascotasPermitidas ? 1 : 0;
+    }
+    if (aceptaCredito != null) {
+      body['acepta_credito'] = aceptaCredito ? 1 : 0;
+    }
+    if (deposito != null) body['deposito'] = deposito;
+    if (serviciosIncluidos != null) {
+      body['servicios_incluidos'] = serviciosIncluidos;
+    }
+    if (requisitos != null) body['requisitos'] = requisitos;
+    if (latitud != null) body['latitud'] = latitud;
+    if (longitud != null) body['longitud'] = longitud;
+
+    final res = await _put('/inmobiliario/inmuebles/$inmuebleId', body);
 
     if (res['success'] != true) {
       throw _apiException(res, 'Error al actualizar inmueble');
@@ -272,6 +397,57 @@ class ApiServiceInmobiliario {
   }
 
   // ===============================
+  // CALIFICACIONES
+  // ===============================
+
+  static Future<List<dynamic>> getCalificacionesInmueble({
+    required int inmuebleId,
+  }) async {
+    final res = await _get(
+      '/inmobiliario/inmuebles/$inmuebleId/calificaciones',
+    );
+
+    if (res['success'] != true) {
+      throw _apiException(res, 'Error al obtener calificaciones');
+    }
+
+    final data = res['data'];
+    return data is List ? data : [];
+  }
+
+  static Future<void> calificarInmueble({
+    required int inmuebleId,
+    required int clienteId,
+    required int calificacion,
+    String comentario = '',
+  }) async {
+    final res = await _post(
+      '/inmobiliario/inmuebles/$inmuebleId/calificar',
+      {
+        'cliente_id': clienteId,
+        'calificacion': calificacion,
+        'comentario': comentario,
+      },
+    );
+
+    if (res['success'] != true) {
+      throw _apiException(res, 'Error al calificar inmueble');
+    }
+  }
+
+  static Future<void> eliminarCalificacionInmueble({
+    required int calificacionId,
+  }) async {
+    final res = await _delete(
+      '/inmobiliario/inmuebles/calificaciones/$calificacionId',
+    );
+
+    if (res['success'] != true) {
+      throw _apiException(res, 'Error al eliminar calificación');
+    }
+  }
+
+  // ===============================
   // ARCHIVOS DEL INMUEBLE
   // Fotos / documentos / contratos / escrituras
   // ===============================
@@ -298,19 +474,11 @@ class ApiServiceInmobiliario {
     );
 
     if (res['success'] != true) {
-      throw _apiException(
-        res,
-        'Error al obtener archivos del inmueble',
-      );
+      throw _apiException(res, 'Error al obtener archivos del inmueble');
     }
 
     final data = res['data'];
-
-    if (data is List) {
-      return data;
-    }
-
-    return [];
+    return data is List ? data : [];
   }
 
   static Future<List<dynamic>> getFotosInmueble({
@@ -344,12 +512,9 @@ class ApiServiceInmobiliario {
     String descripcion = '',
   }) async {
     final uri = _uri('/inmobiliario/inmuebles/$inmuebleId/archivos');
-
     final request = http.MultipartRequest('POST', uri);
 
-    request.headers.addAll({
-      'Accept': 'application/json',
-    });
+    request.headers.addAll({'Accept': 'application/json'});
 
     request.fields.addAll({
       'agente_id': '$agenteId',
@@ -386,10 +551,7 @@ class ApiServiceInmobiliario {
     res['status_code'] = response.statusCode;
 
     if (res['success'] != true) {
-      throw _apiException(
-        res,
-        'Error al subir archivo del inmueble',
-      );
+      throw _apiException(res, 'Error al subir archivo del inmueble');
     }
   }
 
@@ -433,10 +595,7 @@ class ApiServiceInmobiliario {
     final res = await _delete('/inmobiliario/archivos/$archivoId');
 
     if (res['success'] != true) {
-      throw _apiException(
-        res,
-        'Error al eliminar archivo del inmueble',
-      );
+      throw _apiException(res, 'Error al eliminar archivo del inmueble');
     }
   }
 
@@ -460,12 +619,7 @@ class ApiServiceInmobiliario {
     }
 
     final data = res['data'];
-
-    if (data is List) {
-      return data;
-    }
-
-    return [];
+    return data is List ? data : [];
   }
 
   // ===============================
@@ -488,12 +642,7 @@ class ApiServiceInmobiliario {
     }
 
     final data = res['data'];
-
-    if (data is List) {
-      return data;
-    }
-
-    return [];
+    return data is List ? data : [];
   }
 
   static Future<void> registrarProspecto({
@@ -518,10 +667,7 @@ class ApiServiceInmobiliario {
       body['cliente_id'] = clienteId;
     }
 
-    final res = await _post(
-      '/inmobiliario/prospectos',
-      body,
-    );
+    final res = await _post('/inmobiliario/prospectos', body);
 
     if (res['success'] != true) {
       throw _apiException(res, 'Error al registrar prospecto');
@@ -541,42 +687,16 @@ class ApiServiceInmobiliario {
   }) async {
     final body = <String, dynamic>{};
 
-    if (inmuebleId != null) {
-      body['inmueble_id'] = inmuebleId;
-    }
+    if (inmuebleId != null) body['inmueble_id'] = inmuebleId;
+    if (clienteId != null) body['cliente_id'] = clienteId;
+    if (nombre != null) body['nombre'] = nombre;
+    if (telefono != null) body['telefono'] = telefono;
+    if (correo != null) body['correo'] = correo;
+    if (nivelInteres != null) body['nivel_interes'] = nivelInteres;
+    if (estado != null) body['estado'] = estado;
+    if (mensaje != null) body['mensaje'] = mensaje;
 
-    if (clienteId != null) {
-      body['cliente_id'] = clienteId;
-    }
-
-    if (nombre != null) {
-      body['nombre'] = nombre;
-    }
-
-    if (telefono != null) {
-      body['telefono'] = telefono;
-    }
-
-    if (correo != null) {
-      body['correo'] = correo;
-    }
-
-    if (nivelInteres != null) {
-      body['nivel_interes'] = nivelInteres;
-    }
-
-    if (estado != null) {
-      body['estado'] = estado;
-    }
-
-    if (mensaje != null) {
-      body['mensaje'] = mensaje;
-    }
-
-    final res = await _put(
-      '/inmobiliario/prospectos/$prospectoId',
-      body,
-    );
+    final res = await _put('/inmobiliario/prospectos/$prospectoId', body);
 
     if (res['success'] != true) {
       throw _apiException(res, 'Error al actualizar prospecto');
@@ -589,16 +709,11 @@ class ApiServiceInmobiliario {
   }) async {
     final res = await _post(
       '/inmobiliario/prospectos/$prospectoId/estado',
-      {
-        'estado': estado,
-      },
+      {'estado': estado},
     );
 
     if (res['success'] != true) {
-      throw _apiException(
-        res,
-        'Error al cambiar estado del prospecto',
-      );
+      throw _apiException(res, 'Error al cambiar estado del prospecto');
     }
   }
 
@@ -608,16 +723,11 @@ class ApiServiceInmobiliario {
   }) async {
     final res = await _post(
       '/inmobiliario/prospectos/$prospectoId/interes',
-      {
-        'nivel_interes': nivelInteres,
-      },
+      {'nivel_interes': nivelInteres},
     );
 
     if (res['success'] != true) {
-      throw _apiException(
-        res,
-        'Error al cambiar interés del prospecto',
-      );
+      throw _apiException(res, 'Error al cambiar interés del prospecto');
     }
   }
 

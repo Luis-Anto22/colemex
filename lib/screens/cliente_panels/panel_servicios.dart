@@ -4,9 +4,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/api_services/cliente_profesionales_api.dart';
+import 'catalogo_inmuebles_screen.dart';
 import 'profesionales_mapa_fullscreen.dart';
 import 'servicio_selector.dart';
-import 'package:advocatus/screens/cliente_panels/solicitar_asistencia_vial_screen.dart';
+import 'solicitar_asistencia_vial_screen.dart';
 
 class PanelServicios extends StatefulWidget {
   final String nombreUsuario;
@@ -85,6 +86,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     super.didUpdateWidget(oldWidget);
 
     final servicio = widget.servicioSeleccionado?.trim() ?? '';
+
     if (_esServicioAbogados(servicio)) {
       final especialidadInicio = widget.especialidadBusqueda?.trim() ?? '';
       if (especialidadInicio.isNotEmpty &&
@@ -99,10 +101,6 @@ class _PanelServiciosState extends State<PanelServicios> {
     }
   }
 
-  bool _esServicioAbogados(String servicio) {
-    return servicio.toLowerCase().trim() == 'abogados';
-  }
-
   String _normalizarServicio(String servicio) {
     return servicio
         .toLowerCase()
@@ -113,6 +111,30 @@ class _PanelServiciosState extends State<PanelServicios> {
         .replaceAll('ó', 'o')
         .replaceAll('ú', 'u')
         .replaceAll('ñ', 'n');
+  }
+
+  bool _esServicioAbogados(String servicio) {
+    return _normalizarServicio(servicio) == 'abogados' ||
+        _normalizarServicio(servicio) == 'abogado';
+  }
+
+  bool _esAsistenciaVial(String servicio) {
+    final s = _normalizarServicio(servicio);
+    return s == 'asistencia vial' || s == 'asistencia_vial';
+  }
+
+  bool _esAgenteInmobiliario(String servicio) {
+    final s = _normalizarServicio(servicio);
+    return s == 'agente inmobiliario' || s == 'agentes inmobiliarios';
+  }
+
+  void _abrirCatalogoInmuebles() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CatalogoInmueblesScreen(),
+      ),
+    );
   }
 
   IconData _iconoServicio(String servicio) {
@@ -300,12 +322,14 @@ class _PanelServiciosState extends State<PanelServicios> {
       setState(() {
         _especialidadesAbogado = legales;
         final especialidadInicio = widget.especialidadBusqueda?.trim() ?? '';
+
         if (especialidadInicio.isNotEmpty) {
           _especialidadAbogado = especialidadInicio;
         } else if (_especialidadAbogado.isNotEmpty &&
             !_especialidadesAbogado.contains(_especialidadAbogado)) {
           _especialidadAbogado = '';
         }
+
         _cargandoEspecialidadesAbogado = false;
       });
     } catch (_) {
@@ -314,9 +338,11 @@ class _PanelServiciosState extends State<PanelServicios> {
       setState(() {
         _especialidadesAbogado = [..._especialidadesLegalesFallback];
         final especialidadInicio = widget.especialidadBusqueda?.trim() ?? '';
+
         if (especialidadInicio.isNotEmpty) {
           _especialidadAbogado = especialidadInicio;
         }
+
         _cargandoEspecialidadesAbogado = false;
       });
     }
@@ -494,11 +520,13 @@ class _PanelServiciosState extends State<PanelServicios> {
 
   String _especialidadFiltroActual(String servicio) {
     final especialidadGlobal = widget.especialidadBusqueda?.trim() ?? '';
+
     if (_esServicioAbogados(servicio)) {
       if (_especialidadAbogado.trim().isNotEmpty) {
         return _especialidadAbogado.trim();
       }
     }
+
     return especialidadGlobal;
   }
 
@@ -511,6 +539,18 @@ class _PanelServiciosState extends State<PanelServicios> {
         setState(() {
           _profesionales = [];
           _mensaje = '';
+        });
+      }
+      return;
+    }
+
+    if (_esAgenteInmobiliario(servicio) || _esAsistenciaVial(servicio)) {
+      if (mounted) {
+        setState(() {
+          _profesionales = [];
+          _mensaje = '';
+          _ubicacionCliente = null;
+          _cargando = false;
         });
       }
       return;
@@ -533,6 +573,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     });
 
     final ubicacion = await _obtenerUbicacion();
+
     if (!mounted) return;
 
     if (ubicacion == null) {
@@ -557,8 +598,7 @@ class _PanelServiciosState extends State<PanelServicios> {
       _ordenarPorDistancia();
 
       if (_profesionales.isEmpty) {
-        _mensaje =
-            'No hay profesionales disponibles para el filtro indicado.';
+        _mensaje = 'No hay profesionales disponibles para el filtro indicado.';
       }
     } catch (_) {
       _mensaje = 'Error al cargar profesionales.';
@@ -570,10 +610,6 @@ class _PanelServiciosState extends State<PanelServicios> {
       });
     }
   }
-  bool _esAsistenciaVial(String servicio) {
-  final s = _normalizarServicio(servicio);
-  return s == 'asistencia vial' || s == 'asistencia_vial';
-}
 
   void _ordenarPorDistancia() {
     _profesionales.sort((a, b) {
@@ -585,19 +621,21 @@ class _PanelServiciosState extends State<PanelServicios> {
 
   Future<LatLng?> _obtenerUbicacion() async {
     final servicioActivo = await Geolocator.isLocationServiceEnabled();
+
     if (!servicioActivo) {
-      _mensaje = 'Servicio de ubicacion desactivado.';
+      _mensaje = 'Servicio de ubicación desactivado.';
       return null;
     }
 
     var permiso = await Geolocator.checkPermission();
+
     if (permiso == LocationPermission.denied) {
       permiso = await Geolocator.requestPermission();
     }
 
     if (permiso == LocationPermission.denied ||
         permiso == LocationPermission.deniedForever) {
-      _mensaje = 'Permiso de ubicacion denegado.';
+      _mensaje = 'Permiso de ubicación denegado.';
       return null;
     }
 
@@ -611,6 +649,7 @@ class _PanelServiciosState extends State<PanelServicios> {
   double? _distanciaKm(Map<String, dynamic> profesional) {
     final raw = profesional['distancia_km'];
     final parsed = raw != null ? double.tryParse(raw.toString()) : null;
+
     if (parsed != null) return parsed;
 
     if (_ubicacionCliente == null) return null;
@@ -630,7 +669,9 @@ class _PanelServiciosState extends State<PanelServicios> {
   Future<int?> _obtenerClienteId() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('id');
+
     if (id == null || id <= 0) return null;
+
     return id;
   }
 
@@ -639,9 +680,8 @@ class _PanelServiciosState extends State<PanelServicios> {
   ) async {
     final servicioSeleccionado = widget.servicioSeleccionado?.trim() ?? '';
     final servicioPerfil = (profesional['perfil']?.toString() ?? '').trim();
-    final servicio = servicioSeleccionado.isNotEmpty
-        ? servicioSeleccionado
-        : servicioPerfil;
+    final servicio =
+        servicioSeleccionado.isNotEmpty ? servicioSeleccionado : servicioPerfil;
 
     if (servicio.isEmpty) {
       if (!mounted) return;
@@ -652,6 +692,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     }
 
     final profesionalId = int.tryParse(profesional['id']?.toString() ?? '');
+
     if (profesionalId == null || profesionalId <= 0) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -661,9 +702,11 @@ class _PanelServiciosState extends State<PanelServicios> {
     }
 
     final nombre = profesional['nombre']?.toString() ?? 'Profesional';
+
     final tituloController = TextEditingController(
       text: 'Solicitud de $servicio',
     );
+
     final descripcionController = TextEditingController();
 
     final confirmar = await showDialog<bool>(
@@ -735,6 +778,7 @@ class _PanelServiciosState extends State<PanelServicios> {
     }
 
     final clienteId = await _obtenerClienteId();
+
     if (clienteId == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -759,10 +803,9 @@ class _PanelServiciosState extends State<PanelServicios> {
       if (!mounted) return;
 
       final creado = resp['creado'] == true;
+
       final message = resp['message']?.toString() ??
-          (creado
-              ? 'Solicitud enviada correctamente.'
-              : 'Solicitud registrada.');
+          (creado ? 'Solicitud enviada correctamente.' : 'Solicitud registrada.');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -794,8 +837,11 @@ class _PanelServiciosState extends State<PanelServicios> {
     final especialidad = profesional['especialidad']?.toString() ?? '';
     final estado = profesional['estado']?.toString() ?? 'disponible';
     final distancia = _distanciaKm(profesional);
+
     final rating =
-        double.tryParse(profesional['rating_promedio']?.toString() ?? '') ?? 0.0;
+        double.tryParse(profesional['rating_promedio']?.toString() ?? '') ??
+            0.0;
+
     final totalCalificaciones =
         int.tryParse(profesional['total_calificaciones']?.toString() ?? '') ?? 0;
 
@@ -906,6 +952,7 @@ class _PanelServiciosState extends State<PanelServicios> {
 
   Widget _estadoChip(String estado) {
     final color = _colorEstado(estado);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -971,6 +1018,7 @@ class _PanelServiciosState extends State<PanelServicios> {
       builder: (context, constraints) {
         final compact =
             constraints.hasBoundedHeight && constraints.maxHeight < 190;
+
         final iconSize = compact ? 30.0 : 44.0;
         final titleSize = compact ? 14.5 : 17.0;
         final subtitleSize = compact ? 12.5 : 14.0;
@@ -979,10 +1027,10 @@ class _PanelServiciosState extends State<PanelServicios> {
         return Container(
           padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.82),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFDDE6F2)),
-            ),
+            color: Colors.white.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFDDE6F2)),
+          ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1033,19 +1081,25 @@ class _PanelServiciosState extends State<PanelServicios> {
     );
 
     if (!mounted || seleccionado == null) return;
+
     _mostrarDetalle(seleccionado);
   }
 
   @override
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
+
     final servicioSel = widget.servicioSeleccionado?.trim() ?? '';
     final especialidadSelGlobal = widget.especialidadBusqueda?.trim() ?? '';
     final especialidadSelActiva = _especialidadFiltroActual(servicioSel);
+
     final esAbogados = _esServicioAbogados(servicioSel);
     final esAsistenciaVial = _esAsistenciaVial(servicioSel);
+    final esAgenteInmobiliario = _esAgenteInmobiliario(servicioSel);
+
     final tieneFiltro =
         servicioSel.isNotEmpty || especialidadSelActiva.isNotEmpty;
+
     final isSmallPhone = screen.width < 380 || screen.height < 700;
     final hPad = isSmallPhone ? 12.0 : 16.0;
     final titleSize = isSmallPhone ? 16.0 : 17.0;
@@ -1123,8 +1177,10 @@ class _PanelServiciosState extends State<PanelServicios> {
                         color: const Color(0xFFE4EDFA),
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: const Icon(
-                        Icons.travel_explore_rounded,
+                      child: Icon(
+                        esAgenteInmobiliario
+                            ? Icons.apartment_rounded
+                            : Icons.travel_explore_rounded,
                         color: _primary,
                         size: 22,
                       ),
@@ -1132,7 +1188,9 @@ class _PanelServiciosState extends State<PanelServicios> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Encuentra profesionales cercanos',
+                        esAgenteInmobiliario
+                            ? 'Catálogo de propiedades'
+                            : 'Encuentra profesionales cercanos',
                         style: TextStyle(
                           fontSize: titleSize,
                           fontWeight: FontWeight.w800,
@@ -1144,7 +1202,9 @@ class _PanelServiciosState extends State<PanelServicios> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Selecciona un servicio y/o usa la especialidad para filtrar profesionales.',
+                  esAgenteInmobiliario
+                      ? 'Explora casas, departamentos, terrenos y locales publicados por agentes inmobiliarios.'
+                      : 'Selecciona un servicio y/o usa la especialidad para filtrar profesionales.',
                   style: TextStyle(
                     color: const Color(0xFF475569),
                     height: 1.3,
@@ -1176,7 +1236,14 @@ class _PanelServiciosState extends State<PanelServicios> {
                 ServicioSelector(
                   servicios: widget.serviciosDisponibles,
                   seleccionado: widget.servicioSeleccionado,
-                  onSeleccionar: widget.onSeleccionarServicio,
+                  onSeleccionar: (servicio) {
+                    if (_esAgenteInmobiliario(servicio)) {
+                      _abrirCatalogoInmuebles();
+                      return;
+                    }
+
+                    widget.onSeleccionarServicio(servicio);
+                  },
                 ),
                 if (esAbogados) ...[
                   const SizedBox(height: 12),
@@ -1269,7 +1336,7 @@ class _PanelServiciosState extends State<PanelServicios> {
               icono: Icons.travel_explore_rounded,
               titulo: 'Elige un servicio o una especialidad',
               subtitulo:
-                  'Mostraremos en el mapa a los profesionales más cercanos que coincidan con tu filtro.',
+                  'Mostraremos los profesionales o catálogos disponibles según el servicio elegido.',
             ),
           )
         else ...[
@@ -1305,16 +1372,24 @@ class _PanelServiciosState extends State<PanelServicios> {
                   Row(
                     children: [
                       Icon(
-                        servicioSel.isNotEmpty
-                            ? _iconoServicio(servicioSel)
-                            : Icons.balance_rounded,
+                        esAsistenciaVial
+                            ? Icons.car_repair_rounded
+                            : esAgenteInmobiliario
+                                ? Icons.apartment_rounded
+                                : servicioSel.isNotEmpty
+                                    ? _iconoServicio(servicioSel)
+                                    : Icons.balance_rounded,
                         size: 18,
                         color: _primary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Mapa de profesionales cercanos',
+                          esAsistenciaVial
+                              ? 'Asistencia vial'
+                              : esAgenteInmobiliario
+                                  ? 'Catálogo inmobiliario'
+                                  : 'Mapa de profesionales cercanos',
                           style: TextStyle(
                             color: _primary,
                             fontWeight: FontWeight.w800,
@@ -1326,7 +1401,11 @@ class _PanelServiciosState extends State<PanelServicios> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Abre el mapa en pantalla completa para ver mejor y tocar un pin.',
+                    esAsistenciaVial
+                        ? 'Solicita apoyo vial directamente desde la app.'
+                        : esAgenteInmobiliario
+                            ? 'Consulta propiedades disponibles en renta o venta.'
+                            : 'Abre el mapa en pantalla completa para ver mejor y tocar un pin.',
                     style: TextStyle(
                       color: const Color(0xFF475569),
                       fontSize: isSmallPhone ? 12.5 : 13.2,
@@ -1341,18 +1420,27 @@ class _PanelServiciosState extends State<PanelServicios> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const SolicitarAsistenciaVialScreen(),
+                                  builder: (_) =>
+                                      const SolicitarAsistenciaVialScreen(),
                                 ),
                               );
                             }
-                          : _abrirMapaPantallaCompleta,
+                          : esAgenteInmobiliario
+                              ? _abrirCatalogoInmuebles
+                              : _abrirMapaPantallaCompleta,
                       icon: Icon(
-                        esAsistenciaVial ? Icons.car_repair_rounded : Icons.map_outlined,
+                        esAsistenciaVial
+                            ? Icons.car_repair_rounded
+                            : esAgenteInmobiliario
+                                ? Icons.apartment_rounded
+                                : Icons.map_outlined,
                       ),
                       label: Text(
                         esAsistenciaVial
                             ? 'Solicitar asistencia vial'
-                            : 'Abrir mapa completo (${_profesionales.length})',
+                            : esAgenteInmobiliario
+                                ? 'Ver catálogo de propiedades'
+                                : 'Abrir mapa completo (${_profesionales.length})',
                       ),
                     ),
                   ),
@@ -1360,7 +1448,7 @@ class _PanelServiciosState extends State<PanelServicios> {
               ),
             ),
           ),
-          if (_profesionales.isNotEmpty)
+          if (_profesionales.isNotEmpty && !esAgenteInmobiliario)
             Padding(
               padding: EdgeInsets.fromLTRB(hPad, 12, hPad, hPad),
               child: _estadoVacio(
