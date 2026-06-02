@@ -97,6 +97,53 @@ class ClienteProfesionalesApi {
 
     return [];
   }
+  Future<List<Map<String, dynamic>>> getCasosArchivados({
+  required int clienteId,
+  int limit = 50,
+}) async {
+  final res = await _client.get(
+    '/common/casos-cliente-archivados',
+    params: {
+      'cliente_id': clienteId,
+      'limit': limit,
+    },
+  );
+
+  if (res['success'] != true) {
+    throw Exception(
+      res['message'] ?? res['mensaje'] ?? 'Error al obtener casos archivados',
+    );
+  }
+
+  final data = res['data'] ?? res['casos'];
+
+  if (data is List) {
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  return [];
+}
+Future<Map<String, dynamic>> desarchivarCaso({
+  required int casoId,
+  required int clienteId,
+}) async {
+  final res = await _client.post(
+    '/common/casos-cliente/$casoId/desarchivar',
+    {
+      'cliente_id': clienteId,
+    },
+  );
+
+  if (res['success'] != true) {
+    throw Exception(
+      res['message'] ??
+      res['mensaje'] ??
+      'Error al desarchivar caso',
+    );
+  }
+
+  return res;
+}
 
   Future<Map<String, dynamic>> solicitarCaso({
     required int clienteId,

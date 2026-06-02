@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'casos_archivados_screen.dart';
 
 import '../../services/api_services/cliente_profesionales_api.dart';
 import '../../services/api_services/api_client.dart';
@@ -79,6 +80,70 @@ class _PanelInicioState extends State<PanelInicio> {
     return prefs.getInt('id') ?? 0;
   }
 
+  Future<void> _cargarMisCasos() async {
+    if (mounted) {
+      setState(() {
+        _cargandoCasos = true;
+        _errorCasos = '';
+        _casosSeleccionados.clear();
+        _modoSeleccionCasos = false;
+      });
+    }
+
+    try {
+      final clienteId = await _obtenerClienteId();
+
+      if (clienteId <= 0) {
+        if (!mounted) return;
+        setState(() {
+          _cargandoCasos = false;
+          _errorCasos = 'No se pudo identificar al cliente.';
+          _casos = [];
+        });
+        return;
+      }
+
+      final casos = await _api.getMisCasos(clienteId: clienteId, limit: 50);
+
+      if (!mounted) return;
+
+      setState(() {
+        _casos = casos;
+        _cargandoCasos = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cargandoCasos = false;
+        _errorCasos = 'No se pudo cargar el historial de casos.';
+      });
+    }
+  }
+
+  Future<void> _cargarEspecialidades() async {
+    if (mounted) {
+      setState(() {
+        _cargandoEspecialidades = true;
+      });
+    }
+
+    try {
+      final items = await _api.getEspecialidades(limit: 150);
+
+      if (!mounted) return;
+
+      setState(() {
+        _especialidades = items.toSet().toList()..sort();
+        _cargandoEspecialidades = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cargandoEspecialidades = false;
+      });
+    }
+  }
+
   void _onBusquedaChanged() {
     final q = _busquedaController.text.trim().toLowerCase();
 
@@ -137,70 +202,6 @@ class _PanelInicioState extends State<PanelInicio> {
     setState(() {
       _sugerenciasBusqueda = sugerencias.take(8).toList();
     });
-  }
-
-  Future<void> _cargarEspecialidades() async {
-    if (mounted) {
-      setState(() {
-        _cargandoEspecialidades = true;
-      });
-    }
-
-    try {
-      final items = await _api.getEspecialidades(limit: 150);
-
-      if (!mounted) return;
-
-      setState(() {
-        _especialidades = items.toSet().toList()..sort();
-        _cargandoEspecialidades = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _cargandoEspecialidades = false;
-      });
-    }
-  }
-
-  Future<void> _cargarMisCasos() async {
-    if (mounted) {
-      setState(() {
-        _cargandoCasos = true;
-        _errorCasos = '';
-        _casosSeleccionados.clear();
-        _modoSeleccionCasos = false;
-      });
-    }
-
-    try {
-      final clienteId = await _obtenerClienteId();
-
-      if (clienteId <= 0) {
-        if (!mounted) return;
-        setState(() {
-          _cargandoCasos = false;
-          _errorCasos = 'No se pudo identificar al cliente.';
-          _casos = [];
-        });
-        return;
-      }
-
-      final casos = await _api.getMisCasos(clienteId: clienteId, limit: 6);
-
-      if (!mounted) return;
-
-      setState(() {
-        _casos = casos;
-        _cargandoCasos = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _cargandoCasos = false;
-        _errorCasos = 'No se pudo cargar el historial de casos.';
-      });
-    }
   }
 
   String? _servicioExacto(String q) {
@@ -289,6 +290,134 @@ class _PanelInicioState extends State<PanelInicio> {
     if (value.length >= 16) return value.substring(0, 16);
     if (value.length >= 10) return value.substring(0, 10);
     return value;
+  }
+
+  Future<void> _archivarCaso(int index) async {
+    if (index < 0 || index >= _casos.length) return;
+
+    final caso = _casos[index];
+    final casoId = int.tryParse('${caso['id']}');
+    final clienteId = await _obtenerClienteId();
+
+    if (casoId == null || clienteId <= 0) return;
+
+    final res = await _apiClient.archivarCasoCliente(
+      casoId: casoId,
+      clienteId: clienteId,
+    );
+
+    if (!mounted) return;
+
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso archivado')),
+      );
+
+      await _cargarMisCasos();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'] ?? 'No se pudo archivar')),
+      );
+    }
+  }
+
+  Future<void> _eliminarCaso(int index) async {
+    if (index < 0 || index >= _casos.length) return;
+
+    final caso = _casos[index];
+    final casoId = int.tryParse('${caso['id']}');
+    final clienteId = await _obtenerClienteId();
+
+    if (casoId == null || clienteId <= 0) return;
+
+    final res = await _apiClient.eliminarCasoCliente(
+      casoId: casoId,
+      clienteId: clienteId,
+    );
+
+    if (!mounted) return;
+
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Caso eliminado')),
+      );
+
+      await _cargarMisCasos();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'] ?? 'No se pudo eliminar')),
+      );
+    }
+  }
+
+  Future<void> _archivarSeleccionados() async {
+    final clienteId = await _obtenerClienteId();
+    if (clienteId <= 0) return;
+
+    final indices = _casosSeleccionados.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    for (final index in indices) {
+      if (index < 0 || index >= _casos.length) continue;
+
+      final casoId = int.tryParse('${_casos[index]['id']}');
+      if (casoId == null) continue;
+
+      await _apiClient.archivarCasoCliente(
+        casoId: casoId,
+        clienteId: clienteId,
+      );
+    }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Casos archivados')),
+    );
+
+    await _cargarMisCasos();
+  }
+
+  Future<void> _eliminarSeleccionados() async {
+    final clienteId = await _obtenerClienteId();
+    if (clienteId <= 0) return;
+
+    final indices = _casosSeleccionados.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    for (final index in indices) {
+      if (index < 0 || index >= _casos.length) continue;
+
+      final casoId = int.tryParse('${_casos[index]['id']}');
+      if (casoId == null) continue;
+
+      await _apiClient.eliminarCasoCliente(
+        casoId: casoId,
+        clienteId: clienteId,
+      );
+    }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Casos eliminados')),
+    );
+
+    await _cargarMisCasos();
+  }
+
+  void _toggleSeleccionCaso(int index) {
+    setState(() {
+      if (_casosSeleccionados.contains(index)) {
+        _casosSeleccionados.remove(index);
+      } else {
+        _casosSeleccionados.add(index);
+      }
+
+      if (_casosSeleccionados.isEmpty) {
+        _modoSeleccionCasos = false;
+      }
+    });
   }
 
   Widget _buildBuscador() {
@@ -397,154 +526,6 @@ class _PanelInicioState extends State<PanelInicio> {
     );
   }
 
-  Future<void> _archivarCaso(int index) async {
-    final caso = _casos[index];
-    final casoId = int.tryParse('${caso['id']}');
-    final clienteId = await _obtenerClienteId();
-
-    if (casoId == null || clienteId <= 0) return;
-
-    final res = await _apiClient.archivarCasoCliente(
-      casoId: casoId,
-      clienteId: clienteId,
-    );
-
-    if (!mounted) return;
-
-    if (res['success'] == true) {
-      setState(() {
-        _casos.removeAt(index);
-        _casosSeleccionados.clear();
-        _modoSeleccionCasos = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Caso archivado')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message'] ?? 'No se pudo archivar')),
-      );
-    }
-  }
-
-  Future<void> _eliminarCaso(int index) async {
-    final caso = _casos[index];
-    final casoId = int.tryParse('${caso['id']}');
-    final clienteId = await _obtenerClienteId();
-
-    if (casoId == null || clienteId <= 0) return;
-
-    final res = await _apiClient.eliminarCasoCliente(
-      casoId: casoId,
-      clienteId: clienteId,
-    );
-
-    if (!mounted) return;
-
-    if (res['success'] == true) {
-      setState(() {
-        _casos.removeAt(index);
-        _casosSeleccionados.clear();
-        _modoSeleccionCasos = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Caso eliminado')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message'] ?? 'No se pudo eliminar')),
-      );
-    }
-  }
-
-  Future<void> _archivarSeleccionados() async {
-    final clienteId = await _obtenerClienteId();
-    if (clienteId <= 0) return;
-
-    final indices = _casosSeleccionados.toList()
-      ..sort((a, b) => b.compareTo(a));
-
-    for (final index in indices) {
-      if (index < 0 || index >= _casos.length) continue;
-
-      final casoId = int.tryParse('${_casos[index]['id']}');
-      if (casoId == null) continue;
-
-      await _apiClient.archivarCasoCliente(
-        casoId: casoId,
-        clienteId: clienteId,
-      );
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      for (final index in indices) {
-        if (index >= 0 && index < _casos.length) {
-          _casos.removeAt(index);
-        }
-      }
-      _casosSeleccionados.clear();
-      _modoSeleccionCasos = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Casos archivados')),
-    );
-  }
-
-  Future<void> _eliminarSeleccionados() async {
-    final clienteId = await _obtenerClienteId();
-    if (clienteId <= 0) return;
-
-    final indices = _casosSeleccionados.toList()
-      ..sort((a, b) => b.compareTo(a));
-
-    for (final index in indices) {
-      if (index < 0 || index >= _casos.length) continue;
-
-      final casoId = int.tryParse('${_casos[index]['id']}');
-      if (casoId == null) continue;
-
-      await _apiClient.eliminarCasoCliente(
-        casoId: casoId,
-        clienteId: clienteId,
-      );
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      for (final index in indices) {
-        if (index >= 0 && index < _casos.length) {
-          _casos.removeAt(index);
-        }
-      }
-      _casosSeleccionados.clear();
-      _modoSeleccionCasos = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Casos eliminados')),
-    );
-  }
-
-  void _toggleSeleccionCaso(int index) {
-    setState(() {
-      if (_casosSeleccionados.contains(index)) {
-        _casosSeleccionados.remove(index);
-      } else {
-        _casosSeleccionados.add(index);
-      }
-
-      if (_casosSeleccionados.isEmpty) {
-        _modoSeleccionCasos = false;
-      }
-    });
-  }
-
   Widget _buildMisCasos() {
     final compact = MediaQuery.of(context).size.width < 380;
 
@@ -592,27 +573,39 @@ class _PanelInicioState extends State<PanelInicio> {
             style: TextStyle(color: Color(0xFF475569)),
           ),
           const SizedBox(height: 12),
-          if (_casos.isNotEmpty)
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
+                if (_casos.isNotEmpty)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _modoSeleccionCasos = !_modoSeleccionCasos;
+                        _casosSeleccionados.clear();
+                      });
+                    },
+                    icon: Icon(
+                      _modoSeleccionCasos
+                          ? Icons.close_rounded
+                          : Icons.check_box_outlined,
+                    ),
+                    label: Text(_modoSeleccionCasos ? 'Cancelar' : 'Seleccionar'),
+                  ),
+
                 ElevatedButton.icon(
                   onPressed: () {
-                    setState(() {
-                      _modoSeleccionCasos = !_modoSeleccionCasos;
-                      _casosSeleccionados.clear();
-                    });
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CasosArchivadosScreen(),
+                      ),
+                    );
                   },
-                  icon: Icon(
-                    _modoSeleccionCasos
-                        ? Icons.close_rounded
-                        : Icons.check_box_outlined,
-                  ),
-                  label: Text(
-                    _modoSeleccionCasos ? 'Cancelar' : 'Seleccionar',
-                  ),
+                  icon: const Icon(Icons.archive_rounded),
+                  label: const Text('Archivados'),
                 ),
+
                 if (_modoSeleccionCasos && _casosSeleccionados.isNotEmpty) ...[
                   ElevatedButton.icon(
                     onPressed: _archivarSeleccionados,
