@@ -160,7 +160,9 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final usuario = decoded['usuario'];
+      final usuario = tipoLogin == 'cliente'
+        ? decoded['cliente']
+        : decoded['usuario'];
 
       if (usuario == null || usuario is! Map<String, dynamic>) {
         if (!mounted) return;
@@ -192,15 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      if (token.isEmpty) {
-        if (!mounted) return;
-
-        setState(() {
-          cargando = false;
-          mensajeError = 'No se recibió token de autenticación';
-        });
-        return;
-      }
+      
 
       final prefs = await SharedPreferences.getInstance();
 
