@@ -6,6 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'services/push/push_notifications_service.dart';
 
+// BIOMETRÍA / CUENTAS GUARDADAS
+import 'services/auth/saved_accounts_service.dart';
+import 'services/auth/profile_selector_screen.dart';
+import 'services/auth/session_timeout_wrapper.dart';
+
 // Screens principales
 import 'screens/login_screen.dart';
 import 'screens/panel_cliente.dart';
@@ -56,13 +61,19 @@ Future<void> main() async {
   final String perfil = prefs.getString('perfil') ?? '';
   final int id = prefs.getInt('id') ?? 0;
 
-  // ✅ Inicializar push solo en app móvil/escritorio, no en Chrome/Web.
-  // En web puede requerir configuración extra de VAPID y service worker.
+  bool hayCuentasGuardadas = false;
+
+  try {
+    hayCuentasGuardadas = await SavedAccountsService.hayCuentasGuardadas();
+  } catch (e) {
+    debugPrint('Error consultando cuentas guardadas: $e');
+    hayCuentasGuardadas = false;
+  }
+
   if (!kIsWeb) {
     try {
       await PushNotificationsService.init();
 
-      // Si ya había sesión iniciada, intentamos guardar/actualizar token FCM.
       if (sesionActiva && token.isNotEmpty && id > 0) {
         await PushNotificationsService.guardarTokenActual();
       }
@@ -78,6 +89,7 @@ Future<void> main() async {
       token: token,
       perfil: perfil,
       id: id,
+      hayCuentasGuardadas: hayCuentasGuardadas,
     ),
   );
 }
@@ -88,6 +100,7 @@ class MyApp extends StatelessWidget {
   final String token;
   final String perfil;
   final int id;
+  final bool hayCuentasGuardadas;
 
   const MyApp({
     super.key,
@@ -96,6 +109,7 @@ class MyApp extends StatelessWidget {
     required this.token,
     required this.perfil,
     required this.id,
+    required this.hayCuentasGuardadas,
   });
 
   String _normalizarPerfil(String value) {
@@ -177,6 +191,10 @@ class MyApp extends StatelessWidget {
         default:
           return '/login';
       }
+    }
+
+    if (hayCuentasGuardadas) {
+      return '/login';
     }
 
     return '/login';
@@ -261,7 +279,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Advocatus',
+      title: 'AppBogator',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSwatch(
           primarySwatch: Colors.indigo,
@@ -270,10 +288,26 @@ class MyApp extends StatelessWidget {
         ),
         primaryColor: const Color(0xFFD4AF37),
       ),
+
+      // ✅ IMPORTANTE:
+      // SessionTimeoutWrapper va aquí dentro del builder,
+      // no envolviendo el MaterialApp por fuera.
+      builder: (context, child) {
+        return SessionTimeoutWrapper(
+          // Para probar rápido puedes poner: Duration(seconds: 30)
+          // Para producción dejamos 15 minutos.
+          timeout: const Duration(minutes: 15),
+          enabled: true,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+
       initialRoute: initialRoute,
       routes: {
         '/home': (context) => const HomePublicScreen(),
         '/login': (context) => const LoginScreen(),
+        '/profile-selector': (context) => const ProfileSelectorScreen(),
+
         '/panel-cliente': (context) => const PanelCliente(),
         '/panel-admin-home': (context) => const PanelAdminHome(),
         '/registro-socio': (context) => const RegistroSocioScreen(),
