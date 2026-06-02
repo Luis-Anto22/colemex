@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'casos_archivados_screen.dart';
 
+import 'casos_archivados_screen.dart';
 import '../../services/api_services/cliente_profesionales_api.dart';
 import '../../services/api_services/api_client.dart';
 
@@ -49,6 +49,9 @@ class _PanelInicioState extends State<PanelInicio> {
   String _errorCasos = '';
   List<Map<String, dynamic>> _casos = [];
 
+  int _totalActivos = 0;
+  int _totalArchivados = 0;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +65,7 @@ class _PanelInicioState extends State<PanelInicio> {
   @override
   void didUpdateWidget(covariant PanelInicio oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (widget.especialidadBusqueda != oldWidget.especialidadBusqueda &&
         _busquedaController.text != widget.especialidadBusqueda) {
       _busquedaController.text = widget.especialidadBusqueda;
@@ -81,42 +85,70 @@ class _PanelInicioState extends State<PanelInicio> {
   }
 
   Future<void> _cargarMisCasos() async {
-    if (mounted) {
-      setState(() {
-        _cargandoCasos = true;
-        _errorCasos = '';
-        _casosSeleccionados.clear();
-        _modoSeleccionCasos = false;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _cargandoCasos = true;
+      _errorCasos = '';
+    });
 
     try {
       final clienteId = await _obtenerClienteId();
 
       if (clienteId <= 0) {
         if (!mounted) return;
+
         setState(() {
           _cargandoCasos = false;
           _errorCasos = 'No se pudo identificar al cliente.';
           _casos = [];
+          _totalActivos = 0;
         });
         return;
       }
 
-      final casos = await _api.getMisCasos(clienteId: clienteId, limit: 50);
+      final casos = await _api.getMisCasos(
+        clienteId: clienteId,
+        limit: 50,
+      );
 
       if (!mounted) return;
 
       setState(() {
         _casos = casos;
+        _totalActivos = casos.length;
         _cargandoCasos = false;
+        _casosSeleccionados.clear();
+        _modoSeleccionCasos = false;
       });
+
+      await _cargarConteoCasos();
     } catch (_) {
       if (!mounted) return;
+
       setState(() {
         _cargandoCasos = false;
         _errorCasos = 'No se pudo cargar el historial de casos.';
       });
+    }
+  }
+
+  Future<void> _cargarConteoCasos() async {
+    try {
+      final clienteId = await _obtenerClienteId();
+
+      if (clienteId <= 0) return;
+
+      final conteo = await _api.getConteoCasos(clienteId: clienteId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _totalActivos = conteo['activos'] ?? _totalActivos;
+        _totalArchivados = conteo['archivados'] ?? 0;
+      });
+    } catch (_) {
+      // No rompemos la pantalla si falla solo el conteo.
     }
   }
 
@@ -138,6 +170,7 @@ class _PanelInicioState extends State<PanelInicio> {
       });
     } catch (_) {
       if (!mounted) return;
+
       setState(() {
         _cargandoEspecialidades = false;
       });
@@ -165,6 +198,7 @@ class _PanelInicioState extends State<PanelInicio> {
       required String icono,
     }) {
       final key = '${tipo.toLowerCase()}::${valor.toLowerCase()}';
+
       if (!seen.add(key)) return;
 
       sugerencias.add({
@@ -206,6 +240,7 @@ class _PanelInicioState extends State<PanelInicio> {
 
   String? _servicioExacto(String q) {
     final objetivo = q.trim().toLowerCase();
+
     if (objetivo.isEmpty) return null;
 
     for (final servicio in widget.serviciosDisponibles) {
@@ -213,6 +248,7 @@ class _PanelInicioState extends State<PanelInicio> {
         return servicio;
       }
     }
+
     return null;
   }
 
@@ -225,6 +261,7 @@ class _PanelInicioState extends State<PanelInicio> {
     }
 
     final servicio = _servicioExacto(valor);
+
     if (servicio != null) {
       widget.onSeleccionarServicio(servicio);
       widget.onBuscarEspecialidad('');
@@ -286,9 +323,12 @@ class _PanelInicioState extends State<PanelInicio> {
 
   String _fechaCorta(String fechaRaw) {
     if (fechaRaw.isEmpty) return '';
+
     final value = fechaRaw.replaceFirst('T', ' ');
+
     if (value.length >= 16) return value.substring(0, 16);
     if (value.length >= 10) return value.substring(0, 10);
+
     return value;
   }
 
@@ -352,7 +392,8 @@ class _PanelInicioState extends State<PanelInicio> {
 
   Future<void> _archivarSeleccionados() async {
     final clienteId = await _obtenerClienteId();
-    if (clienteId <= 0) return;
+
+    if (clienteId <= 0 || _casosSeleccionados.isEmpty) return;
 
     final indices = _casosSeleccionados.toList()
       ..sort((a, b) => b.compareTo(a));
@@ -361,6 +402,7 @@ class _PanelInicioState extends State<PanelInicio> {
       if (index < 0 || index >= _casos.length) continue;
 
       final casoId = int.tryParse('${_casos[index]['id']}');
+
       if (casoId == null) continue;
 
       await _apiClient.archivarCasoCliente(
@@ -380,7 +422,8 @@ class _PanelInicioState extends State<PanelInicio> {
 
   Future<void> _eliminarSeleccionados() async {
     final clienteId = await _obtenerClienteId();
-    if (clienteId <= 0) return;
+
+    if (clienteId <= 0 || _casosSeleccionados.isEmpty) return;
 
     final indices = _casosSeleccionados.toList()
       ..sort((a, b) => b.compareTo(a));
@@ -389,6 +432,7 @@ class _PanelInicioState extends State<PanelInicio> {
       if (index < 0 || index >= _casos.length) continue;
 
       final casoId = int.tryParse('${_casos[index]['id']}');
+
       if (casoId == null) continue;
 
       await _apiClient.eliminarCasoCliente(
@@ -435,7 +479,10 @@ class _PanelInicioState extends State<PanelInicio> {
         children: [
           Row(
             children: [
-              const Icon(Icons.search_rounded, color: PanelInicio._primary),
+              const Icon(
+                Icons.search_rounded,
+                color: PanelInicio._primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -511,7 +558,10 @@ class _PanelInicioState extends State<PanelInicio> {
                       color: PanelInicio._primary,
                       size: 18,
                     ),
-                    title: Text(valor, style: const TextStyle(fontSize: 14)),
+                    title: Text(
+                      valor,
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     subtitle: Text(
                       tipo == 'servicio' ? 'Servicio' : 'Especialidad',
                       style: const TextStyle(fontSize: 12),
@@ -537,7 +587,7 @@ class _PanelInicioState extends State<PanelInicio> {
         border: Border.all(color: const Color(0xFFDDE6F2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -548,11 +598,14 @@ class _PanelInicioState extends State<PanelInicio> {
         children: [
           Row(
             children: [
-              const Icon(Icons.folder_copy_rounded, color: PanelInicio._primary),
+              const Icon(
+                Icons.folder_copy_rounded,
+                color: PanelInicio._primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Mis casos',
+                  'Mis casos ($_totalActivos)',
                   style: TextStyle(
                     fontSize: compact ? 16 : 17,
                     fontWeight: FontWeight.w700,
@@ -573,57 +626,60 @@ class _PanelInicioState extends State<PanelInicio> {
             style: TextStyle(color: Color(0xFF475569)),
           ),
           const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (_casos.isNotEmpty)
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _modoSeleccionCasos = !_modoSeleccionCasos;
-                        _casosSeleccionados.clear();
-                      });
-                    },
-                    icon: Icon(
-                      _modoSeleccionCasos
-                          ? Icons.close_rounded
-                          : Icons.check_box_outlined,
-                    ),
-                    label: Text(_modoSeleccionCasos ? 'Cancelar' : 'Seleccionar'),
-                  ),
-
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (_casos.isNotEmpty)
                 ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CasosArchivadosScreen(),
-                      ),
-                    );
+                    setState(() {
+                      _modoSeleccionCasos = !_modoSeleccionCasos;
+                      _casosSeleccionados.clear();
+                    });
                   },
-                  icon: const Icon(Icons.archive_rounded),
-                  label: const Text('Archivados'),
+                  icon: Icon(
+                    _modoSeleccionCasos
+                        ? Icons.close_rounded
+                        : Icons.check_box_outlined,
+                  ),
+                  label: Text(
+                    _modoSeleccionCasos ? 'Cancelar' : 'Seleccionar',
+                  ),
                 ),
-
-                if (_modoSeleccionCasos && _casosSeleccionados.isNotEmpty) ...[
-                  ElevatedButton.icon(
-                    onPressed: _archivarSeleccionados,
-                    icon: const Icon(Icons.archive_rounded),
-                    label: const Text('Archivar'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _eliminarSeleccionados,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
+              ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CasosArchivadosScreen(),
                     ),
-                    icon: const Icon(Icons.delete_rounded),
-                    label: const Text('Eliminar'),
+                  );
+
+                  if (!mounted) return;
+                  await _cargarMisCasos();
+                },
+                icon: const Icon(Icons.archive_rounded),
+                label: Text('Archivados ($_totalArchivados)'),
+              ),
+              if (_modoSeleccionCasos && _casosSeleccionados.isNotEmpty)
+                ElevatedButton.icon(
+                  onPressed: _archivarSeleccionados,
+                  icon: const Icon(Icons.archive_rounded),
+                  label: const Text('Archivar'),
+                ),
+              if (_modoSeleccionCasos && _casosSeleccionados.isNotEmpty)
+                ElevatedButton.icon(
+                  onPressed: _eliminarSeleccionados,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
                   ),
-                ],
-              ],
-            ),
+                  icon: const Icon(Icons.delete_rounded),
+                  label: const Text('Eliminar'),
+                ),
+            ],
+          ),
           if (_casos.isNotEmpty) const SizedBox(height: 12),
           if (_cargandoCasos)
             const Padding(
@@ -648,19 +704,23 @@ class _PanelInicioState extends State<PanelInicio> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final caso = _casos[index];
+
                 final estado = caso['estado']?.toString() ?? 'pendiente';
                 final colorEstado = _colorEstado(estado);
+
                 final tituloRaw = caso['titulo']?.toString().trim() ?? '';
                 final titulo = tituloRaw.isEmpty
                     ? 'Caso #${caso['id'] ?? ''}'
                     : tituloRaw;
+
                 final servicio = caso['servicio']?.toString().trim() ?? '';
                 final profesional =
                     caso['profesional_nombre']?.toString().trim() ?? '';
-                final fechaRaw =
-                    caso['fecha']?.toString() ??
+
+                final fechaRaw = caso['fecha']?.toString() ??
                     caso['fecha_creacion']?.toString() ??
                     '';
+
                 final fecha = _fechaCorta(fechaRaw.trim());
                 final seleccionado = _casosSeleccionados.contains(index);
 
@@ -670,13 +730,19 @@ class _PanelInicioState extends State<PanelInicio> {
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.only(left: 24),
                     color: Colors.blue,
-                    child: const Icon(Icons.archive, color: Colors.white),
+                    child: const Icon(
+                      Icons.archive,
+                      color: Colors.white,
+                    ),
                   ),
                   secondaryBackground: Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 24),
                     color: Colors.red,
-                    child: const Icon(Icons.delete, color: Colors.white),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
                   ),
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.startToEnd) {
@@ -684,6 +750,7 @@ class _PanelInicioState extends State<PanelInicio> {
                     } else if (direction == DismissDirection.endToStart) {
                       await _eliminarCaso(index);
                     }
+
                     return false;
                   },
                   child: InkWell(
@@ -702,10 +769,12 @@ class _PanelInicioState extends State<PanelInicio> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: seleccionado
-                            ? Colors.blue.withValues(alpha: 0.12)
+                            ? Colors.blue.withOpacity(0.12)
                             : const Color(0xFFF8FBFF),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFDCE6F4)),
+                        border: Border.all(
+                          color: const Color(0xFFDCE6F4),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -738,8 +807,7 @@ class _PanelInicioState extends State<PanelInicio> {
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color:
-                                            colorEstado.withValues(alpha: 0.12),
+                                        color: colorEstado.withOpacity(0.12),
                                         borderRadius:
                                             BorderRadius.circular(999),
                                       ),
@@ -824,12 +892,15 @@ class _PanelInicioState extends State<PanelInicio> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [PanelInicio._primary, PanelInicio._secondary],
+              colors: [
+                PanelInicio._primary,
+                PanelInicio._secondary,
+              ],
             ),
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: PanelInicio._primary.withValues(alpha: 0.25),
+                color: PanelInicio._primary.withOpacity(0.25),
                 blurRadius: 18,
                 offset: const Offset(0, 8),
               ),
@@ -844,10 +915,13 @@ class _PanelInicioState extends State<PanelInicio> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.person_rounded, color: Colors.white),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -144,6 +144,28 @@ Future<Map<String, dynamic>> desarchivarCaso({
 
   return res;
 }
+Future<Map<String, dynamic>> getConteoCasos({
+  required int clienteId,
+}) async {
+  final res = await _client.get(
+    '/common/casos-cliente-conteo',
+    params: {
+      'cliente_id': clienteId,
+    },
+  );
+
+  if (res['success'] != true) {
+    throw Exception(
+      res['message'] ??
+      res['mensaje'] ??
+      'Error al obtener conteo de casos',
+    );
+  }
+
+  return Map<String, dynamic>.from(
+    res['data'] ?? {},
+  );
+}
 
   Future<Map<String, dynamic>> solicitarCaso({
     required int clienteId,
