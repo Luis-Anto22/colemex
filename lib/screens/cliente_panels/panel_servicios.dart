@@ -675,162 +675,180 @@ class _PanelServiciosState extends State<PanelServicios> {
     return id;
   }
 
-  Future<void> _mostrarDialogoSolicitud(
-    Map<String, dynamic> profesional,
-  ) async {
-    final servicioSeleccionado = widget.servicioSeleccionado?.trim() ?? '';
-    final servicioPerfil = (profesional['perfil']?.toString() ?? '').trim();
-    final servicio =
-        servicioSeleccionado.isNotEmpty ? servicioSeleccionado : servicioPerfil;
+Future<void> _mostrarDialogoSolicitud(
+  Map<String, dynamic> profesional,
+) async {
+  if (_enviandoSolicitud) return;
 
-    if (servicio.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo determinar el servicio.')),
-      );
-      return;
-    }
+  final servicioSeleccionado = widget.servicioSeleccionado?.trim() ?? '';
+  final servicioPerfil = (profesional['perfil']?.toString() ?? '').trim();
+  final servicio =
+      servicioSeleccionado.isNotEmpty ? servicioSeleccionado : servicioPerfil;
 
-    final profesionalId = int.tryParse(profesional['id']?.toString() ?? '');
-
-    if (profesionalId == null || profesionalId <= 0) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profesional inválido.')),
-      );
-      return;
-    }
-
-    final nombre = profesional['nombre']?.toString() ?? 'Profesional';
-
-    final tituloController = TextEditingController(
-      text: 'Solicitud de $servicio',
+  if (servicio.isEmpty) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo determinar el servicio.')),
     );
+    return;
+  }
 
-    final descripcionController = TextEditingController();
+  final profesionalId = int.tryParse(profesional['id']?.toString() ?? '');
 
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Enviar solicitud'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Se enviará una solicitud de caso a $nombre para que la acepte o rechace.',
+  if (profesionalId == null || profesionalId <= 0) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profesional inválido.')),
+    );
+    return;
+  }
+
+  final nombre = profesional['nombre']?.toString() ?? 'Profesional';
+
+  final tituloController = TextEditingController(
+    text: 'Solicitud de $servicio',
+  );
+
+  final descripcionController = TextEditingController();
+
+  final confirmar = await showDialog<bool>(
+    context: context,
+    barrierDismissible: !_enviandoSolicitud,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Enviar solicitud'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Se enviará una solicitud de caso a $nombre para que la acepte o rechace.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: tituloController,
+                decoration: const InputDecoration(
+                  labelText: 'Título del caso',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: tituloController,
-                  decoration: const InputDecoration(
-                    labelText: 'Título del caso',
-                    border: OutlineInputBorder(),
-                  ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: descripcionController,
+                minLines: 3,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción (opcional)',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descripcionController,
-                  minLines: 3,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción (opcional)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Enviar'),
-            ),
-          ],
-        );
-      },
-    );
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Enviar'),
+          ),
+        ],
+      );
+    },
+  );
 
-    if (confirmar != true) {
-      tituloController.dispose();
-      descripcionController.dispose();
-      return;
-    }
-
-    final titulo = tituloController.text.trim();
-    final descripcion = descripcionController.text.trim();
-
+  if (confirmar != true) {
     tituloController.dispose();
     descripcionController.dispose();
+    return;
+  }
 
-    if (titulo.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El título es obligatorio.')),
-      );
-      return;
+  final titulo = tituloController.text.trim();
+  final descripcion = descripcionController.text.trim();
+
+  tituloController.dispose();
+  descripcionController.dispose();
+
+  if (titulo.isEmpty) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('El título es obligatorio.')),
+    );
+    return;
+  }
+
+  final clienteId = await _obtenerClienteId();
+
+  if (clienteId == null) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo identificar al cliente.')),
+    );
+    return;
+  }
+
+  if (!mounted) return;
+
+  setState(() {
+    _enviandoSolicitud = true;
+  });
+
+  try {
+    final resp = await _api.solicitarCaso(
+      clienteId: clienteId,
+      profesionalId: profesionalId,
+      servicio: servicio,
+      titulo: titulo,
+      descripcion: descripcion,
+    );
+
+    if (!mounted) return;
+
+    final creado = resp['creado'] == true ||
+        resp['success'] == true ||
+        resp['data']?['creado'] == true;
+
+    final message = resp['message']?.toString() ??
+        resp['mensaje']?.toString() ??
+        (creado
+            ? 'Solicitud enviada correctamente.'
+            : 'Solicitud registrada correctamente.');
+
+    // ✅ Cerramos la ficha/bottom sheet del profesional.
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
     }
 
-    final clienteId = await _obtenerClienteId();
+    if (!mounted) return;
 
-    if (clienteId == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo identificar al cliente.')),
-      );
-      return;
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: creado
+            ? const Color(0xFF166534)
+            : const Color(0xFF9A3412),
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
 
-    setState(() {
-      _enviandoSolicitud = true;
-    });
-
-    try {
-      final resp = await _api.solicitarCaso(
-        clienteId: clienteId,
-        profesionalId: profesionalId,
-        servicio: servicio,
-        titulo: titulo,
-        descripcion: descripcion,
-      );
-
-      if (!mounted) return;
-
-      final creado = resp['creado'] == true;
-
-      final message = resp['message']?.toString() ??
-          (creado ? 'Solicitud enviada correctamente.' : 'Solicitud registrada.');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor:
-              creado ? const Color(0xFF166534) : const Color(0xFF9A3412),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo enviar la solicitud: $e'),
-          backgroundColor: const Color(0xFFB91C1C),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _enviandoSolicitud = false;
-        });
-      }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('No se pudo enviar la solicitud: $e'),
+        backgroundColor: const Color(0xFFB91C1C),
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _enviandoSolicitud = false;
+      });
     }
   }
+}
 
   void _mostrarDetalle(Map<String, dynamic> profesional) {
     final nombre = profesional['nombre']?.toString() ?? 'Profesional';
