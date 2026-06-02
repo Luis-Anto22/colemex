@@ -159,6 +159,17 @@ class ApiClient {
     },
   );
 }
+Future<Map<String, dynamic>> desarchivarCasoCliente({
+  required int casoId,
+  required int clienteId,
+}) async {
+  return post(
+    '/common/casos-cliente/$casoId/desarchivar',
+    {
+      'cliente_id': clienteId,
+    },
+  );
+}
 
 Future<Map<String, dynamic>> eliminarCasoCliente({
   required int casoId,
