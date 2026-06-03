@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'registro_usuario_screen.dart';
+import 'registro_socio_screen.dart';
 
 // PUSH NOTIFICATIONS
 import 'package:advocatus/services/push/push_notifications_service.dart';
@@ -747,20 +748,24 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
             const SizedBox(height: 14),
-            TextButton(
+           TextButton(
               onPressed: cargando
                   ? null
                   : () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const RegistroUsuarioScreen(),
+                          builder: (context) => tipoLogin == 'cliente'
+                              ? const RegistroUsuarioScreen()
+                              : const RegistroSocioScreen(),
                         ),
                       );
                     },
-              child: const Text(
-                '¿No tienes cuenta? Regístrate',
-                style: TextStyle(
+              child: Text(
+                tipoLogin == 'cliente'
+                    ? '¿No tienes cuenta? Regístrate'
+                    : '¿Eres profesional? Regístrate',
+                style: const TextStyle(
                   color: Color(0xFF9EC5FF),
                   fontWeight: FontWeight.w700,
                 ),

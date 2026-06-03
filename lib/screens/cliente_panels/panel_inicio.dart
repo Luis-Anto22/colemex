@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'casos_archivados_screen.dart';
 
+import 'casos_archivados_screen.dart';
 import '../../services/api_services/cliente_profesionales_api.dart';
 import '../../services/api_services/api_client.dart';
 
@@ -51,6 +51,9 @@ class _PanelInicioState extends State<PanelInicio> {
   String _errorCasos = '';
   List<Map<String, dynamic>> _casos = [];
 
+  int _totalActivos = 0;
+  int _totalArchivados = 0;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +67,7 @@ class _PanelInicioState extends State<PanelInicio> {
   @override
   void didUpdateWidget(covariant PanelInicio oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (widget.especialidadBusqueda != oldWidget.especialidadBusqueda &&
         _busquedaController.text != widget.especialidadBusqueda) {
       _busquedaController.text = widget.especialidadBusqueda;
@@ -83,42 +87,70 @@ class _PanelInicioState extends State<PanelInicio> {
   }
 
   Future<void> _cargarMisCasos() async {
-    if (mounted) {
-      setState(() {
-        _cargandoCasos = true;
-        _errorCasos = '';
-        _casosSeleccionados.clear();
-        _modoSeleccionCasos = false;
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      _cargandoCasos = true;
+      _errorCasos = '';
+    });
 
     try {
       final clienteId = await _obtenerClienteId();
 
       if (clienteId <= 0) {
         if (!mounted) return;
+
         setState(() {
           _cargandoCasos = false;
           _errorCasos = 'No se pudo identificar al cliente.';
           _casos = [];
+          _totalActivos = 0;
         });
         return;
       }
 
-      final casos = await _api.getMisCasos(clienteId: clienteId, limit: 50);
+      final casos = await _api.getMisCasos(
+        clienteId: clienteId,
+        limit: 50,
+      );
 
       if (!mounted) return;
 
       setState(() {
         _casos = casos;
+        _totalActivos = casos.length;
         _cargandoCasos = false;
+        _casosSeleccionados.clear();
+        _modoSeleccionCasos = false;
       });
+
+      await _cargarConteoCasos();
     } catch (_) {
       if (!mounted) return;
+
       setState(() {
         _cargandoCasos = false;
         _errorCasos = 'No se pudo cargar el historial de casos.';
       });
+    }
+  }
+
+  Future<void> _cargarConteoCasos() async {
+    try {
+      final clienteId = await _obtenerClienteId();
+
+      if (clienteId <= 0) return;
+
+      final conteo = await _api.getConteoCasos(clienteId: clienteId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _totalActivos = conteo['activos'] ?? _totalActivos;
+        _totalArchivados = conteo['archivados'] ?? 0;
+      });
+    } catch (_) {
+      // No rompemos la pantalla si falla solo el conteo.
     }
   }
 
@@ -140,6 +172,7 @@ class _PanelInicioState extends State<PanelInicio> {
       });
     } catch (_) {
       if (!mounted) return;
+
       setState(() {
         _cargandoEspecialidades = false;
       });
@@ -167,6 +200,7 @@ class _PanelInicioState extends State<PanelInicio> {
       required String icono,
     }) {
       final key = '${tipo.toLowerCase()}::${valor.toLowerCase()}';
+
       if (!seen.add(key)) return;
 
       sugerencias.add({
@@ -208,6 +242,7 @@ class _PanelInicioState extends State<PanelInicio> {
 
   String? _servicioExacto(String q) {
     final objetivo = q.trim().toLowerCase();
+
     if (objetivo.isEmpty) return null;
 
     for (final servicio in widget.serviciosDisponibles) {
@@ -215,6 +250,7 @@ class _PanelInicioState extends State<PanelInicio> {
         return servicio;
       }
     }
+
     return null;
   }
 
@@ -227,6 +263,7 @@ class _PanelInicioState extends State<PanelInicio> {
     }
 
     final servicio = _servicioExacto(valor);
+
     if (servicio != null) {
       widget.onSeleccionarServicio(servicio);
       widget.onBuscarEspecialidad('');
@@ -374,9 +411,12 @@ class _PanelInicioState extends State<PanelInicio> {
 
   String _fechaCorta(String fechaRaw) {
     if (fechaRaw.isEmpty) return '';
+
     final value = fechaRaw.replaceFirst('T', ' ');
+
     if (value.length >= 16) return value.substring(0, 16);
     if (value.length >= 10) return value.substring(0, 10);
+
     return value;
   }
 
@@ -440,7 +480,8 @@ class _PanelInicioState extends State<PanelInicio> {
 
   Future<void> _archivarSeleccionados() async {
     final clienteId = await _obtenerClienteId();
-    if (clienteId <= 0) return;
+
+    if (clienteId <= 0 || _casosSeleccionados.isEmpty) return;
 
     final indices = _casosSeleccionados.toList()
       ..sort((a, b) => b.compareTo(a));
@@ -449,6 +490,7 @@ class _PanelInicioState extends State<PanelInicio> {
       if (index < 0 || index >= _casos.length) continue;
 
       final casoId = int.tryParse('${_casos[index]['id']}');
+
       if (casoId == null) continue;
 
       await _apiClient.archivarCasoCliente(
@@ -468,7 +510,8 @@ class _PanelInicioState extends State<PanelInicio> {
 
   Future<void> _eliminarSeleccionados() async {
     final clienteId = await _obtenerClienteId();
-    if (clienteId <= 0) return;
+
+    if (clienteId <= 0 || _casosSeleccionados.isEmpty) return;
 
     final indices = _casosSeleccionados.toList()
       ..sort((a, b) => b.compareTo(a));
@@ -477,6 +520,7 @@ class _PanelInicioState extends State<PanelInicio> {
       if (index < 0 || index >= _casos.length) continue;
 
       final casoId = int.tryParse('${_casos[index]['id']}');
+
       if (casoId == null) continue;
 
       await _apiClient.eliminarCasoCliente(
@@ -1277,7 +1321,7 @@ class _PanelInicioState extends State<PanelInicio> {
             Expanded(
               child: _QuickAccess(
                 icon: Icons.folder_rounded,
-                title: 'Mis casos',
+                title: 'Mis casos\n($_totalActivos)',
                 color: const Color(0xFF7CA9FF),
                 onTap: _cargarMisCasos,
               ),
@@ -1286,15 +1330,18 @@ class _PanelInicioState extends State<PanelInicio> {
             Expanded(
               child: _QuickAccess(
                 icon: Icons.archive_rounded,
-                title: 'Archivados',
+                title: 'Archivados\n($_totalArchivados)',
                 color: const Color(0xFFD6A84F),
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => const CasosArchivadosScreen(),
                     ),
                   );
+
+                  if (!mounted) return;
+                  await _cargarMisCasos();
                 },
               ),
             ),
