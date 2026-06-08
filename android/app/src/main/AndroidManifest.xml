@@ -3,6 +3,10 @@
     <!-- Internet para conectar con Laravel / R2 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Estado de red -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <!-- Notificaciones push Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -10,42 +14,37 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
-    <!-- Ubicación -->
+    <!-- Ubicación para mapa / SOS / profesionales cercanos -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Estado de red -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!-- Servicios / bloqueo de suspensión -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Cámara -->
+    <!-- Cámara para foto de rostro -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Android 12 o menor -->
+    <!-- Galería Android 12 o menor -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <!-- Escritura solo Android 10 o menor, por compatibilidad -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29" />
 
-    <!-- Android 13+ -->
+    <!-- Galería Android 13+ para imágenes -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <!-- Android 14+ acceso parcial a fotos seleccionadas -->
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
 
-    <!-- Solo si también subes audios -->
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-
-    <!-- Ubicación en segundo plano: déjalo comentado si no lo necesitas -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> -->
+    <!-- Cámara opcional: no obligamos a que el celular tenga cámara -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:label="AppBogator"

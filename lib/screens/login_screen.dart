@@ -505,7 +505,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 13),
         const Text(
-          'Asistencia legal y profesional',
+          'Asistencia Juridica, Donde y Cuando lo Necesites',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Color(0xFFE8EEF8),
