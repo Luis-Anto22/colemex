@@ -9,6 +9,7 @@ import 'panel_inicio.dart';
 import 'panel_servicios.dart';
 import 'panel_sos.dart';
 import 'perfil_cliente_screen.dart';
+import 'historial_cliente_screen.dart';
 import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
 
 class PanelClienteUI extends StatefulWidget {
@@ -818,7 +819,14 @@ class PanelAjustesCliente extends StatelessWidget {
                       title: 'Historial',
                       subtitle: 'Servicios anteriores',
                       color: _purple,
-                      onTap: () => _proximamente(context, 'Historial'),
+                      onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HistorialClienteScreen(),
+                        ),
+                      );
+                    },
                     ),
                     _ProfileActionCard(
                       icon: Icons.credit_card_rounded,

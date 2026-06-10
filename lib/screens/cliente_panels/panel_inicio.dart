@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:advocatus/screens/common/notificaciones/notificaciones_screen.dart';
+
 import 'casos_archivados_screen.dart';
 import '../../services/api_services/cliente_profesionales_api.dart';
 import '../../services/api_services/api_client.dart';
@@ -47,6 +49,9 @@ class _PanelInicioState extends State<PanelInicio> {
   List<String> _especialidades = [];
   List<Map<String, String>> _sugerenciasBusqueda = [];
 
+  int _notificacionesNoLeidas = 0;
+  bool _cargandoNotificaciones = false;
+
   bool _cargandoCasos = true;
   String _errorCasos = '';
   List<Map<String, dynamic>> _casos = [];
@@ -62,6 +67,7 @@ class _PanelInicioState extends State<PanelInicio> {
     _busquedaController.addListener(_onBusquedaChanged);
     _cargarEspecialidades();
     _cargarMisCasos();
+    _cargarConteoNotificaciones();
   }
 
   @override
@@ -85,6 +91,55 @@ class _PanelInicioState extends State<PanelInicio> {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('id') ?? 0;
   }
+  Future<void> _cargarConteoNotificaciones() async {
+  if (_cargandoNotificaciones) return;
+
+  final clienteId = await _obtenerClienteId();
+
+  if (clienteId <= 0) return;
+
+  setState(() {
+    _cargandoNotificaciones = true;
+  });
+
+  try {
+    final res = await _apiClient.get(
+      '/notificaciones/count',
+      params: {
+        'cliente_id': clienteId,
+      },
+    );
+
+    if (!mounted) return;
+
+    final data = res['data'];
+
+    int total = 0;
+
+    if (data is Map) {
+      total = int.tryParse(
+            '${data['unread_count'] ?? data['no_leidas'] ?? data['unread'] ?? data['total'] ?? 0}',
+          ) ??
+          0;
+    } else {
+      total = int.tryParse(
+            '${res['unread_count'] ?? res['no_leidas'] ?? res['total'] ?? 0}',
+          ) ??
+          0;
+    }
+
+    setState(() {
+      _notificacionesNoLeidas = total;
+      _cargandoNotificaciones = false;
+    });
+  } catch (_) {
+    if (!mounted) return;
+
+    setState(() {
+      _cargandoNotificaciones = false;
+    });
+  }
+}
 
   Future<void> _cargarMisCasos() async {
     if (!mounted) return;
@@ -637,10 +692,22 @@ class _PanelInicioState extends State<PanelInicio> {
             clipBehavior: Clip.none,
             children: [
               IconButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Notificaciones en ajustes')),
+                onPressed: () async {
+                  final clienteId = await _obtenerClienteId();
+
+                  if (!mounted) return;
+
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NotificacionesScreen(
+                        clienteId: clienteId > 0 ? clienteId : null,
+                      ),
+                    ),
                   );
+
+                  if (!mounted) return;
+                  _cargarConteoNotificaciones();
                 },
                 icon: const Icon(
                   Icons.notifications_none_rounded,
@@ -648,6 +715,7 @@ class _PanelInicioState extends State<PanelInicio> {
                   size: 29,
                 ),
               ),
+              if (_notificacionesNoLeidas > 0)
               Positioned(
                 right: 8,
                 top: 5,
@@ -660,9 +728,11 @@ class _PanelInicioState extends State<PanelInicio> {
                     color: _red,
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
-                    '3',
-                    style: TextStyle(
+                  child: Text(
+                    _notificacionesNoLeidas > 99
+                        ? '99+'
+                        : '$_notificacionesNoLeidas',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.w900,

@@ -97,6 +97,34 @@ class ClienteProfesionalesApi {
 
     return [];
   }
+  Future<List<Map<String, dynamic>>> getHistorialCasosCliente({
+  required int clienteId,
+  int limit = 100,
+}) async {
+  final res = await _client.get(
+    '/common/historial-casos-cliente',
+    params: {
+      'cliente_id': clienteId,
+      'limit': limit,
+    },
+  );
+
+  if (res['success'] != true) {
+    throw Exception(
+      res['message'] ??
+          res['mensaje'] ??
+          'Error al obtener historial de casos',
+    );
+  }
+
+  final data = res['data'] ?? res['casos'];
+
+  if (data is List) {
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  return [];
+}
   Future<List<Map<String, dynamic>>> getCasosArchivados({
   required int clienteId,
   int limit = 50,
